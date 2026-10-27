@@ -1,0 +1,15 @@
+node_modules
+dist
+.venv
+data
+.git
+.impeccable
+__pycache__
+**/__pycache__
+*.tsbuildinfo
+.env
+.env.*
+tests
+*.log
+answers-*.jpg
+.DS_Store

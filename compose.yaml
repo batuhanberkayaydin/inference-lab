@@ -1,0 +1,25 @@
+name: inference-lab
+
+services:
+  inference-lab:
+    build: .
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:${LAB_PORT:-8080}:8787"
+    environment:
+      LAB_ADMIN_USER: ${LAB_ADMIN_USER:-admin}
+      LAB_ADMIN_PASSWORD: ${LAB_ADMIN_PASSWORD:-admin}
+    volumes:
+      - lab-data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8787/api/health', timeout=3).close()"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  lab-data:
