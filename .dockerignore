@@ -3,6 +3,7 @@ dist
 .venv
 data
 .git
+.github
 .impeccable
 __pycache__
 **/__pycache__

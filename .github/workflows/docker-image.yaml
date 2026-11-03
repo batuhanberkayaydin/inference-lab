@@ -1,0 +1,97 @@
+name: Publish Docker image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-image-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - name: Build complete runtime image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          platforms: linux/${{ matrix.arch }}
+          load: true
+          tags: ${{ env.IMAGE }}:sha-${{ github.sha }}-${{ matrix.arch }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=Inference Lab
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+      - name: Run backend regressions without internet access
+        env:
+          TEST_IMAGE: ${{ env.IMAGE }}:sha-${{ github.sha }}-${{ matrix.arch }}
+        run: |
+          docker run --rm --network none \
+            --mount "type=bind,source=$PWD/tests,target=/app/tests,readonly" \
+            "$TEST_IMAGE" python -m unittest discover -s tests -v
+      - name: Check packaged runtime without internet access
+        env:
+          TEST_IMAGE: ${{ env.IMAGE }}:sha-${{ github.sha }}-${{ matrix.arch }}
+        run: docker run --rm --network none -i "$TEST_IMAGE" python - < .github/scripts/smoke-image.py
+      - name: Log in to GHCR
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish tested architecture image
+        env:
+          TEST_IMAGE: ${{ env.IMAGE }}:sha-${{ github.sha }}-${{ matrix.arch }}
+        run: docker push "$TEST_IMAGE"
+
+  publish:
+    name: Publish multi-platform tags
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      packages: write
+    steps:
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
+      - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish latest only after both architectures pass
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          docker buildx imagetools create \
+            --tag "$IMAGE:latest" \
+            --tag "$IMAGE:sha-$COMMIT_SHA" \
+            "$IMAGE:sha-$COMMIT_SHA-amd64" \
+            "$IMAGE:sha-$COMMIT_SHA-arm64"
+          docker buildx imagetools inspect "$IMAGE:sha-$COMMIT_SHA"

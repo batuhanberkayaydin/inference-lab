@@ -24,6 +24,7 @@ Prepare identical request inputs, compare up to four configured models, inspect 
 - Automatic report persistence, previous-run inspection and exports.
 - A shared interactive overview chart for live runs and reports; data-aware scales, per-model visibility, token/throughput views, accessible time inspection, and explicit benchmark-mode explanations.
 - Docker Compose startup from the repository root, with unless-stopped restart, a persistent data volume, and localhost port 8080. Native data/ and Docker volume are separate.
+- Default Compose pulls a complete prebuilt GHCR image for Linux AMD64/ARM64; target servers need no pip, npm or source build. A separate Compose override enables local image development. GitHub Actions tests the final images without external network access before publishing the shared latest tag.
 - Fresh deployments have no automatic models, contexts, saved inputs or reports, and default to real API mode. Bundled 32K/64K Turkish prompt files are loaded only by explicit selection and never auto-inserted into user tables.
 - Never invent provider token counts or speculative metrics. Clearly distinguish demonstration runs from real runs.
 - Development instructions and a small extensible test suite.

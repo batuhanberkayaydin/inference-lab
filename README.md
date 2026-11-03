@@ -19,13 +19,39 @@ Docker çalışır durumdayken:
 docker compose up
 ```
 
-İlk açılışta arayüz ve Python backend tek imajda derlenir. Uygulama [http://127.0.0.1:8080](http://127.0.0.1:8080) adresindedir; giriş **admin / admin**. Arka planda çalıştırmak için `docker compose up -d`. Kaynak kod güncellenince `docker compose up --build -d` kullanın.
+İlk açılışta GitHub Container Registry'den hazır uygulama imajı indirilir: `ghcr.io/batuhanberkayaydin/inference-lab:latest`. Python, cryptography, derlenmiş arayüz ve örnek promptlar imajın içindedir. Sunucuya Python, pip veya Node kurmak gerekmez; sunucuda `pip install`, `npm ci` veya kaynak derlemesi çalışmaz. Linux AMD64 ve ARM64 desteklenir; Docker uygun mimariyi seçer.
+
+Uygulama [http://127.0.0.1:8080](http://127.0.0.1:8080) adresindedir; giriş **admin / admin**. Arka planda çalıştırmak için `docker compose up -d`. Yeni imaj sürümüne geçmek için:
+
+```bash
+git pull
+docker compose pull
+docker compose up -d
+```
+
+`docker compose up --build` artık sunucuda derleme başlatmaz; varsayılan Compose dosyasında `build` alanı yoktur. İmajın indirilmesi için sunucunun `ghcr.io` registry'sine erişmesi gerekir; PyPI veya npm registry erişimi gerekmez. Model sağlayıcısına erişim yine gereklidir.
 
 Servis `restart: unless-stopped` kullanır; elle durdurulmadıkça Docker yeniden başladığında tekrar açılır. Model ayarları, şifreleme anahtarı, girdiler ve raporlar `lab-data` adlı kalıcı volume’da tutulur. `docker compose down` volume’u korur; `down -v` verileri siler. Yerel Python sürümünün `data/` klasörüyle bu Docker volume’u ayrıdır; mevcut yerel kayıtlar otomatik taşınmaz.
 
 Port ve yönetici bilgilerini değiştirmek için `.env.example` dosyasını `.env` adıyla kopyalayıp düzenleyin. Docker varsayılan 8080 portunu, yerel Python sürümü 8787 portunu kullanır. Compose yalnızca bilgisayarın loopback adresine port açar; container içinde servis `0.0.0.0:8787` dinler ve root olmayan kullanıcıyla çalışır.
 
+`.env` içindeki `LAB_IMAGE` ile imaj sürümünü veya kurumun kendi registry adresini seçebilirsiniz. `latest` yerine `ghcr.io/batuhanberkayaydin/inference-lab:sha-TAM_COMMIT_SHA` kullanmak sürümü sabitler. Registry'ye erişemeyen sunucu için erişimi olan aynı mimarideki bilgisayarda `docker pull` ve `docker save`, hedefte `docker load` ardından `docker compose up -d --pull never` kullanılabilir.
+
 Sağlayıcı başka bir container içindeyse aynı Docker ağındaki servis adını kullanın. Bilgisayarınızdaki vLLM servisine bağlanırken sağlayıcı URL’sini `http://host.docker.internal:8000/v1` şeklinde girin; container içindeki `localhost` container’ın kendisidir. Linux’ta model servisi Docker ağı tarafından erişilebilir bir arayüzde dinlemelidir. [Docker ağ dokümanı](https://docs.docker.com/desktop/features/networking/) ve [Compose restart politikası](https://docs.docker.com/reference/compose-file/services/#restart).
+
+### Kaynaktan Docker imajı geliştirme
+
+Yalnızca uygulamayı değiştiren geliştiriciler, internet erişimi olan bilgisayarda şu ek Compose dosyasını kullanır:
+
+```bash
+docker compose -f compose.yaml -f compose.build.yaml up --build -d
+```
+
+Bu seçenek `inference-lab:local` imajını yerel Dockerfile'dan derler; PyPI ve npm erişimi gerektirir. Varsayılan hazır imaj akışıyla aynı port, proje adı ve veri volume'u kullanılır. `LAB_BUILD_IMAGE` ile yerel imaj adı değiştirilebilir.
+
+### İmaj yayını
+
+`main` dalına her push ve elle başlatılan **Publish Docker image** GitHub Actions koşusu, AMD64 ve ARM64 için imaj oluşturur. Backend testleri ve paketlenmiş uygulamanın başlangıç kontrolü son imajın içinde `--network none` ile çalışır. İki mimarinin kontrolleri de geçince `latest` ve `sha-TAM_COMMIT_SHA` etiketleri yayımlanır. Kimlik doğrulama yalnızca Actions'ın geçici `GITHUB_TOKEN` değeriyle yapılır; kullanıcı API anahtarları ve `data/` imaja alınmaz. Yeni bir fork'ta ilk GHCR paketinin görünürlüğünü **Public** yapmak gerekir; GitHub yeni paketleri başlangıçta private oluşturur. [GHCR dokümanı](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
 
 ### Yerel Python
 

@@ -29,6 +29,7 @@
 - Girdi listesi uzun içerikleri taşımaz; detay yalnızca seçme/düzenlemede yüklenir. Kayıttan yükleme isteği otomatik çalıştırmaz ve diğer kutuları değiştirip değiştirmeyeceği açık olmalıdır.
 - Varsayılan admin/admin sadece bu yerel geliştirme sürümü içindir. Sunucu 127.0.0.1'e bağlanır.
 - Docker içinde `--host 0.0.0.0` kullanılır; Compose varsayılan olarak sadece `127.0.0.1:8080` portunu yayımlar. `restart: unless-stopped` ve `lab-data` kalıcı volume korunmalıdır. Yerel `data/` klasörünü veya anahtarları Docker build context'ine alma.
+- Varsayılan Compose hazır GHCR imajını kullanır; sunucuda pip/npm veya build gerektirmemeli. Kaynaktan geliştirme `-f compose.yaml -f compose.build.yaml` ile açıkça seçilir. İmaj yayını iki mimaride son runtime içinde ağsız backend ve başlangıç kontrolleri geçmeden `latest` etiketini değiştirmemeli.
 - Grafik eksik token bilgisini sıfır saymamalı, bilinmeyen aralıkları birleştirmemeli ve son ölçümü rapor özetindeki duvar süresi/değerle eşleştirmelidir. Model fazları kendi başlangıcına göre hizalanır; anlık decode hızı diye sunulmaz.
 
 ## Doğrulama ve genişletme

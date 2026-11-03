@@ -48,6 +48,8 @@
 
 - `node --test tests/chart.test.mjs`: kısa/uzun koşulara uygun eksen; eksik veri ile ölçülmüş sıfır ayrımı; kopuk veri aralıkları; tekrar eden ve sırasız örnekler; son noktanın rapor özetiyle eşleşmesi; klavye/süre inceleme için önceki gerçek örneğin bulunması.
 - Docker: `docker compose config --quiet`, imaj derleme, `up -d --wait`, healthcheck, root olmayan kullanıcı, `unless-stopped` politikası ve durdurup yeniden açınca kayıtların/şifreli anahtarların korunması.
+- Hazır imaj: varsayılan `docker compose config` çıktısında `image` var, `build` yok. Yerel geliştirme override'ı aynı port, proje ve volume'u kullanır; `image: inference-lab:local`, `build` ve `pull_policy: build` içerir.
+- CI: AMD64/ARM64 final imajlarında Python regresyonları ve `.github/scripts/smoke-image.py`, `--network none` ile geçmeli. cryptography şifrelemesi, boş ilk DB, paketlenmiş arayüz/örnekler, HTTP health ve kimlik doğrulama kontrol edilir; runtime'da Node bulunmaz. İki mimari geçmeden `latest` yayımlanmaz.
 - UI: genel bakışta metrik seçimi, model görünürlüğü, süre inceleme; iki karşılaştırma fazının ayrı seçimi; masaüstü ve mobilde okunur eksenler ve taşmasız mod açıklamaları.
 
 ## Sonraki genişletmeler

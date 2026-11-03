@@ -2,7 +2,7 @@ name: inference-lab
 
 services:
   inference-lab:
-    build: .
+    image: ${LAB_IMAGE:-ghcr.io/batuhanberkayaydin/inference-lab:latest}
     restart: unless-stopped
     init: true
     ports:
