@@ -1,4 +1,4 @@
-"""Local inference workbench: encrypted credentials, streaming measurements, SQLite reports."""
+"""Local inference workbench: private credential files, streaming measurements, SQLite reports."""
 from __future__ import annotations
 
 import argparse
@@ -28,7 +28,7 @@ from urllib.error import HTTPError
 import duration
 import bundled_examples
 from request_input import parse_input
-from cryptography.fernet import Fernet
+from credentials import CredentialFiles
 
 ROOT = Path(__file__).resolve().parents[1]
 COLORS = ['#3f6eeb', '#dd693b', '#0b8b78', '#9772cc']
@@ -139,12 +139,7 @@ class Store:
         self.directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         os.chmod(self.directory, 0o700)
         self.db = self.directory / 'lab.sqlite3'
-        keyfile = self.directory / 'credential.key'
-        if not keyfile.exists():
-            fd = os.open(keyfile, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-            with os.fdopen(fd, 'wb') as f:
-                f.write(Fernet.generate_key())
-        self.cipher = Fernet(keyfile.read_bytes())
+        self.credentials = CredentialFiles(self.directory)
         with self.connect() as db:
             db.execute('CREATE TABLE IF NOT EXISTS models (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS contexts (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
@@ -205,8 +200,11 @@ class Store:
 
     def delete(self, table, ident):
         assert table in ('models', 'contexts', 'inputs')
+        old = self.get(table, ident) if table == 'models' else None
         with self.connect() as db:
             db.execute(f'DELETE FROM {table} WHERE id = ?', (ident,))
+        if old:
+            self.credentials.remove(old.get('api_key', ''))
 
     def list_inputs(self):
         # Long context bodies stay off the library listing and initial benchmark load.
@@ -250,20 +248,33 @@ class Store:
         return self.put('inputs', item)
 
     def public_models(self):
-        return [{k: v for k, v in m.items() if k != 'api_key'} | {'has_key': bool(m['api_key'])} for m in self.list('models')]
+        return [{k: v for k, v in m.items() if k != 'api_key'} | {
+            'has_key': bool(m['api_key']),
+            'key_requires_reentry': bool(m['api_key']) and not self.credentials.is_reference(m['api_key']),
+        } for m in self.list('models')]
 
     def save_model(self, data):
         old = self.get('models', data.get('id')) or {}
         if not str(data.get('name', '')).strip() or not str(data.get('model', '')).strip():
             raise ValueError('Görünen ad ve model kimliği zorunludur.')
-        key = self.cipher.encrypt(data['api_key'].encode()).decode() if data.get('api_key') else old.get('api_key', '')
-        if data.get('clear_key'):
-            key = ''
         item = { 'id': old.get('id', secrets.token_hex(6)), 'name': data['name'].strip()[:100],
                  'provider': str(data.get('provider', 'OpenAI uyumlu'))[:100], 'model': data['model'].strip()[:300],
                  'base_url': valid_url(data.get('base_url', '')), 'metrics_url': valid_url(data.get('metrics_url', ''), True),
-                 'api_key': key, 'demo': False, 'color': old.get('color', COLORS[len(self.list('models')) % 4]) }
-        self.put('models', item)
+                 'api_key': old.get('api_key', ''), 'demo': False, 'color': old.get('color', COLORS[len(self.list('models')) % 4]) }
+        new_reference = None
+        if data.get('clear_key'):
+            item['api_key'] = ''
+        elif data.get('api_key'):
+            new_reference = self.credentials.save(data['api_key'])
+            item['api_key'] = new_reference
+        try:
+            self.put('models', item)
+        except BaseException:
+            if new_reference:
+                self.credentials.remove(new_reference)
+            raise
+        if old.get('api_key') != item['api_key']:
+            self.credentials.remove(old.get('api_key', ''))
         return next(m for m in self.public_models() if m['id'] == item['id'])
 
 
@@ -279,6 +290,11 @@ class Engine:
         self.events = {}
         self.responses = {}
         self.sessions = {}
+
+    def runtime_model(self, model, demo):
+        # Only this private runtime copy holds the key. Reports use explicit public fields.
+        # Capture it once so clearing/editing a model cannot break an in-flight test.
+        return dict(model, api_key='' if demo else self.store.credentials.read(model.get('api_key', '')))
 
     def snapshot(self, ident):
         with self.lock:
@@ -323,6 +339,7 @@ class Engine:
         with self.lock:
             if any(r['status'] in ('running', 'stopping', 'queued') for r in self.runs.values()):
                 raise ValueError('Bir test zaten çalışıyor. Önce tamamlanmasını bekleyin veya durdurun.')
+            models = [self.runtime_model(model, demo) for model in models]
             ident = secrets.token_hex(8)
             clean_models = [{k: m[k] for k in ('id', 'name', 'model', 'provider', 'color', 'base_url', 'metrics_url')} for m in models]
             config = {'mode': mode, 'prompts': prompts, 'max_tokens': max_tokens, 'temperature': temperature,
@@ -365,7 +382,7 @@ class Engine:
         try:
             headers = {}
             if model['api_key']:
-                headers['Authorization'] = 'Bearer ' + self.store.cipher.decrypt(model['api_key'].encode()).decode()
+                headers['Authorization'] = 'Bearer ' + model['api_key']
             opener = build_opener(ProxyHandler({}))
             with opener.open(Request(model['metrics_url'], headers=headers), timeout=5) as response:
                 values = parse_prometheus(response.read(4_000_000).decode(), model['model'])
@@ -495,7 +512,7 @@ class Engine:
                     payload['stream_options'] = dict(payload.get('stream_options', {}), include_usage=True)
                 headers = {'Content-Type': 'application/json', 'Accept': 'text/event-stream' if payload['stream'] else 'application/json'}
                 if model['api_key']:
-                    headers['Authorization'] = 'Bearer ' + self.store.cipher.decrypt(model['api_key'].encode()).decode()
+                    headers['Authorization'] = 'Bearer ' + model['api_key']
                 opener = build_opener(ProxyHandler({}))
                 response = opener.open(Request(endpoint(model['base_url']), data=json.dumps(payload).encode(), headers=headers), timeout=config['timeout'])
                 with self.lock:

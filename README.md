@@ -19,39 +19,22 @@ Docker çalışır durumdayken:
 docker compose up
 ```
 
-İlk açılışta GitHub Container Registry'den hazır uygulama imajı indirilir: `ghcr.io/batuhanberkayaydin/inference-lab:latest`. Python, cryptography, derlenmiş arayüz ve örnek promptlar imajın içindedir. Sunucuya Python, pip veya Node kurmak gerekmez; sunucuda `pip install`, `npm ci` veya kaynak derlemesi çalışmaz. Linux AMD64 ve ARM64 desteklenir; Docker uygun mimariyi seçer.
+İlk açılışta arayüz ve Python backend yerel Dockerfile'dan tek imajda derlenir. Python tarafı yalnızca standart kütüphaneyi kullanır: pip, cryptography veya başka bir Python paketi kurulmaz; PyPI erişimi gerekmez. Sunucuya ayrıca Python veya Node kurmak gerekmez. İlk Docker derlemesi temel Node/Python imajlarını ve frontend npm paketlerini indirebilir; tamamen internetsiz bir derleme değildir.
 
-Uygulama [http://127.0.0.1:8080](http://127.0.0.1:8080) adresindedir; giriş **admin / admin**. Arka planda çalıştırmak için `docker compose up -d`. Yeni imaj sürümüne geçmek için:
+Uygulama [http://127.0.0.1:8080](http://127.0.0.1:8080) adresindedir; giriş **admin / admin**. Arka planda çalıştırmak için `docker compose up -d`. Kaynak kodu güncelleyip yeniden derlemek için:
 
 ```bash
 git pull
-docker compose pull
-docker compose up -d
+docker compose up --build -d
 ```
 
-`docker compose up --build` artık sunucuda derleme başlatmaz; varsayılan Compose dosyasında `build` alanı yoktur. İmajın indirilmesi için sunucunun `ghcr.io` registry'sine erişmesi gerekir; PyPI veya npm registry erişimi gerekmez. Model sağlayıcısına erişim yine gereklidir.
+GitHub'da otomatik Docker derleme/yayın iş akışı yoktur; hazır GHCR imajı çekilmez. Eski yayımlanmış imaj bu değişiklikleri içermez. Yerel Docker derlemesi veya `bash start.sh` kullanın. Model sağlayıcısına erişim yine gereklidir.
 
-Servis `restart: unless-stopped` kullanır; elle durdurulmadıkça Docker yeniden başladığında tekrar açılır. Model ayarları, şifreleme anahtarı, girdiler ve raporlar `lab-data` adlı kalıcı volume’da tutulur. `docker compose down` volume’u korur; `down -v` verileri siler. Yerel Python sürümünün `data/` klasörüyle bu Docker volume’u ayrıdır; mevcut yerel kayıtlar otomatik taşınmaz.
+Servis `restart: unless-stopped` kullanır; elle durdurulmadıkça Docker yeniden başladığında tekrar açılır. Model ayarları, özel API anahtarı dosyaları, girdiler ve raporlar `lab-data` adlı kalıcı volume’da tutulur. `docker compose down` volume’u korur; `down -v` verileri siler. Yerel Python sürümünün `data/` klasörüyle bu Docker volume’u ayrıdır; mevcut yerel kayıtlar otomatik taşınmaz.
 
 Port ve yönetici bilgilerini değiştirmek için `.env.example` dosyasını `.env` adıyla kopyalayıp düzenleyin. Docker varsayılan 8080 portunu, yerel Python sürümü 8787 portunu kullanır. Compose yalnızca bilgisayarın loopback adresine port açar; container içinde servis `0.0.0.0:8787` dinler ve root olmayan kullanıcıyla çalışır.
 
-`.env` içindeki `LAB_IMAGE` ile imaj sürümünü veya kurumun kendi registry adresini seçebilirsiniz. `latest` yerine `ghcr.io/batuhanberkayaydin/inference-lab:sha-TAM_COMMIT_SHA` kullanmak sürümü sabitler. Registry'ye erişemeyen sunucu için erişimi olan aynı mimarideki bilgisayarda `docker pull` ve `docker save`, hedefte `docker load` ardından `docker compose up -d --pull never` kullanılabilir.
-
 Sağlayıcı başka bir container içindeyse aynı Docker ağındaki servis adını kullanın. Bilgisayarınızdaki vLLM servisine bağlanırken sağlayıcı URL’sini `http://host.docker.internal:8000/v1` şeklinde girin; container içindeki `localhost` container’ın kendisidir. Linux’ta model servisi Docker ağı tarafından erişilebilir bir arayüzde dinlemelidir. [Docker ağ dokümanı](https://docs.docker.com/desktop/features/networking/) ve [Compose restart politikası](https://docs.docker.com/reference/compose-file/services/#restart).
-
-### Kaynaktan Docker imajı geliştirme
-
-Yalnızca uygulamayı değiştiren geliştiriciler, internet erişimi olan bilgisayarda şu ek Compose dosyasını kullanır:
-
-```bash
-docker compose -f compose.yaml -f compose.build.yaml up --build -d
-```
-
-Bu seçenek `inference-lab:local` imajını yerel Dockerfile'dan derler; PyPI ve npm erişimi gerektirir. Varsayılan hazır imaj akışıyla aynı port, proje adı ve veri volume'u kullanılır. `LAB_BUILD_IMAGE` ile yerel imaj adı değiştirilebilir.
-
-### İmaj yayını
-
-`main` dalına her push ve elle başlatılan **Publish Docker image** GitHub Actions koşusu, AMD64 ve ARM64 için imaj oluşturur. Backend testleri ve paketlenmiş uygulamanın başlangıç kontrolü son imajın içinde `--network none` ile çalışır. İki mimarinin kontrolleri de geçince `latest` ve `sha-TAM_COMMIT_SHA` etiketleri yayımlanır. Kimlik doğrulama yalnızca Actions'ın geçici `GITHUB_TOKEN` değeriyle yapılır; kullanıcı API anahtarları ve `data/` imaja alınmaz. Yeni bir fork'ta ilk GHCR paketinin görünürlüğünü **Public** yapmak gerekir; GitHub yeni paketleri başlangıçta private oluşturur. [GHCR dokümanı](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
 
 ### Yerel Python
 
@@ -68,7 +51,7 @@ Ardından:
 bash start.sh
 ```
 
-İlk çalıştırmada yerel Python ortamı ve npm bağımlılıkları hazırlanır; frontend derlenir. Ardından [http://127.0.0.1:8787](http://127.0.0.1:8787) adresini açın.
+İlk çalıştırmada pip içermeyen yerel Python ortamı ve npm bağımlılıkları hazırlanır; frontend derlenir. Python için hiçbir paket indirilmez. Ardından [http://127.0.0.1:8787](http://127.0.0.1:8787) adresini açın. Yalnızca backend'i başlatmak için mevcut Python ile `python3 backend/server.py` yeterlidir; arayüz için derlenmiş `dist/` gerekir.
 
 `start.sh`, eski bir Node sürümü seçiliyse nvm üzerinden bu projenin kurulu sürümüne geçer; sistem genelindeki varsayılan sürümü değiştirmez. npm kurulumu ve geliştirme/derleme/test komutları eski Node sürümlerini reddeder. Docker derlemesi de `node:24.22.1-bookworm-slim` kullanır. Node yalnızca frontend geliştirme ve derleme aşamasında gereklidir; son Docker imajı Python backend ve statik arayüz dosyalarını içerir.
 
@@ -136,8 +119,9 @@ Koşular, durdurma ve hata durumları dahil, `data/lab.sqlite3` içinde saklanı
 
 - `LAB_ADMIN_USER`, `LAB_ADMIN_PASSWORD`: varsayılan hesabı değiştirir.
 - `backend/server.py --port 8787 --data-dir /tam/yol`: port/veri dizini.
-- API anahtarları Fernet ile şifrelenir. Şifreleme anahtarı `data/credential.key` dosyasında kalır. `data/` dizini 0700, anahtar ve DB 0600 izinleri taşır.
-- Yedeklerken SQLite ile `credential.key` birlikte korunmalıdır. Oturumlar bellektedir; yeniden başlatınca giriş gerekir. Kesilen koşular sonraki başlangıçta “Kesintiye uğradı” olarak korunur.
+- API anahtarları şifrelenmez: `data/credentials/` altındaki ayrı dosyalarda düz metin tutulur. POSIX sistemlerinde veri ve anahtar dizinleri 0700, anahtar dosyaları ve DB 0600 izinleri taşır; root veya uygulama kullanıcısı bu dosyaları okuyabilir. SQLite yalnızca rastgele dosya referansı taşır. Anahtarlar tarayıcıya ve raporlara gönderilmez.
+- Eski Fernet kayıtları ve `data/credential.key` silinmez veya otomatik dönüştürülmez. Bu sürüm bunları çözmez; model düzenleme ekranında API anahtarını yeniden girip kaydedin. Boş anahtar alanı eski kaydı korur. Anahtarsız model, girdiler ve raporlar doğrudan çalışmaya devam eder.
+- Yedeklerken SQLite ile birlikte tüm `data/credentials/` dizinini ve mevcutsa eski `credential.key` dosyasını koruyun. Oturumlar bellektedir; yeniden başlatınca giriş gerekir. Kesilen koşular sonraki başlangıçta “Kesintiye uğradı” olarak korunur.
 - Bu yerel geliştirme sürümünü internete açmak için ayrıca üretim kimlik doğrulaması ve dağıtım yapılandırması gerekir.
 
 ## Geliştirme ve testler

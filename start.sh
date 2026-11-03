@@ -11,9 +11,8 @@ if ! node scripts/check-node.mjs >/dev/null 2>&1; then
 fi
 node scripts/check-node.mjs
 if [ ! -x .venv/bin/python ]; then
-  python3 -m venv .venv
+  python3 -m venv --without-pip .venv
 fi
-.venv/bin/python -m pip install -r backend/requirements.txt
 npm ci
 npm run build
 exec .venv/bin/python backend/server.py "$@"

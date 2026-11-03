@@ -1,6 +1,0 @@
-# Geliştirme için: docker compose -f compose.yaml -f compose.build.yaml up --build -d
-services:
-  inference-lab:
-    image: ${LAB_BUILD_IMAGE:-inference-lab:local}
-    build: .
-    pull_policy: build

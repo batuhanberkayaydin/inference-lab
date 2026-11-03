@@ -18,7 +18,7 @@
 | 4 model × 8 istek | 32 başarılı ölçüm |
 | Giriş / kötü şifre / kötü Origin | 401/403; yetkisiz veri erişimi yok |
 | Markdown / CSV / JSON | Doğru koşu dışa aktarılır; API anahtarı yok |
-| Anahtar düzenleme / yeniden açma | Şifreli veri korunur, boş giriş anahtarı silmez |
+| Anahtar düzenleme / yeniden açma | Özel dosya referansı korunur, boş giriş anahtarı silmez |
 
 ## Manuel arayüz kontrolü
 
@@ -47,9 +47,9 @@
 ## Grafik ve Docker kontrolleri
 
 - `node --test tests/chart.test.mjs`: kısa/uzun koşulara uygun eksen; eksik veri ile ölçülmüş sıfır ayrımı; kopuk veri aralıkları; tekrar eden ve sırasız örnekler; son noktanın rapor özetiyle eşleşmesi; klavye/süre inceleme için önceki gerçek örneğin bulunması.
-- Docker: `docker compose config --quiet`, imaj derleme, `up -d --wait`, healthcheck, root olmayan kullanıcı, `unless-stopped` politikası ve durdurup yeniden açınca kayıtların/şifreli anahtarların korunması.
-- Hazır imaj: varsayılan `docker compose config` çıktısında `image` var, `build` yok. Yerel geliştirme override'ı aynı port, proje ve volume'u kullanır; `image: inference-lab:local`, `build` ve `pull_policy: build` içerir.
-- CI: AMD64/ARM64 final imajlarında Python regresyonları ve `.github/scripts/smoke-image.py`, `--network none` ile geçmeli. cryptography şifrelemesi, boş ilk DB, paketlenmiş arayüz/örnekler, HTTP health ve kimlik doğrulama kontrol edilir; runtime'da Node bulunmaz. İki mimari geçmeden `latest` yayımlanmaz.
+- Docker: `docker compose config --quiet`, yerel imaj derleme, `up -d --wait`, healthcheck, root olmayan kullanıcı, `unless-stopped` politikası ve durdurup yeniden açınca kayıtların/özel anahtar dosyalarının korunması. Varsayılan Compose `build` içerir, GHCR imajı gerektirmez; GitHub'da imaj build/yayın workflow'u yoktur.
+- Python: `python3 -S -m unittest discover -s tests -v` site-packages olmadan geçmeli. Dockerfile ve start.sh pip kurulum adımı içermemeli.
+- Anahtarlar: dosya/dizin izinleri, SQLite ve API çıktısında gizlilik, yeniden açma, boş düzenleme, değiştirme/kaldırma/silme, başarısız DB yazımında yeni dosyanın temizlenmesi. Eski Fernet kaydı ve credential.key korunur; açık yeniden giriş hatası verilir, anahtarsız sağlayıcı çağrısına düşülmez.
 - UI: genel bakışta metrik seçimi, model görünürlüğü, süre inceleme; iki karşılaştırma fazının ayrı seçimi; masaüstü ve mobilde okunur eksenler ve taşmasız mod açıklamaları.
 
 ## Sonraki genişletmeler

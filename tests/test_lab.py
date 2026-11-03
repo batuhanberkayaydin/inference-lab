@@ -25,6 +25,7 @@ class Fixture(BaseHTTPRequestHandler):
     current = 0
     peak = 0
     bodies = []
+    authorizations = []
 
     def log_message(self, *args):
         pass
@@ -33,6 +34,7 @@ class Fixture(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
         with self.lock:
             type(self).bodies.append(body)
+            type(self).authorizations.append(self.headers.get('Authorization'))
             type(self).current += 1
             type(self).peak = max(type(self).peak, type(self).current)
         self.send_response(200)
@@ -133,6 +135,7 @@ class IntegrationTests(unittest.TestCase):
         with Fixture.lock:
             Fixture.peak = 0
             Fixture.bodies = []
+            Fixture.authorizations = []
 
     def tearDown(self):
         self.temp.cleanup()
@@ -183,7 +186,7 @@ class IntegrationTests(unittest.TestCase):
             self.assertGreater(row['e2e_s'], row['ttft_s'])
             self.assertGreater(row['stream_tps'], 0)
         self.assertEqual(self.store.get('reports', run['id'])['status'], 'completed')
-        self.assertIn('test-only-secret', self.store.cipher.decrypt(self.store.get('models',self.model['id'])['api_key'].encode()).decode())
+        self.assertEqual('test-only-secret', self.store.credentials.read(self.store.get('models',self.model['id'])['api_key']))
         self.assertNotIn('test-only-secret', json.dumps(run))
         self.assertNotIn('api_key', json.dumps(self.store.public_models()))
         self.assertNotIn('test-only-secret', Path(self.temp.name, 'lab.sqlite3').read_bytes().decode(errors='ignore'))
@@ -291,13 +294,23 @@ class IntegrationTests(unittest.TestCase):
             app.server_close()
 
     def test_keys_survive_restart_and_blank_edit_keeps_them(self):
-        encrypted=self.store.get('models',self.model['id'])['api_key']
+        reference=self.store.get('models',self.model['id'])['api_key']
         self.store.save_model(self.model | {'name':'Renamed','api_key':''})
         reloaded=Store(self.temp.name)
-        self.assertEqual(reloaded.get('models',self.model['id'])['api_key'],encrypted)
-        self.assertEqual(reloaded.cipher.decrypt(encrypted.encode()).decode(),'test-only-secret')
+        self.assertEqual(reloaded.get('models',self.model['id'])['api_key'],reference)
+        self.assertEqual(reloaded.credentials.read(reference),'test-only-secret')
         self.store.save_model(self.model | {'clear_key':True})
         self.assertFalse(self.store.get('models',self.model['id'])['api_key'])
+
+    def test_active_run_keeps_its_private_key_when_saved_model_key_is_removed(self):
+        run = self.engine.start(self.config | {'mode': 'compare'})
+        self.store.save_model(self.model | {'clear_key': True})
+        self.assertEqual(list(self.store.credentials.directory.iterdir()), [])
+        run = await_report(self.engine, run['id'])
+        self.assertEqual(run['status'], 'completed')
+        self.assertEqual(Fixture.authorizations, ['Bearer test-only-secret'] * 4)
+        self.assertNotIn('test-only-secret', json.dumps(run))
+        self.assertNotIn('test-only-secret', json.dumps(self.store.list('reports')))
 
 
 if __name__=='__main__':

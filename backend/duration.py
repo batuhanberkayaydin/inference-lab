@@ -68,6 +68,7 @@ def start(engine, data):
     with engine.lock:
         if any(r['status'] in ('running', 'stopping', 'queued') for r in engine.runs.values()):
             raise ValueError('Başka bir test çalışıyor; önce tamamlanmasını bekleyin veya durdurun.')
+        model = engine.runtime_model(model, demo)
         ident = secrets.token_hex(8)
         run = {'id': ident, 'kind': 'duration', 'name': str(data.get('name', '')).strip()[:120] or f'Süreli test · {model["name"]}',
                'created_at': stamp(), 'finished_at': None, 'status': 'running', 'config': config, 'models': [clean],

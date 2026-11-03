@@ -55,6 +55,7 @@ type Model = {
   color: string;
   demo: boolean;
   has_key?: boolean;
+  key_requires_reentry?: boolean;
 };
 type Context = { id: string; name: string; category: string; content: string };
 type Row = {
@@ -841,13 +842,17 @@ function ModelForm({
               value={form.api_key}
               onChange={(e) => update("api_key", e.target.value)}
               placeholder={
-                model?.has_key
+                model?.key_requires_reentry
+                  ? "Eski şifreli anahtarı yeniden girin"
+                  : model?.has_key
                   ? "Kayıtlı anahtarı korumak için boş bırakın"
                   : "Anahtar gerekmiyorsa boş bırakın"
               }
             />
             <small>
-              Anahtar sunucuda şifrelenir; tarayıcıya geri gönderilmez.
+              {model?.key_requires_reentry
+                ? "Eski şifreli kayıt korunuyor. Kullanmak için API anahtarını yeniden girip kaydedin."
+                : "Anahtar sunucuda yalnızca uygulama kullanıcısının okuyabildiği dosyada tutulur; şifrelenmez ve tarayıcıya geri gönderilmez."}
             </small>
           </label>
           {model?.has_key && (
@@ -2187,8 +2192,9 @@ function App() {
                   <div>
                     <h3>Anahtarlar sunucuda tutulur</h3>
                     <p>
-                      API anahtarları şifrelenerek saklanır ve raporlara
-                      eklenmez. Bu ilk sürümde yönetici hesabı admin / admin;
+                      API anahtarları yalnızca uygulama kullanıcısının okuyabildiği
+                      dosyalarda tutulur; şifrelenmez ve raporlara eklenmez.
+                      Bu ilk sürümde yönetici hesabı admin / admin;
                       sunucu ortam değişkenleriyle değiştirilebilir.
                     </p>
                   </div>
