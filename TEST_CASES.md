@@ -49,6 +49,7 @@
 - `node --test tests/chart.test.mjs`: kısa/uzun koşulara uygun eksen; eksik veri ile ölçülmüş sıfır ayrımı; kopuk veri aralıkları; tekrar eden ve sırasız örnekler; son noktanın rapor özetiyle eşleşmesi; klavye/süre inceleme için önceki gerçek örneğin bulunması.
 - Docker: `docker compose config --quiet`, yerel imaj derleme, `up -d --wait`, healthcheck, root olmayan kullanıcı, `unless-stopped` politikası ve durdurup yeniden açınca kayıtların/özel anahtar dosyalarının korunması. Varsayılan Compose `build` içerir, GHCR imajı gerektirmez; GitHub'da imaj build/yayın workflow'u yoktur.
 - Python: `python3 -S -m unittest discover -s tests -v` site-packages olmadan geçmeli. Dockerfile ve start.sh pip kurulum adımı içermemeli.
+- Docker kaynak izinleri: backend/examples/dist dosyaları 0600, dizinleri 0700 olan bir build context'ten alınsa da imajda kaynak dosyaları 0644/dizinler 0755 olmalı. `USER lab` sonrası backend `--help` kontrolü geçmeli; data/credentials izinleri bu normalizasyondan etkilenmemeli.
 - Anahtarlar: dosya/dizin izinleri, SQLite ve API çıktısında gizlilik, yeniden açma, boş düzenleme, değiştirme/kaldırma/silme, başarısız DB yazımında yeni dosyanın temizlenmesi. Eski Fernet kaydı ve credential.key korunur; açık yeniden giriş hatası verilir, anahtarsız sağlayıcı çağrısına düşülmez.
 - UI: genel bakışta metrik seçimi, model görünürlüğü, süre inceleme; iki karşılaştırma fazının ayrı seçimi; masaüstü ve mobilde okunur eksenler ve taşmasız mod açıklamaları.
 

@@ -30,6 +30,7 @@
 - Varsayılan admin/admin sadece bu yerel geliştirme sürümü içindir. Sunucu 127.0.0.1'e bağlanır.
 - Docker içinde `--host 0.0.0.0` kullanılır; Compose varsayılan olarak sadece `127.0.0.1:8080` portunu yayımlar. `restart: unless-stopped` ve `lab-data` kalıcı volume korunmalıdır. Yerel `data/` klasörünü veya anahtarları Docker build context'ine alma.
 - Varsayılan Compose yerel Dockerfile'dan derler. GitHub'da otomatik imaj build/yayın akışı veya GHCR zorunluluğu ekleme. Python runtime aşaması pip/PyPI gerektirmez; frontend için npm ve ilk derlemede temel imaj erişimi gerekebilir.
+- Docker COPY sonrası yalnızca backend/examples/dist kaynak izinlerini normalize et (dizin 0755, dosya 0644); root sahipliği ve `USER lab` korunmalı. `/app/data` veya anahtar dosyalarını bu işlemle açma. Runtime kullanıcısıyla `python -S backend/server.py --help` derleme sırasında geçmeli.
 - Grafik eksik token bilgisini sıfır saymamalı, bilinmeyen aralıkları birleştirmemeli ve son ölçümü rapor özetindeki duvar süresi/değerle eşleştirmelidir. Model fazları kendi başlangıcına göre hizalanır; anlık decode hızı diye sunulmaz.
 
 ## Doğrulama ve genişletme

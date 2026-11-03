@@ -30,6 +30,8 @@ docker compose up --build -d
 
 GitHub'da otomatik Docker derleme/yayın iş akışı yoktur; hazır GHCR imajı çekilmez. Eski yayımlanmış imaj bu değişiklikleri içermez. Yerel Docker derlemesi veya `bash start.sh` kullanın. Model sağlayıcısına erişim yine gereklidir.
 
+`can't open file '/app/backend/server.py': [Errno 13] Permission denied` hatası için güncel Dockerfile kaynak dizinlerini 0755, dosyalarını 0644 yapar; böylece sunucudaki kısıtlı umask izinleri runtime kullanıcısını engellemez. Derleme ayrıca `lab` kullanıcısıyla backend girişini kontrol eder. Düzeltme için `git pull` ve `docker compose up --build -d` gerekir; yalnızca container'ı yeniden başlatmak eski imajı değiştirmez. Veri ve API anahtarı dosyalarının özel izinleri korunur.
+
 Servis `restart: unless-stopped` kullanır; elle durdurulmadıkça Docker yeniden başladığında tekrar açılır. Model ayarları, özel API anahtarı dosyaları, girdiler ve raporlar `lab-data` adlı kalıcı volume’da tutulur. `docker compose down` volume’u korur; `down -v` verileri siler. Yerel Python sürümünün `data/` klasörüyle bu Docker volume’u ayrıdır; mevcut yerel kayıtlar otomatik taşınmaz.
 
 Port ve yönetici bilgilerini değiştirmek için `.env.example` dosyasını `.env` adıyla kopyalayıp düzenleyin. Docker varsayılan 8080 portunu, yerel Python sürümü 8787 portunu kullanır. Compose yalnızca bilgisayarın loopback adresine port açar; container içinde servis `0.0.0.0:8787` dinler ve root olmayan kullanıcıyla çalışır.
