@@ -40,8 +40,8 @@ def start(engine, data):
     duration = data.get('duration_s', 60)
     interval = data.get('interval_s', 1)
     timeout = data.get('timeout', 150)
-    if type(lanes) is not int or not 1 <= lanes <= 8:
-        raise ValueError('Eşzamanlılık 1–8 arasında olmalıdır.')
+    if type(lanes) is not int or not 1 <= lanes <= 16:
+        raise ValueError('Eşzamanlılık 1–16 arasında olmalıdır.')
     for value, low, high, label in ((duration, 1, 3600, 'Test süresi'), (interval, .1, 600, 'Bekleme'), (timeout, 1, 600, 'Zaman aşımı')):
         if type(value) not in (int, float) or not math.isfinite(value) or not low <= value <= high:
             raise ValueError(f'{label} {low}–{high} saniye arasında olmalıdır.')

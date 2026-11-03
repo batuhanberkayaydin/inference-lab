@@ -13,6 +13,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import type { PromptExample } from "./examples";
 import { api } from "./api";
 
 export type SavedInputSummary = {
@@ -266,6 +267,8 @@ function InputEditor({
 }
 
 export function SavedInputs({
+  examples,
+  onExample,
   items,
   draft,
   onDraftUsed,
@@ -275,6 +278,8 @@ export function SavedInputs({
   running,
   onMessage,
 }: {
+  examples: PromptExample[];
+  onExample: (id: string) => Promise<void>;
   items: SavedInputSummary[];
   draft?: InputDraft | null;
   onDraftUsed: () => void;
@@ -301,6 +306,13 @@ export function SavedInputs({
         .toLocaleLowerCase("tr")
         .includes(query.toLocaleLowerCase("tr")),
   );
+  async function prepareExample(id: string) {
+    if (!id) return;
+    setBusy(true); setError("");
+    try { await onExample(id); }
+    catch (e) { setError((e as Error).message); }
+    finally { setBusy(false); }
+  }
   async function edit(id: string) {
     setBusy(true);
     setError("");
@@ -367,11 +379,11 @@ export function SavedInputs({
           Yeni girdi
         </button>
       </div>
-      {error && (
-        <div className="error-message" role="alert">
-          {error}
-        </div>
-      )}
+      <div className="saved-example-picker">
+        <label>Örnek prompttan yeni girdi hazırla<select aria-label="Örnek prompttan yeni girdi hazırla" value="" disabled={busy || running} onChange={e => void prepareExample(e.target.value)}><option value="">32K / 64K örneği seç</option>{examples.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+        <p>Örnekler arşive otomatik eklenmez. Seçip inceledikten sonra kaydedebilirsin. 32K / 64K etiketleri gerçek token sayımı değildir.</p>
+      </div>
+      {error && <div className="error-message" role="alert">{error}</div>}
       <section className="list-panel saved-library">
         <div className="list-toolbar">
           <div className="search-field">

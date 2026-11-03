@@ -52,6 +52,7 @@ class SavedInputTests(unittest.TestCase):
             with self.assertRaises(ValueError):self.store.save_input(data)
 
     def test_existing_database_gains_input_table_without_changing_contexts(self):
+        self.store.put('contexts', {'id':'user-context', 'name':'Existing', 'content':'Keep this context', 'category':''})
         before=self.store.list('contexts')
         with self.store.connect() as db:db.execute('DROP TABLE inputs')
         reloaded=Store(self.temp.name)

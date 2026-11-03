@@ -15,15 +15,16 @@ Inference engineers comparing normal and concurrent vLLM-compatible inference se
 Prepare identical request inputs, compare up to four configured models, inspect streaming performance, and save reports for later analysis.
 
 ## Capabilities and Constraints
-- One to eight independently editable request inputs; reusable default contexts.
+- One to sixteen independently editable request inputs; reusable default contexts.
 - A separate saved-input archive: named context/question pairs, category and free/8K/16K/32K/64K/128K target labels, .txt import, editing, and loading into a chosen request or all requests. Target labels do not claim actual tokenizer length.
 - Single, concurrent, and serial-vs-concurrent comparison modes.
-- Separate timed-test page: one configured model, up to eight independent lanes, each waiting after its own response, a dispatch duration, JSON/curl body import, per-request duration and provider tokens divided by total response time, guard result/attempts/version/policy checks and saved test history. No tables or graphs. Missing headers are unknown and reasoning-only answers fail the content check.
+- Separate timed-test page: one configured model, up to sixteen independent lanes, each waiting after its own response, a dispatch duration, JSON/curl body import, per-request duration and provider tokens divided by total response time, guard result/attempts/version/policy checks and saved test history. No tables or graphs. Missing headers are unknown and reasoning-only answers fail the content check.
 - Model name, provider base URL, model ID, API key and optional metrics URL managed in admin settings.
 - Initial administrator credentials: admin / admin.
 - Automatic report persistence, previous-run inspection and exports.
 - A shared interactive overview chart for live runs and reports; data-aware scales, per-model visibility, token/throughput views, accessible time inspection, and explicit benchmark-mode explanations.
 - Docker Compose startup from the repository root, with unless-stopped restart, a persistent data volume, and localhost port 8080. Native data/ and Docker volume are separate.
+- Fresh deployments have no automatic models, contexts, saved inputs or reports, and default to real API mode. Bundled 32K/64K Turkish prompt files are loaded only by explicit selection and never auto-inserted into user tables.
 - Never invent provider token counts or speculative metrics. Clearly distinguish demonstration runs from real runs.
 - Development instructions and a small extensible test suite.
 

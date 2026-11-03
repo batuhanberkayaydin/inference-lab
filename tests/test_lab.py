@@ -12,7 +12,12 @@ from urllib.error import HTTPError
 from http.cookiejar import CookieJar
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
+import bundled_examples
 from server import Engine, Store, endpoint, handler_for, markdown_report, percentile, speculative_delta, summarize
+
+
+class FixtureServer(ThreadingHTTPServer):
+    request_queue_size = 128
 
 
 class Fixture(BaseHTTPRequestHandler):
@@ -110,7 +115,7 @@ class MetricsTests(unittest.TestCase):
 class IntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.provider = ThreadingHTTPServer(('127.0.0.1', 0), Fixture)
+        cls.provider = FixtureServer(('127.0.0.1', 0), Fixture)
         threading.Thread(target=cls.provider.serve_forever, daemon=True).start()
         cls.base = f'http://127.0.0.1:{cls.provider.server_port}'
 
@@ -184,13 +189,13 @@ class IntegrationTests(unittest.TestCase):
         self.assertNotIn('test-only-secret', Path(self.temp.name, 'lab.sqlite3').read_bytes().decode(errors='ignore'))
 
     def test_serial_and_concurrent_use_identical_payloads(self):
-        run = self.run_config(mode='compare', prompts=[str(i) for i in range(8)])
+        run = self.run_config(mode='compare', prompts=[str(i) for i in range(16)])
         self.assertEqual([p['name'] for p in run['phases']], ['serial', 'concurrent'])
         self.assertGreaterEqual(Fixture.peak, 2)
         bodies = Fixture.bodies
-        self.assertEqual(len(bodies),16)
-        serial = sorted(json.dumps(b,sort_keys=True) for b in bodies[:8])
-        parallel = sorted(json.dumps(b,sort_keys=True) for b in bodies[8:])
+        self.assertEqual(len(bodies),32)
+        serial = sorted(json.dumps(b,sort_keys=True) for b in bodies[:16])
+        parallel = sorted(json.dumps(b,sort_keys=True) for b in bodies[16:])
         self.assertEqual(serial,parallel)
         self.assertGreater(run['phases'][0]['models'][0]['summary']['wall_s'],run['phases'][1]['models'][0]['summary']['wall_s'])
 
@@ -226,7 +231,7 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(self.store.get('reports',run['id'])['status'],'cancelled')
 
     def test_validation_and_active_run_guard(self):
-        for changes in ({'prompts': ['x']*9}, {'prompts':['']}, {'model_ids':['missing']}, {'max_tokens':0}, {'temperature':float('nan')}, {'mode':'single'}, {'model_ids':[self.model['id']]*2}):
+        for changes in ({'prompts': ['x']*17}, {'prompts':['']}, {'model_ids':['missing']}, {'max_tokens':0}, {'temperature':float('nan')}, {'mode':'single'}, {'model_ids':[self.model['id']]*2}):
             with self.assertRaises(ValueError):
                 self.engine.start(self.config | changes)
         run=self.engine.start(self.config | {'demo':True})
@@ -235,13 +240,13 @@ class IntegrationTests(unittest.TestCase):
         self.engine.stop(run['id'])
         await_report(self.engine,run['id'])
 
-    def test_four_models_eight_requests_supported(self):
+    def test_four_models_sixteen_requests_supported(self):
         ids=[]
         for i in range(4):
             ids.append(self.store.save_model({'name':f'Test{i}','model':'fixture','base_url':self.base})['id'])
-        run=self.run_config(model_ids=ids,prompts=['x']*8,model_schedule='parallel')
+        run=self.run_config(model_ids=ids,prompts=['x']*16,model_schedule='parallel')
         self.assertEqual(run['status'],'completed')
-        self.assertEqual(sum(m['summary']['completed'] for m in run['phases'][0]['models']),32)
+        self.assertEqual(sum(m['summary']['completed'] for m in run['phases'][0]['models']),64)
 
     def test_http_auth_origin_and_exports(self):
         app=ThreadingHTTPServer(('127.0.0.1',0),handler_for(self.engine))
@@ -272,6 +277,12 @@ class IntegrationTests(unittest.TestCase):
             csv=client.open(base+f'/api/runs/{run["id"]}/export?format=csv').read().decode()
             self.assertIn('ttft_s',csv)
             self.assertNotIn('test-only-secret',csv)
+            long_prompt = bundled_examples.example('turkish-64k')['content']
+            with post('/api/runs', self.config | {'prompts': [long_prompt] * 16}) as response:
+                large_run = json.load(response)
+            completed = await_report(self.engine, large_run['id'])
+            self.assertEqual(completed['phases'][0]['models'][0]['summary']['completed'], 16)
+            self.assertEqual(completed['config']['prompts'], [long_prompt] * 16)
             post('/api/logout',{}).close()
             with self.assertRaises(HTTPError) as result:client.open(base+'/api/contexts')
             result.exception.close()

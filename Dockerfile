@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir -r backend/requirements.txt \
     && useradd --uid 10001 --gid lab --no-create-home lab \
     && mkdir -p /app/data && chown lab:lab /app/data
 COPY backend ./backend
+COPY examples ./examples
 COPY --from=frontend /build/dist ./dist
 USER lab
 EXPOSE 8787

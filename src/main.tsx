@@ -30,6 +30,7 @@ import {
   Zap,
 } from "lucide-react";
 import "./styles.css";
+import { loadExample, type PromptExample } from "./examples";
 import { DurationTests } from "./DurationTests";
 import { ResponseComparison } from "./ResponseComparison";
 import { ModeExplanation } from "./ModeExplanation";
@@ -710,7 +711,7 @@ function Results({
             </dd>
             <dt>p95 / p99</dt>
             <dd>
-              Başarılı istekler üzerinde doğrusal interpolasyon. 1–8 örneklik
+              Başarılı istekler üzerinde doğrusal interpolasyon. 1–16 örneklik
               ilk sürüm; istatistiksel genelleme için tekrarlı koşular gerekir.
             </dd>
             <dt>Draft / kabul</dt>
@@ -1012,6 +1013,7 @@ function App() {
       : "benchmark";
   });
   const [models, setModels] = useState<Model[]>([]);
+  const [examples, setExamples] = useState<PromptExample[]>([]);
   const [contexts, setContexts] = useState<Context[]>([]);
   const [savedInputs, setSavedInputs] = useState<SavedInputSummary[]>([]);
   const [inputDraft, setInputDraft] = useState<InputDraft | null>(null);
@@ -1022,7 +1024,7 @@ function App() {
   const [selected, setSelected] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<string[]>(["", "", "", ""]);
   const [mode, setMode] = useState("concurrent");
-  const [demo, setDemo] = useState(true);
+  const [demo, setDemo] = useState(false);
   const [stream, setStream] = useState(true);
   const [schedule, setSchedule] = useState("sequential");
   const [maxTokens, setMaxTokens] = useState(512);
@@ -1054,16 +1056,18 @@ function App() {
       });
   }, []);
   async function load() {
-    const [m, c, r, saved] = await Promise.all([
+    const [m, c, r, saved, exampleList] = await Promise.all([
       api<Model[]>("/models"),
       api<Context[]>("/contexts"),
       api<Report[]>("/reports"),
       api<SavedInputSummary[]>("/inputs"),
+      api<PromptExample[]>("/examples"),
     ]);
     setModels(m);
     setContexts(c);
     setReports(r);
     setSavedInputs(saved);
+    setExamples(exampleList);
     setSelected((prev) =>
       prev.length
         ? prev.filter((id) => m.some((model) => model.id === id))
@@ -1071,7 +1075,6 @@ function App() {
     );
     if (initial.current) {
       initial.current = false;
-      if (c[0]) setPrompts(Array(4).fill(c[0].content));
       const current = r.find(active);
       const id = current?.id || sessionStorage.getItem("lab_run");
       if (id) {
@@ -1190,7 +1193,12 @@ function App() {
   }
   async function choosePrompt(source: string, index: number) {
     setError("");
-    if (source.startsWith("input:")) {
+    if (source.startsWith("example:")) {
+      setBusy(true);
+      try { const item = await loadExample(source.slice(8)); setPrompt(index, item.content, source); }
+      catch (e) { setError((e as Error).message); }
+      finally { setBusy(false); }
+    } else if (source.startsWith("input:")) {
       setBusy(true);
       try {
         await applySavedInput(source.slice(6), index);
@@ -1205,6 +1213,21 @@ function App() {
       );
       if (context) setPrompt(index, context.content);
     }
+  }
+  async function loadExampleIntoAll(id: string) {
+    if (!id || running || busy) return;
+    setBusy(true); setError("");
+    try {
+      const item = await loadExample(id);
+      setPrompts(prev => prev.map((value, i) => mode === "single" && i > 0 ? value : item.content));
+      setPromptSources(Object.fromEntries(effectivePrompts.map((_, i) => [i, "example:" + id])));
+      setToast(`${item.name}, tüm etkin girdilere yüklendi. Henüz istek gönderilmedi.`);
+    } catch (e) { setError((e as Error).message); }
+    finally { setBusy(false); }
+  }
+  async function exampleDraft(id: string) {
+    const item = await loadExample(id);
+    setInputDraft({name: item.name, category: item.category, target_tokens: item.target_tokens, context: item.content, question: ""});
   }
   function archivePrompt(index: number) {
     navigate("inputs");
@@ -1632,6 +1655,7 @@ function App() {
                     </label>
                   </div>
                   <div className="input-section">
+                    <p className="muted">32K / 64K örnekleri isteğe bağlıdır; gerçek token sayısı seçilen modelin tokenizer’ına bağlıdır.</p>
                     <div className="block-heading">
                       <div className="block-title">
                         <span className="step-index">2</span>
@@ -1647,16 +1671,10 @@ function App() {
                         </span>
                       </div>
                       <div className="input-actions">
-                        <button
-                          className="text-button"
-                          disabled={running || busy || !contexts.length}
-                          onClick={() => {
-                            setPrompts(prompts.map(() => contexts[0].content));
-                            setPromptSources({});
-                          }}
-                        >
-                          Örneklerle doldur
-                        </button>
+                        <select aria-label="Tüm etkin girdilere örnek prompt yükle" value="" disabled={running || busy || !examples.length} onChange={e => void loadExampleIntoAll(e.target.value)}>
+                          <option value="">Tüm girdilere örnek yükle</option>
+                          {examples.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+                        </select>
                         <button
                           className="icon-button"
                           title="Girdileri boşalt"
@@ -1682,7 +1700,7 @@ function App() {
                       {mode !== "single" && (
                         <div className="count-control">
                           <span>İstek sayısı</span>
-                          {[1, 2, 4, 8].map((n) => (
+                          {[1, 2, 4, 8, 16].map((n) => (
                             <button
                               key={n}
                               disabled={running || busy}
@@ -1698,7 +1716,7 @@ function App() {
                             disabled={running || busy}
                             onChange={(e) => count(Number(e.target.value))}
                           >
-                            {Array.from({ length: 8 }, (_, i) => (
+                            {Array.from({ length: 16 }, (_, i) => (
                               <option key={i + 1}>{i + 1}</option>
                             ))}
                           </select>
@@ -1724,6 +1742,8 @@ function App() {
                                   (s) => "input:" + s.id === promptSources[i],
                                 )
                                   ? promptSources[i]
+                                  : promptSources[i]?.startsWith("example:")
+                                    ? promptSources[i]
                                   : contexts.find((c) => c.content === prompt)
                                     ? "context:" +
                                       contexts.find(
@@ -1736,7 +1756,7 @@ function App() {
                               }}
                             >
                               <option value="">
-                                Kayıtlı girdi / bağlam seç
+                                Girdi / bağlam / örnek seç
                               </option>
                               {savedInputs.length > 0 && (
                                 <optgroup label="Kayıtlı girdiler">
@@ -1751,7 +1771,10 @@ function App() {
                                   ))}
                                 </optgroup>
                               )}
-                              <optgroup label="Hazır bağlamlar">
+                              <optgroup label="Örnek promptlar · hedef uzunluk">
+                                {examples.map(item => <option key={item.id} value={"example:" + item.id}>{item.name}</option>)}
+                              </optgroup>
+                              <optgroup label="Kayıtlı bağlamlar">
                                 {contexts.map((c) => (
                                   <option key={c.id} value={"context:" + c.id}>
                                     {c.name}
@@ -1765,7 +1788,7 @@ function App() {
                             value={prompt}
                             readOnly={running || busy}
                             onChange={(e) => setPrompt(i, e.target.value)}
-                            placeholder="İsteğini yaz veya hazır bir bağlam seç…"
+                            placeholder="Metin yaz veya kayıtlı girdi / örnek seç…"
                           />
                           <div className="prompt-footer">
                             <span>
@@ -1900,7 +1923,7 @@ function App() {
                   <section className="results initial-results">
                     <div className="section-heading">
                       <div>
-                        <h2>Sonuçlar için her şey hazır</h2>
+                        <h2>{models.length ? "İlk karşılaştırmanı hazırla" : "İlk testin için model ekle"}</h2>
                         <p>
                           İlk token süresi, akış hızı ve toplam verimi tek yerde
                           izle.
@@ -1908,7 +1931,7 @@ function App() {
                       </div>
                       <span className="ready-state">
                         <span className="dot" />
-                        Başlamaya hazır
+                        {models.length ? "Girdilerini hazırla" : "Model bekleniyor"}
                       </span>
                     </div>
                     <Chart models={chosen} />
@@ -2172,9 +2195,11 @@ function App() {
                 </div>
               </>
             ))}
-          {page === "duration" && <DurationTests models={models} contexts={contexts} savedInputs={savedInputs} onSettings={() => navigate("settings")} />}
+          {page === "duration" && <DurationTests examples={examples} models={models} contexts={contexts} savedInputs={savedInputs} onSettings={() => navigate("settings")} />}
           {page === "inputs" && (
             <SavedInputs
+              examples={examples}
+              onExample={exampleDraft}
               items={savedInputs}
               draft={inputDraft}
               onDraftUsed={() => setInputDraft(null)}

@@ -26,6 +26,7 @@ from urllib.parse import urlparse, parse_qs
 from urllib.request import Request, build_opener, ProxyHandler
 from urllib.error import HTTPError
 import duration
+import bundled_examples
 from request_input import parse_input
 from cryptography.fernet import Fernet
 
@@ -150,23 +151,6 @@ class Store:
             db.execute('CREATE TABLE IF NOT EXISTS inputs (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS reports (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS duration_runs (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
-            if not db.execute('SELECT id FROM models LIMIT 1').fetchone():
-                for i, (name, provider, model) in enumerate([
-                    ('vLLM', 'vLLM · Baseline', 'Qwen/Qwen3.5-122B-A10B-FP8'),
-                    ('CBOT Inference', 'CBOT · Speculative', 'Qwen/Qwen3.5-122B-A10B-FP8'),
-                    ('vLLM + MTP', 'vLLM · MTP', 'Qwen/Qwen3.8-27B'),
-                    ('vLLM + DSpark', 'vLLM · DSpark', 'Qwen/Qwen3.8-27B'),
-                ]):
-                    self.put('models', {'id': f'demo-{i}', 'name': name, 'provider': provider, 'model': model,
-                                        'base_url': '', 'api_key': '', 'metrics_url': '', 'color': COLORS[i], 'demo': True}, db)
-            if not db.execute('SELECT id FROM contexts LIMIT 1').fetchone():
-                seeds = [
-                    ('insurance', 'Hasar dosyası analizi', 'Sigorta', 'Aşağıdaki örnek hasar dosyalarını değerlendir. Kural: Hırsızlık ve fırtına kapsam içindedir; aşınma kapsam dışıdır. Belgeler eksikse ödeme hesaplama ve belge bekleniyor yaz. Net ödeme = min(hasar - muafiyet, limit) - önceki ödeme; negatifse sıfır.\nTR-0034: hırsızlık, belgeler tam, hasar 150000 TL, muafiyet 10000 TL, limit 120000 TL, önceki ödeme 10000 TL.\nTR-0172: fırtına, eksper raporu eksik, hasar 80000 TL.\nTR-0311: aşınma, belgeler tam.\nKararları ve net ödemeyi tabloyla ver. Her dosya için uygulanan kuralı bir cümleyle açıkla. Türkçe yanıtla.'),
-                    ('reasoning', 'Mantıksal akıl yürütme', 'Muhakeme', 'Bir ekipte Ayşe, Bora ve Can çalışıyor. Ayşe pazartesi ve çarşamba, Bora salı ve çarşamba, Can pazartesi ve salı uygun. Her gün en az iki kişi çalışacak. Üç günün görev dağılımını tabloyla ver ve herkesin eşit sayıda görev alıp almadığını açıkla.'),
-                    ('summary', 'Uzun metin özetleme', 'Özetleme', 'Aşağıdaki örnek faaliyet notunu özetle: Müşteri hizmetleri ekibi bu çeyrekte çağrı yanıtlama süresini iyileştirmeye odaklandı. Yeni iş akışı ile talepler önce önem derecesine göre sınıflandırıldı. Karmaşık dosyalar uzman ekibe aktarıldı. Başarı yalnızca hızla değil doğruluk ve müşteri memnuniyetiyle değerlendirilecek.\nÜç maddelik yönetici özeti ve iki aksiyon önerisi ver.'),
-                ]
-                for ident, name, category, content in seeds:
-                    self.put('contexts', {'id': ident, 'name': name, 'category': category, 'content': content}, db)
         os.chmod(self.db, 0o600)
         # A process restart cannot resume provider streams. Retain partial reports honestly.
         for report in self.list('duration_runs'):
@@ -309,8 +293,8 @@ class Engine:
         prompts = data.get('prompts', [])
         ids = data.get('model_ids', [])
         mode = data.get('mode', 'concurrent')
-        if not isinstance(prompts, list) or not 1 <= len(prompts) <= 8 or any(not isinstance(p, str) or not p.strip() or len(p) > 1_000_000 for p in prompts):
-            raise ValueError('1–8 adet dolu girdi gerekir; her girdi en fazla 1 milyon karakter olabilir.')
+        if not isinstance(prompts, list) or not 1 <= len(prompts) <= 16 or any(not isinstance(p, str) or not p.strip() or len(p) > 1_000_000 for p in prompts):
+            raise ValueError('1–16 adet dolu girdi gerekir; her girdi en fazla 1 milyon karakter olabilir.')
         if not isinstance(ids, list) or not 1 <= len(ids) <= 4 or len(set(ids)) != len(ids):
             raise ValueError('1–4 farklı model seçin.')
         if mode not in ('single', 'concurrent', 'compare') or (mode == 'single' and len(prompts) != 1):
@@ -331,7 +315,9 @@ class Engine:
         models = [self.store.get('models', ident) for ident in ids]
         if any(m is None for m in models):
             raise ValueError('Seçilen model bulunamadı. Ayarlardan model ekleyin.')
-        demo = bool(data.get('demo', True))
+        demo = data.get('demo', False)
+        if type(demo) is not bool:
+            raise ValueError('demo true veya false olmalıdır.')
         if not demo and any(m['demo'] or not m['base_url'] for m in models):
             raise ValueError('Gerçek ölçüm için sağlayıcı URL’si olan modeller seçin veya ayarlardan ekleyin.')
         with self.lock:
@@ -649,7 +635,7 @@ def markdown_report(run):
                 stats = {k:row.get(k) for k in ('input_tokens', 'output_tokens', 'ttft_s', 'e2e_s', 'stream_tps', 'tpot_s', 'finish_reason', 'usage_source')}
                 lines += ['', f'### {model["name"]} · Girdi {row["index"]+1} · {row["status"]}', '', '```json', json.dumps(stats,ensure_ascii=False,indent=2), '```', '', row.get('error') or row['text']]
         lines.append('')
-    lines += ['## Ölçüm yöntemi', '', 'Verim = başarılı çıktı tokenları / model fazının duvar süresi. TTFT ilk içerik veya reasoning parçasına kadardır. Akış hızı ve TPOT, sağlayıcı token sayısı ile içerik parçalarının zaman aralığından türetilen tahminlerdir; SSE parçaları token sayılmaz. Eksik usage değerleri boş bırakılır. p95 doğrusal interpolasyonla hesaplanır; 1–8 örnek istatistiksel genelleme sağlamaz.', '', '## Notlar', ''] + ['- ' + w for w in dict.fromkeys(run['warnings'])]
+    lines += ['## Ölçüm yöntemi', '', 'Verim = başarılı çıktı tokenları / model fazının duvar süresi. TTFT ilk içerik veya reasoning parçasına kadardır. Akış hızı ve TPOT, sağlayıcı token sayısı ile içerik parçalarının zaman aralığından türetilen tahminlerdir; SSE parçaları token sayılmaz. Eksik usage değerleri boş bırakılır. p95 doğrusal interpolasyonla hesaplanır; 1–16 örnek istatistiksel genelleme sağlamaz.', '', '## Notlar', ''] + ['- ' + w for w in dict.fromkeys(run['warnings'])]
     return '\n'.join(lines)
 
 
@@ -723,6 +709,11 @@ def handler_for(engine):
                         return self.reply(engine.store.public_models())
                     if path == '/api/contexts':
                         return self.reply(engine.store.list('contexts'))
+                    if path == '/api/examples':
+                        return self.reply(bundled_examples.summaries())
+                    if path.startswith('/api/examples/'):
+                        item = bundled_examples.example(path.removeprefix('/api/examples/'))
+                        return self.reply(item) if item else self.reply({'error': 'Örnek prompt bulunamadı.'}, 404)
                     if path == '/api/inputs':
                         return self.reply(engine.store.list_inputs())
                     saved_match = re.fullmatch(r'/api/inputs/([a-f0-9]{12})', path)

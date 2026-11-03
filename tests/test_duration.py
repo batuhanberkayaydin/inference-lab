@@ -17,6 +17,10 @@ import duration
 from request_input import parse_input
 
 
+class FixtureServer(ThreadingHTTPServer):
+    request_queue_size = 128
+
+
 class Provider(BaseHTTPRequestHandler):
     lock = threading.Lock()
     current = 0
@@ -93,7 +97,7 @@ class InputTests(unittest.TestCase):
 class DurationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.provider = ThreadingHTTPServer(('127.0.0.1', 0), Provider)
+        cls.provider = FixtureServer(('127.0.0.1', 0), Provider)
         threading.Thread(target=cls.provider.serve_forever, daemon=True).start()
     @classmethod
     def tearDownClass(cls): cls.provider.shutdown(); cls.provider.server_close()
@@ -133,10 +137,10 @@ class DurationTests(unittest.TestCase):
         self.assertEqual(len(duration.page(self.engine,run['id'],2,3)['requests']),3)
         self.assertNotIn('text',duration.page(self.engine,run['id'])['requests'][0])
 
-    def test_eight_parallel_lanes(self):
-        run = self.run_case('pass',concurrency=8,interval_s=1)
-        self.assertEqual(len(run['requests']),8)
-        self.assertEqual(Provider.peak,8)
+    def test_sixteen_parallel_lanes(self):
+        run = self.run_case('pass',concurrency=16,interval_s=1)
+        self.assertEqual(len(run['requests']),16)
+        self.assertEqual(Provider.peak,16)
 
     def test_retry_and_normal_json(self):
         run = self.run_case('retry',interval_s=1,payload=self.config['payload'] | {'stream':False})
@@ -181,7 +185,7 @@ class DurationTests(unittest.TestCase):
         self.assertEqual(restarted['requests'][0]['status'],'cancelled')
 
     def test_validation(self):
-        for change in ({'concurrency':9},{'duration_s':0},{'interval_s':0},{'payload':self.config['payload'] | {'model':'different'}}):
+        for change in ({'concurrency':17},{'duration_s':0},{'interval_s':0},{'payload':self.config['payload'] | {'model':'different'}}):
             with self.assertRaises(ValueError): duration.start(self.engine,self.config | change)
 
     def test_authenticated_routes_and_export(self):

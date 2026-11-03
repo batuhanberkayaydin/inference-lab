@@ -1,0 +1,1403 @@
+# Türkçe hasar dosyaları: karar ve ödeme sorusu
+
+Bu metindeki kişi ve olaylar tamamen kurgusaldır. Her satır ayrı bir hasar dosyasıdır. Aşağıdaki kuralları yalnızca bu deneme için kullanın; dışarıdan mevzuat veya şirket kuralı eklemeyin.
+
+## Karar kuralları
+
+1. Bütün poliçelerin teminat dönemi 01.01.2026–31.12.2026'dır. Olay tarihi bu aralığın dışındaysa dosya "ret" olur. Ret durumunda ödeme sıfırdır.
+2. "Aşınma" ve "yavaş sızıntı" nedenleri kapsam dışıdır. Bunlarda, belge durumu ne olursa olsun karar "ret" ve ödeme sıfırdır.
+3. Diğer nedenler kapsamdadır. Belge durumu "tam" değilse karar "belge bekleniyor" olur; kesin ödeme henüz hesaplanmaz. Belgelerin hangisinin eksik olduğunu yazın.
+4. Mükerrer ihbar alanı "evet" ise ödeme yapmadan önce dosya "mükerrer inceleme" durumuna alınır. Bu kural, yalnızca kapsam içi ve belgeleri tam dosyalara uygulanır.
+5. Yukarıdakilerin hiçbirine takılmayan dosya "ödenebilir" durumundadır. Brüt ödeme = min(max(hasar tutarı - muafiyet, 0), teminat limiti). Net ödeme = max(brüt ödeme - bu dosyaya ait doğrulanmış önceki ödeme, 0). Bütün tutarlar TL'dir.
+6. Bekleme süresi 10 günü aşan ve henüz ödenebilir olmayan her dosyaya ayrıca "kıdemli inceleme" etiketi ekleyin. Bu etiket temel kararı değiştirmez.
+7. Kuralları yazıldıkları sırada uygulayın. Cevabınızda yalnızca sorulan dosyaları değerlendirin; diğer dosyalar bağlam ve dikkat dağıtıcı örneklerdir.
+
+## Kayıt biçimi
+
+Her kayıtta olay tarihi, neden, hasar tutarı, muafiyet, teminat limiti, aynı dosyanın önceki doğrulanmış ödemesi, belge durumu, mükerrer ihbar ve bekleme süresi verilir. Kayıtların notları karar alanlarına ek bağlam sağlar; açık sayısal alanların yerine geçmez.
+
+## Dosyalar
+
+### Dosya TR-0001
+Bölge: Antalya; başvuru kanalı: mobil uygulama; olay tarihi: 10.04.2026; neden: fırtına; hasar tutarı: 202.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0002
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 20.01.2026; neden: aşınma; hasar tutarı: 219.000 TL; muafiyet: 5.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0003
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 14.08.2026; neden: dolu; hasar tutarı: 319.000 TL; muafiyet: 15.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0004
+Bölge: Samsun; başvuru kanalı: web formu; olay tarihi: 24.12.2026; neden: yangın; hasar tutarı: 293.000 TL; muafiyet: 15.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0005
+Bölge: Ankara; başvuru kanalı: mobil uygulama; olay tarihi: 09.03.2026; neden: fırtına; hasar tutarı: 301.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0006
+Bölge: İzmir; başvuru kanalı: çağrı merkezi; olay tarihi: 20.09.2026; neden: boru patlaması; hasar tutarı: 90.000 TL; muafiyet: 10.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0007
+Bölge: Samsun; başvuru kanalı: web formu; olay tarihi: 23.11.2026; neden: aşınma; hasar tutarı: 323.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0008
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 25.07.2026; neden: aşınma; hasar tutarı: 99.000 TL; muafiyet: 5.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 9 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0009
+Bölge: Bursa; başvuru kanalı: web formu; olay tarihi: 24.05.2026; neden: yangın; hasar tutarı: 257.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 14 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0010
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 10.02.2026; neden: boru patlaması; hasar tutarı: 312.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0011
+Bölge: Gaziantep; başvuru kanalı: mobil uygulama; olay tarihi: 01.02.2026; neden: dolu; hasar tutarı: 185.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0012
+Bölge: Antalya; başvuru kanalı: web formu; olay tarihi: 01.08.2026; neden: boru patlaması; hasar tutarı: 433.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0013
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 15.02.2026; neden: yangın; hasar tutarı: 219.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: evet; bekleme: 23 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0014
+Bölge: İzmir; başvuru kanalı: acente; olay tarihi: 28.05.2026; neden: aşınma; hasar tutarı: 311.000 TL; muafiyet: 15.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 9 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0015
+Bölge: Adana; başvuru kanalı: web formu; olay tarihi: 18.08.2026; neden: aşınma; hasar tutarı: 86.000 TL; muafiyet: 10.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0016
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 19.07.2026; neden: dolu; hasar tutarı: 232.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0017
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 20.11.2026; neden: hırsızlık; hasar tutarı: 121.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 11 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0018
+Bölge: Samsun; başvuru kanalı: acente; olay tarihi: 08.05.2026; neden: aşınma; hasar tutarı: 81.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0019
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 08.09.2026; neden: yavaş sızıntı; hasar tutarı: 244.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0020
+Bölge: İzmir; başvuru kanalı: acente; olay tarihi: 12.06.2026; neden: fırtına; hasar tutarı: 34.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 7 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0021
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 03.07.2026; neden: fırtına; hasar tutarı: 176.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: evet; bekleme: 4 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0022
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 16.10.2026; neden: aşınma; hasar tutarı: 242.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0023
+Bölge: Adana; başvuru kanalı: web formu; olay tarihi: 06.07.2026; neden: boru patlaması; hasar tutarı: 203.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0024
+Bölge: İstanbul; başvuru kanalı: mobil uygulama; olay tarihi: 01.09.2026; neden: yangın; hasar tutarı: 252.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0025
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 21.04.2026; neden: dolu; hasar tutarı: 65.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0026
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 28.06.2026; neden: hırsızlık; hasar tutarı: 93.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0027
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 27.08.2026; neden: yavaş sızıntı; hasar tutarı: 447.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0028
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 20.01.2026; neden: yangın; hasar tutarı: 319.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0029
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 06.02.2026; neden: hırsızlık; hasar tutarı: 53.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0030
+Bölge: İzmir; başvuru kanalı: acente; olay tarihi: 22.02.2026; neden: dolu; hasar tutarı: 129.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 14 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0031
+Bölge: Gaziantep; başvuru kanalı: çağrı merkezi; olay tarihi: 18.03.2026; neden: boru patlaması; hasar tutarı: 326.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0032
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 11.11.2026; neden: aşınma; hasar tutarı: 262.000 TL; muafiyet: 30.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 9 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0033
+Bölge: İstanbul; başvuru kanalı: web formu; olay tarihi: 20.06.2026; neden: yavaş sızıntı; hasar tutarı: 197.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0034
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 24.09.2026; neden: hırsızlık; hasar tutarı: 233.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0035
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 07.07.2026; neden: hırsızlık; hasar tutarı: 386.000 TL; muafiyet: 15.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0036
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 01.02.2026; neden: dolu; hasar tutarı: 295.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fatura eksik; mükerrer ihbar: evet; bekleme: 15 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0037
+Bölge: Antalya; başvuru kanalı: acente; olay tarihi: 06.08.2026; neden: yavaş sızıntı; hasar tutarı: 173.000 TL; muafiyet: 15.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: evet; bekleme: 18 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0038
+Bölge: Samsun; başvuru kanalı: acente; olay tarihi: 10.05.2026; neden: boru patlaması; hasar tutarı: 365.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 8 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0039
+Bölge: İstanbul; başvuru kanalı: web formu; olay tarihi: 06.08.2026; neden: dolu; hasar tutarı: 448.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 17 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0040
+Bölge: Gaziantep; başvuru kanalı: mobil uygulama; olay tarihi: 07.11.2026; neden: aşınma; hasar tutarı: 235.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0041
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 20.11.2025; neden: dolu; hasar tutarı: 102.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0042
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 08.04.2026; neden: hırsızlık; hasar tutarı: 347.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0043
+Bölge: Bursa; başvuru kanalı: web formu; olay tarihi: 16.10.2026; neden: yangın; hasar tutarı: 71.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0044
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 15.05.2026; neden: yavaş sızıntı; hasar tutarı: 182.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0045
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 22.11.2026; neden: fırtına; hasar tutarı: 182.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0046
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 15.05.2026; neden: yavaş sızıntı; hasar tutarı: 56.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0047
+Bölge: Antalya; başvuru kanalı: acente; olay tarihi: 01.12.2026; neden: hırsızlık; hasar tutarı: 134.000 TL; muafiyet: 30.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0048
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 14.10.2026; neden: yavaş sızıntı; hasar tutarı: 49.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0049
+Bölge: Gaziantep; başvuru kanalı: çağrı merkezi; olay tarihi: 06.08.2026; neden: yangın; hasar tutarı: 98.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0050
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 04.09.2026; neden: dolu; hasar tutarı: 435.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0051
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 27.08.2026; neden: aşınma; hasar tutarı: 232.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0052
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 23.10.2026; neden: aşınma; hasar tutarı: 155.000 TL; muafiyet: 10.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0053
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 07.02.2026; neden: yangın; hasar tutarı: 352.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0054
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 06.04.2026; neden: dolu; hasar tutarı: 372.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0055
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 27.05.2026; neden: fırtına; hasar tutarı: 144.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0056
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 17.08.2026; neden: yangın; hasar tutarı: 36.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 22 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0057
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 20.09.2026; neden: dolu; hasar tutarı: 321.000 TL; muafiyet: 10.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0058
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 20.12.2026; neden: fırtına; hasar tutarı: 182.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0059
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 05.09.2026; neden: yangın; hasar tutarı: 450.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0060
+Bölge: Gaziantep; başvuru kanalı: acente; olay tarihi: 19.06.2026; neden: hırsızlık; hasar tutarı: 373.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0061
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 15.07.2026; neden: yavaş sızıntı; hasar tutarı: 305.000 TL; muafiyet: 20.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0062
+Bölge: Gaziantep; başvuru kanalı: web formu; olay tarihi: 27.08.2026; neden: aşınma; hasar tutarı: 222.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 8 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0063
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 28.04.2026; neden: hırsızlık; hasar tutarı: 178.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: evet; bekleme: 15 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0064
+Bölge: Antalya; başvuru kanalı: mobil uygulama; olay tarihi: 09.02.2026; neden: hırsızlık; hasar tutarı: 90.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 22 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0065
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 12.05.2026; neden: fırtına; hasar tutarı: 388.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: evet; bekleme: 17 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0066
+Bölge: Antalya; başvuru kanalı: web formu; olay tarihi: 17.09.2026; neden: boru patlaması; hasar tutarı: 443.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0067
+Bölge: Antalya; başvuru kanalı: web formu; olay tarihi: 13.03.2026; neden: aşınma; hasar tutarı: 155.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0068
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 24.12.2026; neden: yangın; hasar tutarı: 279.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0069
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 15.08.2026; neden: hırsızlık; hasar tutarı: 37.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0070
+Bölge: Gaziantep; başvuru kanalı: web formu; olay tarihi: 11.01.2026; neden: dolu; hasar tutarı: 226.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0071
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 26.05.2026; neden: yavaş sızıntı; hasar tutarı: 99.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0072
+Bölge: Ankara; başvuru kanalı: mobil uygulama; olay tarihi: 17.11.2026; neden: yavaş sızıntı; hasar tutarı: 164.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0073
+Bölge: Adana; başvuru kanalı: web formu; olay tarihi: 05.10.2026; neden: dolu; hasar tutarı: 73.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 9 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0074
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 05.11.2026; neden: aşınma; hasar tutarı: 126.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0075
+Bölge: Gaziantep; başvuru kanalı: çağrı merkezi; olay tarihi: 22.05.2026; neden: boru patlaması; hasar tutarı: 270.000 TL; muafiyet: 5.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0076
+Bölge: Gaziantep; başvuru kanalı: mobil uygulama; olay tarihi: 02.08.2026; neden: yangın; hasar tutarı: 87.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0077
+Bölge: İzmir; başvuru kanalı: acente; olay tarihi: 21.07.2026; neden: fırtına; hasar tutarı: 188.000 TL; muafiyet: 10.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0078
+Bölge: Ankara; başvuru kanalı: mobil uygulama; olay tarihi: 15.10.2026; neden: yavaş sızıntı; hasar tutarı: 171.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0079
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 09.02.2026; neden: boru patlaması; hasar tutarı: 397.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 22 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0080
+Bölge: Gaziantep; başvuru kanalı: web formu; olay tarihi: 13.05.2026; neden: yavaş sızıntı; hasar tutarı: 157.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0081
+Bölge: Samsun; başvuru kanalı: acente; olay tarihi: 09.01.2026; neden: fırtına; hasar tutarı: 286.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: evet; bekleme: 12 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0082
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 20.04.2025; neden: hırsızlık; hasar tutarı: 132.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 19 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0083
+Bölge: Antalya; başvuru kanalı: acente; olay tarihi: 18.02.2026; neden: yavaş sızıntı; hasar tutarı: 359.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0084
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 13.05.2026; neden: yavaş sızıntı; hasar tutarı: 166.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0085
+Bölge: Gaziantep; başvuru kanalı: acente; olay tarihi: 04.05.2026; neden: yangın; hasar tutarı: 430.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0086
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 07.06.2026; neden: yavaş sızıntı; hasar tutarı: 79.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0087
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 19.08.2026; neden: yangın; hasar tutarı: 410.000 TL; muafiyet: 5.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0088
+Bölge: Samsun; başvuru kanalı: acente; olay tarihi: 05.08.2026; neden: boru patlaması; hasar tutarı: 112.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: evet; bekleme: 14 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0089
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 27.12.2026; neden: boru patlaması; hasar tutarı: 58.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 8 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0090
+Bölge: Samsun; başvuru kanalı: acente; olay tarihi: 28.08.2026; neden: aşınma; hasar tutarı: 204.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 7 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0091
+Bölge: Samsun; başvuru kanalı: mobil uygulama; olay tarihi: 26.12.2026; neden: yangın; hasar tutarı: 59.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0092
+Bölge: Antalya; başvuru kanalı: mobil uygulama; olay tarihi: 10.09.2026; neden: dolu; hasar tutarı: 185.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fatura eksik; mükerrer ihbar: evet; bekleme: 3 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0093
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 22.12.2026; neden: boru patlaması; hasar tutarı: 265.000 TL; muafiyet: 15.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0094
+Bölge: Antalya; başvuru kanalı: web formu; olay tarihi: 07.06.2026; neden: boru patlaması; hasar tutarı: 186.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 22 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0095
+Bölge: Ankara; başvuru kanalı: mobil uygulama; olay tarihi: 10.02.2026; neden: boru patlaması; hasar tutarı: 113.000 TL; muafiyet: 15.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0096
+Bölge: Antalya; başvuru kanalı: mobil uygulama; olay tarihi: 15.11.2026; neden: hırsızlık; hasar tutarı: 116.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0097
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 21.01.2026; neden: yangın; hasar tutarı: 45.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0098
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 08.11.2026; neden: boru patlaması; hasar tutarı: 183.000 TL; muafiyet: 20.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0099
+Bölge: Samsun; başvuru kanalı: acente; olay tarihi: 23.01.2026; neden: yavaş sızıntı; hasar tutarı: 295.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 9 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0100
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 04.06.2026; neden: hırsızlık; hasar tutarı: 79.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0101
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 18.05.2026; neden: aşınma; hasar tutarı: 426.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 11 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0102
+Bölge: İzmir; başvuru kanalı: acente; olay tarihi: 21.03.2026; neden: yangın; hasar tutarı: 172.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0103
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 02.03.2026; neden: yangın; hasar tutarı: 214.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0104
+Bölge: Gaziantep; başvuru kanalı: web formu; olay tarihi: 12.06.2026; neden: yangın; hasar tutarı: 419.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 19 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0105
+Bölge: Bursa; başvuru kanalı: web formu; olay tarihi: 06.08.2026; neden: dolu; hasar tutarı: 151.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0106
+Bölge: Gaziantep; başvuru kanalı: çağrı merkezi; olay tarihi: 10.05.2026; neden: aşınma; hasar tutarı: 289.000 TL; muafiyet: 5.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0107
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 20.03.2026; neden: dolu; hasar tutarı: 274.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0108
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 13.09.2026; neden: dolu; hasar tutarı: 69.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0109
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 09.04.2026; neden: boru patlaması; hasar tutarı: 189.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0110
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 05.03.2026; neden: fırtına; hasar tutarı: 233.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 17 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0111
+Bölge: İzmir; başvuru kanalı: acente; olay tarihi: 13.12.2026; neden: yavaş sızıntı; hasar tutarı: 98.000 TL; muafiyet: 15.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0112
+Bölge: İzmir; başvuru kanalı: çağrı merkezi; olay tarihi: 15.07.2026; neden: hırsızlık; hasar tutarı: 191.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0113
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 26.10.2026; neden: yavaş sızıntı; hasar tutarı: 391.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 11 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0114
+Bölge: Adana; başvuru kanalı: web formu; olay tarihi: 04.12.2026; neden: boru patlaması; hasar tutarı: 246.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: evet; bekleme: 13 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0115
+Bölge: Gaziantep; başvuru kanalı: web formu; olay tarihi: 02.11.2026; neden: hırsızlık; hasar tutarı: 227.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0116
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 21.09.2026; neden: boru patlaması; hasar tutarı: 186.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 8 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0117
+Bölge: Ankara; başvuru kanalı: mobil uygulama; olay tarihi: 10.04.2026; neden: hırsızlık; hasar tutarı: 390.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0118
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 26.02.2026; neden: dolu; hasar tutarı: 441.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0119
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 12.07.2026; neden: yangın; hasar tutarı: 370.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0120
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 11.07.2026; neden: boru patlaması; hasar tutarı: 157.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0121
+Bölge: Gaziantep; başvuru kanalı: web formu; olay tarihi: 06.09.2026; neden: yavaş sızıntı; hasar tutarı: 448.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0122
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 21.10.2026; neden: boru patlaması; hasar tutarı: 367.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: evet; bekleme: 5 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0123
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 28.03.2025; neden: fırtına; hasar tutarı: 61.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 19 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0124
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 09.09.2026; neden: hırsızlık; hasar tutarı: 54.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0125
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 27.12.2026; neden: yangın; hasar tutarı: 139.000 TL; muafiyet: 5.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: evet; bekleme: 2 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0126
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 04.08.2026; neden: hırsızlık; hasar tutarı: 257.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0127
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 27.01.2026; neden: fırtına; hasar tutarı: 67.000 TL; muafiyet: 15.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 9 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0128
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 19.09.2026; neden: aşınma; hasar tutarı: 364.000 TL; muafiyet: 30.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 19 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0129
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 08.07.2026; neden: dolu; hasar tutarı: 94.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0130
+Bölge: İzmir; başvuru kanalı: acente; olay tarihi: 14.02.2026; neden: aşınma; hasar tutarı: 197.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0131
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 08.10.2026; neden: dolu; hasar tutarı: 211.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 14 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0132
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 19.06.2026; neden: yavaş sızıntı; hasar tutarı: 363.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0133
+Bölge: Gaziantep; başvuru kanalı: çağrı merkezi; olay tarihi: 16.09.2026; neden: aşınma; hasar tutarı: 280.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0134
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 09.12.2026; neden: boru patlaması; hasar tutarı: 105.000 TL; muafiyet: 20.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0135
+Bölge: Antalya; başvuru kanalı: acente; olay tarihi: 17.01.2026; neden: yangın; hasar tutarı: 337.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0136
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 26.08.2026; neden: yavaş sızıntı; hasar tutarı: 218.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0137
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 18.06.2026; neden: boru patlaması; hasar tutarı: 92.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0138
+Bölge: Ankara; başvuru kanalı: mobil uygulama; olay tarihi: 13.09.2026; neden: yavaş sızıntı; hasar tutarı: 185.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0139
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 13.05.2026; neden: yangın; hasar tutarı: 202.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0140
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 19.06.2026; neden: fırtına; hasar tutarı: 117.000 TL; muafiyet: 30.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0141
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 08.11.2026; neden: dolu; hasar tutarı: 382.000 TL; muafiyet: 15.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 22 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0142
+Bölge: Adana; başvuru kanalı: web formu; olay tarihi: 24.12.2026; neden: yavaş sızıntı; hasar tutarı: 112.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0143
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 19.03.2026; neden: hırsızlık; hasar tutarı: 279.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0144
+Bölge: Gaziantep; başvuru kanalı: web formu; olay tarihi: 01.08.2026; neden: hırsızlık; hasar tutarı: 170.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 17 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0145
+Bölge: Samsun; başvuru kanalı: mobil uygulama; olay tarihi: 09.11.2026; neden: hırsızlık; hasar tutarı: 235.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 9 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0146
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 07.06.2026; neden: dolu; hasar tutarı: 213.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0147
+Bölge: Antalya; başvuru kanalı: web formu; olay tarihi: 16.12.2026; neden: fırtına; hasar tutarı: 372.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 17 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0148
+Bölge: Samsun; başvuru kanalı: acente; olay tarihi: 16.02.2026; neden: hırsızlık; hasar tutarı: 199.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0149
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 01.05.2026; neden: boru patlaması; hasar tutarı: 217.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0150
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 03.09.2026; neden: yangın; hasar tutarı: 162.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0151
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 28.03.2026; neden: boru patlaması; hasar tutarı: 268.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 9 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0152
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 16.04.2026; neden: aşınma; hasar tutarı: 369.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 21 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0153
+Bölge: Samsun; başvuru kanalı: mobil uygulama; olay tarihi: 24.09.2026; neden: hırsızlık; hasar tutarı: 319.000 TL; muafiyet: 20.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0154
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 22.02.2026; neden: yangın; hasar tutarı: 144.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0155
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 25.11.2026; neden: dolu; hasar tutarı: 343.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0156
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 23.12.2026; neden: dolu; hasar tutarı: 446.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: evet; bekleme: 10 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0157
+Bölge: İstanbul; başvuru kanalı: mobil uygulama; olay tarihi: 17.09.2026; neden: dolu; hasar tutarı: 430.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 8 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0158
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 17.09.2026; neden: yangın; hasar tutarı: 284.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0159
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 21.05.2026; neden: yangın; hasar tutarı: 434.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: evet; bekleme: 22 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0160
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 16.06.2026; neden: boru patlaması; hasar tutarı: 390.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 8 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0161
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 16.01.2026; neden: aşınma; hasar tutarı: 375.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 17 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0162
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 04.10.2026; neden: yavaş sızıntı; hasar tutarı: 392.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0163
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 22.11.2026; neden: yangın; hasar tutarı: 46.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0164
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 20.11.2025; neden: yavaş sızıntı; hasar tutarı: 97.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 9 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0165
+Bölge: Antalya; başvuru kanalı: web formu; olay tarihi: 21.06.2026; neden: yangın; hasar tutarı: 385.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 8 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0166
+Bölge: Antalya; başvuru kanalı: web formu; olay tarihi: 11.07.2026; neden: hırsızlık; hasar tutarı: 346.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0167
+Bölge: İstanbul; başvuru kanalı: çağrı merkezi; olay tarihi: 14.03.2026; neden: yavaş sızıntı; hasar tutarı: 436.000 TL; muafiyet: 15.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 8 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0168
+Bölge: Gaziantep; başvuru kanalı: mobil uygulama; olay tarihi: 14.03.2026; neden: fırtına; hasar tutarı: 47.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 21 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0169
+Bölge: Ankara; başvuru kanalı: mobil uygulama; olay tarihi: 12.03.2026; neden: boru patlaması; hasar tutarı: 85.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 19 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0170
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 06.06.2026; neden: fırtına; hasar tutarı: 265.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0171
+Bölge: Antalya; başvuru kanalı: acente; olay tarihi: 10.07.2026; neden: boru patlaması; hasar tutarı: 212.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0172
+Bölge: Gaziantep; başvuru kanalı: acente; olay tarihi: 22.06.2026; neden: fırtına; hasar tutarı: 136.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0173
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 07.12.2026; neden: yangın; hasar tutarı: 229.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0174
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 15.08.2026; neden: yavaş sızıntı; hasar tutarı: 269.000 TL; muafiyet: 30.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0175
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 13.09.2026; neden: aşınma; hasar tutarı: 274.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0176
+Bölge: İzmir; başvuru kanalı: çağrı merkezi; olay tarihi: 14.07.2026; neden: yangın; hasar tutarı: 397.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0177
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 13.11.2026; neden: yavaş sızıntı; hasar tutarı: 105.000 TL; muafiyet: 20.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 14 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0178
+Bölge: Antalya; başvuru kanalı: web formu; olay tarihi: 13.01.2026; neden: yavaş sızıntı; hasar tutarı: 410.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0179
+Bölge: İstanbul; başvuru kanalı: çağrı merkezi; olay tarihi: 04.03.2026; neden: fırtına; hasar tutarı: 359.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0180
+Bölge: Samsun; başvuru kanalı: web formu; olay tarihi: 18.03.2026; neden: fırtına; hasar tutarı: 316.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0181
+Bölge: Samsun; başvuru kanalı: web formu; olay tarihi: 17.07.2026; neden: dolu; hasar tutarı: 58.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0182
+Bölge: Adana; başvuru kanalı: web formu; olay tarihi: 19.02.2026; neden: fırtına; hasar tutarı: 223.000 TL; muafiyet: 5.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0183
+Bölge: Samsun; başvuru kanalı: mobil uygulama; olay tarihi: 20.04.2026; neden: aşınma; hasar tutarı: 243.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0184
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 16.10.2026; neden: boru patlaması; hasar tutarı: 116.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0185
+Bölge: Antalya; başvuru kanalı: web formu; olay tarihi: 19.01.2026; neden: aşınma; hasar tutarı: 213.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0186
+Bölge: Antalya; başvuru kanalı: mobil uygulama; olay tarihi: 27.08.2026; neden: aşınma; hasar tutarı: 149.000 TL; muafiyet: 10.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: evet; bekleme: 7 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0187
+Bölge: Samsun; başvuru kanalı: mobil uygulama; olay tarihi: 04.04.2026; neden: yangın; hasar tutarı: 45.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 19 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0188
+Bölge: Bursa; başvuru kanalı: web formu; olay tarihi: 12.03.2026; neden: yavaş sızıntı; hasar tutarı: 384.000 TL; muafiyet: 15.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0189
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 08.07.2026; neden: boru patlaması; hasar tutarı: 53.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0190
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 14.03.2026; neden: dolu; hasar tutarı: 270.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 11 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0191
+Bölge: Antalya; başvuru kanalı: mobil uygulama; olay tarihi: 04.04.2026; neden: hırsızlık; hasar tutarı: 63.000 TL; muafiyet: 30.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0192
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 16.06.2026; neden: boru patlaması; hasar tutarı: 199.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0193
+Bölge: Adana; başvuru kanalı: web formu; olay tarihi: 16.04.2026; neden: dolu; hasar tutarı: 310.000 TL; muafiyet: 5.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0194
+Bölge: Antalya; başvuru kanalı: acente; olay tarihi: 25.01.2026; neden: yavaş sızıntı; hasar tutarı: 435.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0195
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 04.09.2026; neden: dolu; hasar tutarı: 367.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 21 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0196
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 16.08.2026; neden: boru patlaması; hasar tutarı: 206.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 7 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0197
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 13.04.2026; neden: dolu; hasar tutarı: 216.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0198
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 01.07.2026; neden: hırsızlık; hasar tutarı: 154.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0199
+Bölge: İzmir; başvuru kanalı: çağrı merkezi; olay tarihi: 22.03.2026; neden: boru patlaması; hasar tutarı: 42.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 21 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0200
+Bölge: Gaziantep; başvuru kanalı: mobil uygulama; olay tarihi: 28.09.2026; neden: dolu; hasar tutarı: 260.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 21 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0201
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 01.10.2026; neden: fırtına; hasar tutarı: 102.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0202
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 01.09.2026; neden: boru patlaması; hasar tutarı: 368.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0203
+Bölge: Bursa; başvuru kanalı: web formu; olay tarihi: 18.08.2026; neden: yangın; hasar tutarı: 105.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0204
+Bölge: Ankara; başvuru kanalı: mobil uygulama; olay tarihi: 03.03.2026; neden: fırtına; hasar tutarı: 245.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0205
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 11.06.2025; neden: dolu; hasar tutarı: 265.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 9 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0206
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 21.06.2026; neden: dolu; hasar tutarı: 154.000 TL; muafiyet: 5.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0207
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 03.01.2026; neden: yavaş sızıntı; hasar tutarı: 60.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: evet; bekleme: 19 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0208
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 03.04.2026; neden: hırsızlık; hasar tutarı: 93.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0209
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 06.02.2026; neden: dolu; hasar tutarı: 448.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0210
+Bölge: Samsun; başvuru kanalı: mobil uygulama; olay tarihi: 01.03.2026; neden: fırtına; hasar tutarı: 398.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0211
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 14.05.2026; neden: hırsızlık; hasar tutarı: 353.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 21 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0212
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 23.06.2026; neden: aşınma; hasar tutarı: 143.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0213
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 18.12.2026; neden: aşınma; hasar tutarı: 314.000 TL; muafiyet: 20.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: tam; mükerrer ihbar: evet; bekleme: 15 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0214
+Bölge: Gaziantep; başvuru kanalı: mobil uygulama; olay tarihi: 19.01.2026; neden: yangın; hasar tutarı: 438.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: evet; bekleme: 5 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0215
+Bölge: İstanbul; başvuru kanalı: çağrı merkezi; olay tarihi: 12.04.2026; neden: fırtına; hasar tutarı: 366.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0216
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 21.12.2026; neden: yangın; hasar tutarı: 81.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0217
+Bölge: Antalya; başvuru kanalı: web formu; olay tarihi: 11.09.2026; neden: yavaş sızıntı; hasar tutarı: 177.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0218
+Bölge: Bursa; başvuru kanalı: web formu; olay tarihi: 09.08.2026; neden: aşınma; hasar tutarı: 110.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: evet; bekleme: 7 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0219
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 23.07.2026; neden: hırsızlık; hasar tutarı: 43.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0220
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 03.07.2026; neden: boru patlaması; hasar tutarı: 267.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0221
+Bölge: Antalya; başvuru kanalı: acente; olay tarihi: 21.01.2026; neden: yavaş sızıntı; hasar tutarı: 245.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0222
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 02.01.2026; neden: dolu; hasar tutarı: 247.000 TL; muafiyet: 10.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0223
+Bölge: Gaziantep; başvuru kanalı: mobil uygulama; olay tarihi: 19.02.2026; neden: boru patlaması; hasar tutarı: 168.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0224
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 28.09.2026; neden: hırsızlık; hasar tutarı: 148.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0225
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 12.07.2026; neden: boru patlaması; hasar tutarı: 418.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0226
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 01.06.2026; neden: boru patlaması; hasar tutarı: 259.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0227
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 20.02.2026; neden: hırsızlık; hasar tutarı: 341.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 11 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0228
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 19.06.2026; neden: dolu; hasar tutarı: 112.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 14 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0229
+Bölge: Antalya; başvuru kanalı: mobil uygulama; olay tarihi: 23.09.2026; neden: yangın; hasar tutarı: 428.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 7 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0230
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 27.06.2026; neden: yavaş sızıntı; hasar tutarı: 218.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0231
+Bölge: Antalya; başvuru kanalı: mobil uygulama; olay tarihi: 11.08.2026; neden: fırtına; hasar tutarı: 79.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0232
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 08.10.2026; neden: yavaş sızıntı; hasar tutarı: 257.000 TL; muafiyet: 10.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0233
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 26.10.2026; neden: yangın; hasar tutarı: 188.000 TL; muafiyet: 20.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0234
+Bölge: Samsun; başvuru kanalı: acente; olay tarihi: 11.05.2026; neden: fırtına; hasar tutarı: 53.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0235
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 11.10.2026; neden: yangın; hasar tutarı: 394.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0236
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 23.05.2026; neden: boru patlaması; hasar tutarı: 211.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0237
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 07.03.2026; neden: aşınma; hasar tutarı: 234.000 TL; muafiyet: 5.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: evet; bekleme: 13 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0238
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 08.01.2026; neden: yavaş sızıntı; hasar tutarı: 134.000 TL; muafiyet: 30.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0239
+Bölge: Samsun; başvuru kanalı: web formu; olay tarihi: 09.06.2026; neden: fırtına; hasar tutarı: 381.000 TL; muafiyet: 20.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0240
+Bölge: Antalya; başvuru kanalı: web formu; olay tarihi: 16.01.2026; neden: yangın; hasar tutarı: 144.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0241
+Bölge: İstanbul; başvuru kanalı: çağrı merkezi; olay tarihi: 06.02.2026; neden: yangın; hasar tutarı: 407.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0242
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 03.07.2026; neden: dolu; hasar tutarı: 116.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 14 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0243
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 07.03.2026; neden: hırsızlık; hasar tutarı: 436.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0244
+Bölge: İstanbul; başvuru kanalı: çağrı merkezi; olay tarihi: 07.02.2026; neden: boru patlaması; hasar tutarı: 166.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0245
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 02.05.2026; neden: hırsızlık; hasar tutarı: 174.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0246
+Bölge: Gaziantep; başvuru kanalı: çağrı merkezi; olay tarihi: 11.10.2025; neden: aşınma; hasar tutarı: 193.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0247
+Bölge: İzmir; başvuru kanalı: acente; olay tarihi: 10.10.2026; neden: yavaş sızıntı; hasar tutarı: 192.000 TL; muafiyet: 15.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0248
+Bölge: İzmir; başvuru kanalı: çağrı merkezi; olay tarihi: 04.10.2026; neden: boru patlaması; hasar tutarı: 320.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 11 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0249
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 11.11.2026; neden: boru patlaması; hasar tutarı: 425.000 TL; muafiyet: 15.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: evet; bekleme: 3 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0250
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 03.01.2026; neden: aşınma; hasar tutarı: 316.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 8 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0251
+Bölge: Bursa; başvuru kanalı: web formu; olay tarihi: 24.03.2026; neden: fırtına; hasar tutarı: 324.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 14 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0252
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 08.04.2026; neden: aşınma; hasar tutarı: 262.000 TL; muafiyet: 30.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 17 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0253
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 27.03.2026; neden: boru patlaması; hasar tutarı: 380.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 17 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0254
+Bölge: Antalya; başvuru kanalı: acente; olay tarihi: 06.03.2026; neden: yangın; hasar tutarı: 274.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0255
+Bölge: Gaziantep; başvuru kanalı: mobil uygulama; olay tarihi: 13.05.2026; neden: dolu; hasar tutarı: 224.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0256
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 09.01.2026; neden: hırsızlık; hasar tutarı: 54.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 11 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0257
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 06.12.2026; neden: yangın; hasar tutarı: 114.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0258
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 21.10.2026; neden: fırtına; hasar tutarı: 48.000 TL; muafiyet: 15.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 7 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0259
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 10.11.2026; neden: boru patlaması; hasar tutarı: 274.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 21 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0260
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 08.02.2026; neden: yavaş sızıntı; hasar tutarı: 250.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 7 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0261
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 28.06.2026; neden: fırtına; hasar tutarı: 107.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0262
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 22.05.2026; neden: boru patlaması; hasar tutarı: 114.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 14 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0263
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 09.04.2026; neden: fırtına; hasar tutarı: 155.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0264
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 15.01.2026; neden: dolu; hasar tutarı: 76.000 TL; muafiyet: 30.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 14 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0265
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 14.04.2026; neden: boru patlaması; hasar tutarı: 339.000 TL; muafiyet: 10.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0266
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 06.08.2026; neden: boru patlaması; hasar tutarı: 111.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 21 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0267
+Bölge: Gaziantep; başvuru kanalı: web formu; olay tarihi: 21.03.2026; neden: dolu; hasar tutarı: 35.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 7 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0268
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 26.07.2026; neden: dolu; hasar tutarı: 151.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0269
+Bölge: Samsun; başvuru kanalı: web formu; olay tarihi: 23.01.2026; neden: yavaş sızıntı; hasar tutarı: 165.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 11 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0270
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 20.09.2026; neden: yavaş sızıntı; hasar tutarı: 86.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0271
+Bölge: Ankara; başvuru kanalı: mobil uygulama; olay tarihi: 02.11.2026; neden: yangın; hasar tutarı: 358.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0272
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 21.03.2026; neden: dolu; hasar tutarı: 371.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 7 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0273
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 20.02.2026; neden: aşınma; hasar tutarı: 181.000 TL; muafiyet: 5.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0274
+Bölge: Gaziantep; başvuru kanalı: web formu; olay tarihi: 19.05.2026; neden: dolu; hasar tutarı: 288.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 22 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0275
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 06.08.2026; neden: boru patlaması; hasar tutarı: 149.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 8 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0276
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 20.02.2026; neden: yangın; hasar tutarı: 257.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0277
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 12.03.2026; neden: dolu; hasar tutarı: 192.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0278
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 04.06.2026; neden: yavaş sızıntı; hasar tutarı: 307.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0279
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 01.10.2026; neden: aşınma; hasar tutarı: 434.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0280
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 09.01.2026; neden: boru patlaması; hasar tutarı: 168.000 TL; muafiyet: 5.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0281
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 24.11.2026; neden: dolu; hasar tutarı: 104.000 TL; muafiyet: 20.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0282
+Bölge: Ankara; başvuru kanalı: acente; olay tarihi: 01.05.2026; neden: boru patlaması; hasar tutarı: 336.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0283
+Bölge: Samsun; başvuru kanalı: çağrı merkezi; olay tarihi: 24.07.2026; neden: hırsızlık; hasar tutarı: 181.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fatura eksik; mükerrer ihbar: evet; bekleme: 22 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0284
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 03.02.2026; neden: dolu; hasar tutarı: 145.000 TL; muafiyet: 20.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0285
+Bölge: Gaziantep; başvuru kanalı: çağrı merkezi; olay tarihi: 27.05.2026; neden: yavaş sızıntı; hasar tutarı: 149.000 TL; muafiyet: 5.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0286
+Bölge: Gaziantep; başvuru kanalı: acente; olay tarihi: 22.04.2026; neden: dolu; hasar tutarı: 124.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0287
+Bölge: İstanbul; başvuru kanalı: mobil uygulama; olay tarihi: 07.04.2025; neden: aşınma; hasar tutarı: 295.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0288
+Bölge: İstanbul; başvuru kanalı: web formu; olay tarihi: 10.12.2026; neden: dolu; hasar tutarı: 32.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0289
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 03.12.2026; neden: yangın; hasar tutarı: 61.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 17 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0290
+Bölge: Antalya; başvuru kanalı: mobil uygulama; olay tarihi: 01.01.2026; neden: yangın; hasar tutarı: 125.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 21 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0291
+Bölge: Adana; başvuru kanalı: web formu; olay tarihi: 15.08.2026; neden: boru patlaması; hasar tutarı: 345.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0292
+Bölge: Samsun; başvuru kanalı: mobil uygulama; olay tarihi: 10.11.2026; neden: yavaş sızıntı; hasar tutarı: 126.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0293
+Bölge: İstanbul; başvuru kanalı: mobil uygulama; olay tarihi: 27.11.2026; neden: boru patlaması; hasar tutarı: 335.000 TL; muafiyet: 5.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0294
+Bölge: İzmir; başvuru kanalı: çağrı merkezi; olay tarihi: 07.06.2026; neden: yangın; hasar tutarı: 69.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0295
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 23.04.2026; neden: hırsızlık; hasar tutarı: 364.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 9 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0296
+Bölge: İzmir; başvuru kanalı: çağrı merkezi; olay tarihi: 07.05.2026; neden: hırsızlık; hasar tutarı: 405.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0297
+Bölge: Antalya; başvuru kanalı: mobil uygulama; olay tarihi: 04.03.2026; neden: fırtına; hasar tutarı: 217.000 TL; muafiyet: 10.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0298
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 02.09.2026; neden: fırtına; hasar tutarı: 358.000 TL; muafiyet: 15.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0299
+Bölge: Adana; başvuru kanalı: çağrı merkezi; olay tarihi: 05.08.2026; neden: yavaş sızıntı; hasar tutarı: 317.000 TL; muafiyet: 10.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 17 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0300
+Bölge: Ankara; başvuru kanalı: mobil uygulama; olay tarihi: 02.07.2026; neden: fırtına; hasar tutarı: 346.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0301
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 17.12.2026; neden: hırsızlık; hasar tutarı: 365.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0302
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 13.03.2026; neden: yavaş sızıntı; hasar tutarı: 91.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0303
+Bölge: Bursa; başvuru kanalı: web formu; olay tarihi: 20.10.2026; neden: fırtına; hasar tutarı: 146.000 TL; muafiyet: 5.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 22 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0304
+Bölge: Ankara; başvuru kanalı: çağrı merkezi; olay tarihi: 12.04.2026; neden: yangın; hasar tutarı: 52.000 TL; muafiyet: 5.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0305
+Bölge: Gaziantep; başvuru kanalı: web formu; olay tarihi: 08.05.2026; neden: fırtına; hasar tutarı: 369.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0306
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 12.12.2026; neden: yavaş sızıntı; hasar tutarı: 58.000 TL; muafiyet: 20.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 21 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0307
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 20.11.2026; neden: boru patlaması; hasar tutarı: 266.000 TL; muafiyet: 10.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0308
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 16.03.2026; neden: aşınma; hasar tutarı: 179.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: evet; bekleme: 9 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0309
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 13.04.2026; neden: boru patlaması; hasar tutarı: 377.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: evet; bekleme: 9 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0310
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 12.07.2026; neden: yangın; hasar tutarı: 374.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0311
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 05.06.2026; neden: aşınma; hasar tutarı: 90.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 2 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0312
+Bölge: Samsun; başvuru kanalı: web formu; olay tarihi: 19.01.2026; neden: yavaş sızıntı; hasar tutarı: 442.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 3 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0313
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 20.03.2026; neden: hırsızlık; hasar tutarı: 283.000 TL; muafiyet: 5.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0314
+Bölge: İstanbul; başvuru kanalı: çağrı merkezi; olay tarihi: 12.10.2026; neden: yavaş sızıntı; hasar tutarı: 415.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 17 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0315
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 08.08.2026; neden: dolu; hasar tutarı: 184.000 TL; muafiyet: 20.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: evet; bekleme: 22 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0316
+Bölge: Gaziantep; başvuru kanalı: çağrı merkezi; olay tarihi: 19.03.2026; neden: yangın; hasar tutarı: 79.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 18 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0317
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 15.01.2026; neden: hırsızlık; hasar tutarı: 253.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 10.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 6 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0318
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 21.05.2026; neden: hırsızlık; hasar tutarı: 254.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0319
+Bölge: İstanbul; başvuru kanalı: çağrı merkezi; olay tarihi: 05.11.2026; neden: yavaş sızıntı; hasar tutarı: 306.000 TL; muafiyet: 15.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 21 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0320
+Bölge: Bursa; başvuru kanalı: mobil uygulama; olay tarihi: 14.04.2026; neden: yangın; hasar tutarı: 121.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0321
+Bölge: Antalya; başvuru kanalı: acente; olay tarihi: 08.01.2026; neden: dolu; hasar tutarı: 245.000 TL; muafiyet: 20.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0322
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 02.04.2026; neden: yangın; hasar tutarı: 277.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 1 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0323
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 28.07.2026; neden: yangın; hasar tutarı: 403.000 TL; muafiyet: 30.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Müşteri, daha önce aynı eşya için ödeme alıp almadığının kontrol edilmesini istedi; dosya işlem geçmişi incelendi. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0324
+Bölge: İzmir; başvuru kanalı: web formu; olay tarihi: 16.02.2026; neden: hırsızlık; hasar tutarı: 303.000 TL; muafiyet: 5.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0325
+Bölge: İstanbul; başvuru kanalı: web formu; olay tarihi: 20.10.2026; neden: yavaş sızıntı; hasar tutarı: 223.000 TL; muafiyet: 30.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Hasar tutarı onarım teklifi üzerinden girildi; nihai ödeme hesabında önce muafiyet, sonra limit dikkate alınmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0326
+Bölge: Samsun; başvuru kanalı: acente; olay tarihi: 23.09.2026; neden: yangın; hasar tutarı: 73.000 TL; muafiyet: 30.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0327
+Bölge: Antalya; başvuru kanalı: acente; olay tarihi: 28.01.2026; neden: yangın; hasar tutarı: 176.000 TL; muafiyet: 5.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Eksper notunda olayın tek seferde oluştuğu yazıyor; neden kodunun istisna listesiyle karşılaştırılması isteniyor. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0328
+Bölge: Antalya; başvuru kanalı: çağrı merkezi; olay tarihi: 05.07.2025; neden: boru patlaması; hasar tutarı: 65.000 TL; muafiyet: 10.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 15 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0329
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 09.06.2026; neden: aşınma; hasar tutarı: 308.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 4 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0330
+Bölge: Ankara; başvuru kanalı: web formu; olay tarihi: 14.02.2026; neden: yangın; hasar tutarı: 158.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0331
+Bölge: Antalya; başvuru kanalı: acente; olay tarihi: 21.09.2026; neden: yavaş sızıntı; hasar tutarı: 264.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 14 gün.
+İnceleme notu: Dosya sahibi, kararın gerekçesini yazılı istemiştir; belirsiz kalan belge varsa tamamlanma talebi açıkça belirtilmeli. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0332
+Bölge: Adana; başvuru kanalı: web formu; olay tarihi: 28.08.2026; neden: dolu; hasar tutarı: 189.000 TL; muafiyet: 15.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 7 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0333
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 08.03.2026; neden: fırtına; hasar tutarı: 339.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0334
+Bölge: İzmir; başvuru kanalı: acente; olay tarihi: 09.06.2026; neden: fırtına; hasar tutarı: 441.000 TL; muafiyet: 5.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 11 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0335
+Bölge: İzmir; başvuru kanalı: mobil uygulama; olay tarihi: 25.04.2026; neden: hırsızlık; hasar tutarı: 377.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 17 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Çağrı merkezi, dosyanın durumunun yazılı olarak paylaşılacağını bildirmiştir.
+
+### Dosya TR-0336
+Bölge: Samsun; başvuru kanalı: acente; olay tarihi: 25.09.2026; neden: yangın; hasar tutarı: 179.000 TL; muafiyet: 15.000 TL; teminat limiti: 120.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 13 gün.
+İnceleme notu: Operasyon ekibi, bekleme süresini izliyor; gecikme eşiği aşılırsa dosya kıdemli incelemeye yönlendirilmeli. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0337
+Bölge: Samsun; başvuru kanalı: web formu; olay tarihi: 13.07.2026; neden: yangın; hasar tutarı: 426.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 10 gün.
+İnceleme notu: Eksper, hasarın kapsamını yerinde gördü; olay tarihi ile ilk ihbar tarihi arasındaki farkı ayrıca kaydetti. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0338
+Bölge: Adana; başvuru kanalı: mobil uygulama; olay tarihi: 27.01.2026; neden: boru patlaması; hasar tutarı: 399.000 TL; muafiyet: 10.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fotoğraf eksik; mükerrer ihbar: hayır; bekleme: 16 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0339
+Bölge: Bursa; başvuru kanalı: acente; olay tarihi: 02.06.2026; neden: yangın; hasar tutarı: 137.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 20 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. İhbar görüşmesinde hasarın tek bir olaydan kaynaklandığı söylenmiştir.
+
+### Dosya TR-0340
+Bölge: Gaziantep; başvuru kanalı: çağrı merkezi; olay tarihi: 27.07.2026; neden: aşınma; hasar tutarı: 363.000 TL; muafiyet: 30.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 5 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0341
+Bölge: İstanbul; başvuru kanalı: çağrı merkezi; olay tarihi: 23.08.2026; neden: hırsızlık; hasar tutarı: 40.000 TL; muafiyet: 10.000 TL; teminat limiti: 160.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: evet; bekleme: 11 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0342
+Bölge: İstanbul; başvuru kanalı: acente; olay tarihi: 07.10.2026; neden: boru patlaması; hasar tutarı: 271.000 TL; muafiyet: 20.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 25.000 TL; belgeler: fatura eksik; mükerrer ihbar: hayır; bekleme: 23 gün.
+İnceleme notu: Acente, onarım teklifinin kalemlerini açıkladı; muafiyet ve teminat limitinin ayrı ayrı uygulanması gerektiğini belirtti. İlk bildirimde olay yeri fotoğrafları da paylaşılmıştır.
+
+### Dosya TR-0343
+Bölge: Bursa; başvuru kanalı: çağrı merkezi; olay tarihi: 17.09.2026; neden: fırtına; hasar tutarı: 38.000 TL; muafiyet: 30.000 TL; teminat limiti: 300.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: evet; bekleme: 23 gün.
+İnceleme notu: İlk inceleme otomatik açıldı; karar verilmeden önce poliçe dönemi ve istisna listesi elle doğrulanmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+### Dosya TR-0344
+Bölge: Gaziantep; başvuru kanalı: çağrı merkezi; olay tarihi: 04.12.2026; neden: dolu; hasar tutarı: 224.000 TL; muafiyet: 15.000 TL; teminat limiti: 220.000 TL; önceki doğrulanmış ödeme: 0 TL; belgeler: tam; mükerrer ihbar: hayır; bekleme: 8 gün.
+İnceleme notu: Çağrı kaydında hasarın oluş sırası anlatıldı; anlatım ile yüklenen belgeler arasında açık çelişki bulunmadı. Dosya açıldıktan sonra müşteri onarım süresini sormuştur.
+
+### Dosya TR-0345
+Bölge: Adana; başvuru kanalı: acente; olay tarihi: 26.12.2026; neden: yangın; hasar tutarı: 298.000 TL; muafiyet: 20.000 TL; teminat limiti: 80.000 TL; önceki doğrulanmış ödeme: 40.000 TL; belgeler: eksper raporu eksik; mükerrer ihbar: hayır; bekleme: 12 gün.
+İnceleme notu: Önceki ödeme kaydı kontrol edildi; mahsup yalnızca bu dosya için doğrulanmış ödeme tutarı üzerinden yapılmalı. Eksper, beyan edilen tutarın teklif belgesindeki toplamla uyuştuğunu belirtmiştir.
+
+## Sorular
+
+Yalnızca TR-0034, TR-0172 ve TR-0311 dosyalarını inceleyin. Her biri için temel kararı, varsa eksik belgeyi, gerekiyorsa kıdemli inceleme etiketini ve ödenebilir ise net ödeme tutarını bir tabloda yazın. Ardından üç dosya için uyguladığınız en belirleyici kuralı birer cümleyle açıklayın. Ödeme hesaplanmayan dosyada tutar uydurmayın. Cevabı Türkçe verin.

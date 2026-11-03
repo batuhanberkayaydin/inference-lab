@@ -11,7 +11,7 @@
 
 ## Değişmez ölçüm kuralları
 
-- En fazla 8 dolu girdi ve 4 farklı model. Karşılaştırılan modeller aynı girdi ve generation ayarlarını almalı.
+- En fazla 16 dolu girdi ve 4 farklı model. Karşılaştırılan modeller aynı girdi ve generation ayarlarını almalı.
 - Toplam verim = başarılı çıktı tokenları / model fazının duvar süresi; istek başına hızların toplamı değildir.
 - Token sayısı sağlayıcı `usage` alanından gelir. SSE parçaları token değildir. Eksik usage için token sayısı veya hız üretme.
 - TTFT ilk content/reasoning parçasına kadar geçen süredir. Akış hızı/TPOT tahmin etiketi taşımalıdır.
@@ -44,3 +44,8 @@
 - Guard başlığı yoksa bilinmiyor; attempts yoksa sıfır/tek deneme üretme. `pass` ve HTTP/cevap başarısını ayrı raporla. Reasoning tek başına dolu kullanıcı cevabı değildir.
 - JSON/curl hiçbir şekilde shell ile çalıştırılmaz; API anahtarları yalnızca kayıtlı sağlayıcı ayarından gelir. Özel gövde alanlarını ve chat_template_kwargs değerlerini testlerde koru.
 - Kullanıcı servisleri kapattıysa QA için geçici port/veri dizini kullan; bitişte test sunucusunu kapat ve durmuş Compose servisini yeniden açma.
+
+## Temiz kurulum ve paketli örnekler
+- Store yeni DB’de demo model/bağlam/girdi/rapor eklememeli. Mevcut kullanıcı verilerini ve eski demo kayıtlarını otomatik silme.
+- `examples/` içindeki 32K/64K promptlar yalnızca açık kullanıcı seçimiyle yüklenir; dosyaları değiştirme veya etiketlerini kesin tokenizer sayımı olarak sunma.
+- Docker runtime örnek dosyalarını içermeli. Liste API’si uzun içerikleri taşımaz; seçilen örnek içerik API’sinden yüklenir.
