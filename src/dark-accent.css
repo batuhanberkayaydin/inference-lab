@@ -1,0 +1,63 @@
+/* Intentional color roles for the dark workspace, layered over component defaults. */
+:root[data-theme="dark"] {
+  --ink: #eef2ff;
+  --muted: #b3c4dc;
+  --line: #394b68;
+  --focus: #95b6ff;
+  --accent: #e47c58;
+  background: #111b2d;
+  color: #e8eefb;
+}
+:root[data-theme="dark"] .sidebar { background: #101a30; border-right: 1px solid #344460; }
+:root[data-theme="dark"] .workspace { border-color: #35465e; }
+:root[data-theme="dark"] .workspace-icon { background: #263b5c; color: #bcd5ff; }
+:root[data-theme="dark"] .sidebar nav button.active { background: #293e61; color: #f4f7ff; }
+:root[data-theme="dark"] .sidebar nav button.active svg { color: #f5a67e; }
+:root[data-theme="dark"] .sidebar nav button:hover:not(.active) { background: #203454; }
+:root[data-theme="dark"] .topbar { background: #18263e; }
+:root[data-theme="dark"] .local-chip { background: #173e38; border-color: #386e60; color: #b6efdb; }
+:root[data-theme="dark"] .local-chip .dot, :root[data-theme="dark"] .local-status .dot { background: #73d8ae; }
+:root[data-theme="dark"] .heading-tag { background: #243451; border-color: #465d82; color: #c6d9f9; }
+:root[data-theme="dark"] .setup-panel,
+:root[data-theme="dark"] .results,
+:root[data-theme="dark"] .list-panel,
+:root[data-theme="dark"] .edit-panel { background: #1b2942; border-color: #3b5070; }
+:root[data-theme="dark"] .segmented.mode-tabs button { background: #223451; border-color: #486182; color: #d6e5fa; }
+:root[data-theme="dark"] .segmented.mode-tabs button:hover:not(.active) { background: #2d4668; border-color: #7fa7d9; }
+:root[data-theme="dark"] .segmented.mode-tabs button.active { background: #633e38; border-color: #f1a07b; color: #ffe0cf; }
+:root[data-theme="dark"] .mode-explanation { background: #202f4a; }
+:root[data-theme="dark"] .mode-explanation-heading > span { color: #a8cef3; }
+:root[data-theme="dark"] .mode-explanation > p,
+:root[data-theme="dark"] .model-schedule-explanation p { color: #c3d4e8; }
+:root[data-theme="dark"] .sequence-lane > span,
+:root[data-theme="dark"] .model-schedule-explanation b { color: #d1e3f7; }
+:root[data-theme="dark"] .sequence-request,
+:root[data-theme="dark"] .concurrent .sequence-request { background: #244663; border-color: #497999; color: #c9efff; }
+:root[data-theme="dark"] .mode-takeaways > span { color: #c4d7e8; }
+:root[data-theme="dark"] .mode-takeaways svg { color: #78d9b0; }
+:root[data-theme="dark"] .step-index { background: #304669; border-color: #5c789d; color: #dcecff; }
+:root[data-theme="dark"] .model-choice { background: #22324b; border-color: #435c7d; }
+:root[data-theme="dark"] .model-choice.selected { background: color-mix(in srgb, var(--model-color) 18%, #1c2b43); border-color: color-mix(in srgb, var(--model-color) 65%, #a5c5f1); }
+:root[data-theme="dark"] .prompt-box { border-color: #486080; }
+:root[data-theme="dark"] .prompt-header, :root[data-theme="dark"] .prompt-footer { background: #263954; }
+:root[data-theme="dark"] .prompt-number { color: #9cccf3; }
+:root[data-theme="dark"] .prompt-box textarea { background: #192940; color: #e5efff; }
+:root[data-theme="dark"] .count-control > button.active { background: #31577a; color: #ebf7ff; }
+:root[data-theme="dark"] .button.primary { background: #d66c49; color: #fff; }
+:root[data-theme="dark"] .button.primary:hover { background: #eb835e; color: #1a1e2b; }
+:root[data-theme="dark"] .status.completed { background: #19483d; color: #b3efd5; }
+:root[data-theme="dark"] .status.running, :root[data-theme="dark"] .status.queued { background: #273e6b; color: #ccddff; }
+:root[data-theme="dark"] .status.partial, :root[data-theme="dark"] .status.interrupted, :root[data-theme="dark"] .status.stopping { background: #59452b; color: #ffe0a3; }
+:root[data-theme="dark"] .status.failed, :root[data-theme="dark"] .status.cancelled { background: #593735; color: #ffc4b6; }
+:root[data-theme="dark"] .model-metric-summary { background: #1e3049; border-color: #425d7c; }
+:root[data-theme="dark"] .model-metric-title { background: #293d59; }
+:root[data-theme="dark"] .model-metric-values strong { color: color-mix(in srgb, var(--summary-color) 65%, white); }
+:root[data-theme="dark"] .plot-surface { fill: #17253d; }
+:root[data-theme="dark"] .plot-grid { stroke: #476080; }
+:root[data-theme="dark"] .plot-time-grid { stroke: #354b6a; }
+:root[data-theme="dark"] .performance-plot text,
+:root[data-theme="dark"] .performance-plot .plot-unit,
+:root[data-theme="dark"] .performance-plot .plot-axis-title { fill: #c1d4ec; }
+:root[data-theme="dark"] .performance-empty { background: #1d3049ed; color: #cfdef1; }
+:root[data-theme="dark"] ::selection { background: #865745; color: #fff8f1; }
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #566d8b; }

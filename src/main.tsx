@@ -48,6 +48,7 @@ import {
 } from "./SavedInputs";
 import "./saved-inputs.css";
 import "./dark.css";
+import "./dark-accent.css";
 
 type Model = {
   id: string;
