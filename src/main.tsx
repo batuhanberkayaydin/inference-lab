@@ -20,12 +20,14 @@ import {
   Layers3,
   Loader2,
   LogOut,
+  Moon,
   Play,
   Plus,
   Search,
   Settings2,
   ShieldCheck,
   Square,
+  Sun,
   Trash2,
   X,
   Zap,
@@ -45,6 +47,7 @@ import {
   lengthLabel,
 } from "./SavedInputs";
 import "./saved-inputs.css";
+import "./dark.css";
 
 type Model = {
   id: string;
@@ -1043,6 +1046,16 @@ function ContextForm({
 }
 
 function App() {
+  const [dark, setDark] = useState(() => {
+    try {
+      const stored = localStorage.getItem("inference-lab-theme");
+      return stored === "dark" || (stored !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    } catch { return false; }
+  });
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+    try { localStorage.setItem("inference-lab-theme", dark ? "dark" : "light"); } catch { /* Theme still works for this session. */ }
+  }, [dark]);
   const [session, setSession] = useState<boolean | null>(null);
   const [page, setPage] = useState<Page>(() => {
     const value = window.location.hash.slice(1);
@@ -1495,6 +1508,9 @@ function App() {
             <b>{page === "benchmark" ? "Benchmark" : titles[page]}</b>
           </div>
           <div className="topbar-right">
+            <button className="icon-button theme-toggle" aria-label={dark ? "Açık temaya geç" : "Koyu temaya geç"} title={dark ? "Açık temaya geç" : "Koyu temaya geç"} onClick={() => setDark(!dark)}>
+              {dark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <span className="local-chip">
               <span className="dot" />
               Yerel

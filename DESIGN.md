@@ -254,3 +254,7 @@ Rounded rectangles structure the workspace. Panels use the panel radius, model s
 ## Answer comparison
 
 Each input has a collapsible prompt and open model answer columns using the established identity colors. Answer text wraps at 13px with 1.85 line height; status, 12px token/time metadata and copy controls remain separate. Output regions scroll independently without moving the reader automatically. Four desktop columns become two below 1150px and one below 680px. Stream responses update incrementally; normal responses appear together when complete. Failed and stopped requests preserve partial text beside the error. The same component is used in live results and saved reports.
+
+## Dark theme
+
+The header theme control switches between the daylight palette and dark navy surfaces. The first visit follows the device preference; subsequent choices stay in browser storage. Dark canvas and panels use #182732 and #1d2d39, primary text #dae5ed, muted text #adc1cf, and borders #3b4d5a; copper remains the active accent. Chart backgrounds and input controls use the same palette. The generated component overrides in `src/dark.css` can be refreshed with `node scripts/generate-dark-theme.mjs` after changing component colors.
