@@ -17,11 +17,12 @@
 - TTFT ilk content/reasoning parçasına kadar geçen süredir. Akış hızı/TPOT tahmin etiketi taşımalıdır.
 - Draft/kabul metriklerini Prometheus koşu öncesi/sonrası sayaç farkından al. Sayaç sıfırlanırsa veya yoksa değer `null` kalmalı. Sunucu kapsamı uyarısını koru.
 - Başarısız, durdurulan ve yarım kalan koşuları sakla. Başarısız istekleri başarı gibi gösterme.
-- Demo sonuçları tüm ekran ve dışa aktarımlarda açıkça sentetik olmalıdır. Gerçek deney sonuçlarıyla karıştırma.
+- Yeni demo koşuları reddedilir, eski demo modelleri seçilmez. Geçmişteki demo sonuçları tüm ekran ve dışa aktarımlarda açıkça sentetik kalmalıdır; gerçek deney sonuçlarıyla karıştırma.
 
 ## Veri ve güvenlik
 
 - API anahtarları yalnızca backend tarafından kullanılmalı; UI'ya, loglara, raporlara veya repoya yazılmamalı.
+- Model ayarlarında yalnızca desteklenen OpenAI uyumlu Chat Completions protokolünü sun. Bağlantı testi kullanıcı düğmesine basınca kayıtlı modele kısa gerçek istek gönderir; sonucu/ham sağlayıcı hatasını veya anahtarı rapor olarak kaydetme. Testlerde yalnızca yerel sahte sağlayıcı kullan.
 - API anahtarları şifrelenmez; `data/credentials/` içindeki dosyalarda düz metin tutulur. POSIX'te dizin 0700, dosyalar 0600 olmalı; SQLite yalnızca rastgele referans taşır. `data/` Git ve Docker context dışında kalır. Eski Fernet kayıtlarını ve `credential.key` dosyasını silme; eski anahtar için yeniden giriş gerektiğini açıkça göster.
 - Anahtar alanı düzenlemede boş bırakılırsa mevcut anahtar korunur. Kaldırma ayrı ve açık bir tercihtir.
 - Raporlar model ayarlarının ve girdilerin koşu anındaki kopyasını taşır; daha sonra model düzenlemek eski raporu değiştirmemeli.

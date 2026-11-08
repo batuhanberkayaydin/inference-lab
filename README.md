@@ -59,7 +59,9 @@ bash start.sh
 
 Bu sürüm [21 Ekim 2026 Node güvenlik yamalarını](https://nodejs.org/en/blog/vulnerability/october-2026-security-releases) içerir. Yeni Node güvenlik sürümleri geldiğinde `.nvmrc`, `package.json` engines ve Dockerfile birlikte güncellenmelidir. `npm audit` paket açıklarını tarar; Node çalışma zamanının güvenlik kontrolünün yerini tutmaz.
 
-Giriş: **admin / admin**. Yeni kurulumda model, bağlam, kayıtlı girdi ve rapor listeleri boştur; demo veri otomatik eklenmez. Gerçek ölçüm için **Yönetici ayarları → Model ekle** bölümüne sağlayıcı URL’si, model kimliği ve gerekiyorsa API anahtarı girin. Demo modu yalnızca açıkça seçildiğinde sentetik yanıt üretir; varsayılan mod Gerçek API’dir.
+Giriş: **admin / admin**. Yeni kurulumda model, bağlam, kayıtlı girdi ve rapor listeleri boştur. Ölçüm için **Yönetici ayarları → Model ekle** bölümüne sağlayıcı URL’si, model kimliği ve gerekiyorsa API anahtarı girin. Yeni testler gerçek API üzerinden çalışır; demo modu kaldırılmıştır.
+
+Desteklenen API protokolü OpenAI uyumlu Chat Completions'tır; vLLM ve aynı protokolü uygulayan sağlayıcılar bu seçenekle kullanılır. Modeli kaydettikten sonra **Bağlantıyı test et**, kayıtlı URL, model kimliği ve anahtarla en fazla bir çıktı tokenı isteyen gerçek bir istek gönderir. Sağlayıcı bu istek için ücret veya kota uygulayabilir. Kontrol bağlantı ve normal JSON yanıtını doğrular; streaming, usage, context sınırı ve performans için benchmark gerekir. API anahtarı veya sağlayıcı hata gövdesi sonuçta gösterilmez.
 
 Geliştirme sırasında iki terminal:
 
@@ -79,7 +81,7 @@ Vite arayüzü [http://127.0.0.1:5173](http://127.0.0.1:5173) üzerinden API ça
 
 Örnek: 2 model ve 4 girdi seçildiğinde **Eşzamanlı yük** her modelde 4 isteği birlikte gönderir (toplam 8 API isteği). **Sırayla → aynı anda** aynı 4 girdiyi önce tek tek, ardından birlikte gönderir (model başına 8, toplam 16 API isteği). Sonuçlarda iki faz ayrı seçilir. Model çalışma düzeni bu fazlardan bağımsızdır: “Modeller sırayla” ayarında ilk model kendi testini bitirir, sonra diğer model başlar. Paylaşılan GPU’da model testlerini paralel başlatmak ek kaynak rekabeti yaratabilir.
 
-Demo modu gerçek API çağrısı yapmaz ve sentetik olduğu raporların içinde korunur. Gerçek API modu OpenAI uyumlu `/v1/chat/completions`, SSE, `stream_options.include_usage` destekleyen uç noktalar içindir. Native Anthropic/Gemini API gibi farklı protokoller için sonradan sağlayıcı adaptörü eklenmelidir.
+Eski demo modelleri ve değiştirilmemiş eski örnek bağlamlar listelerden gizlenir. Kullanıcı tarafından değiştirilmiş bağlamlar gösterilir; eski demo raporları sentetik olarak etiketlenmiş halde korunur. Gerçek API modu OpenAI uyumlu `/v1/chat/completions`, SSE, `stream_options.include_usage` destekleyen uç noktalar içindir. Native Anthropic/Gemini API gibi farklı protokoller için sonradan sağlayıcı adaptörü eklenmelidir.
 
 ## Kayıtlı girdiler
 
@@ -115,7 +117,7 @@ Draft/kabul oranı için isteğe bağlı metrics URL eklenir. Desteklenen sayaç
 
 Bu uygulama performans ölçer; model cevaplarının doğruluğunu otomatik değerlendirmez. İlk sürümde her fazda 1–16 örnek kullanılır; p95/p99 istatistiksel genelleme yerine koşu özeti olarak okunmalıdır.
 
-Koşular, durdurma ve hata durumları dahil, `data/lab.sqlite3` içinde saklanır. Raporlar geçmişten açılabilir ve **Markdown / CSV / JSON** olarak dışa aktarılabilir. PDF için tarayıcı **PDF / Yazdır** seçeneği vardır. Girdiler ve model çıktıları raporlarda saklandığından kendi veri saklama politikanıza uygun içerik kullanın.
+Koşular, durdurma ve hata durumları dahil, `data/lab.sqlite3` içinde saklanır. Raporlar geçmişten açılabilir, onay verilerek silinebilir ve **Markdown / CSV / JSON** olarak dışa aktarılabilir. Devam eden koşular silinemez. PDF için tarayıcı **PDF / Yazdır** seçeneği vardır. Girdiler ve model çıktıları raporlarda saklandığından kendi veri saklama politikanıza uygun içerik kullanın.
 
 ## Yerel ayarlar
 

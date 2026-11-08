@@ -58,6 +58,8 @@ def start(engine, data):
     demo = data.get('demo', False)
     if type(demo) is not bool:
         raise ValueError('demo true veya false olmalıdır.')
+    if demo:
+        raise ValueError('Demo modu kaldırıldı. Gerçek API için bir model seçin.')
     if not demo and (model['demo'] or not model['base_url']):
         raise ValueError('Gerçek test için sağlayıcı URL’si olan bir model seçin.')
     clean = {k: model[k] for k in ('id', 'name', 'model', 'provider', 'color', 'base_url', 'metrics_url')}

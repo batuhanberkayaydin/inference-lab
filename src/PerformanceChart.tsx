@@ -175,6 +175,7 @@ export function PerformanceChart({
               ? "Sağlayıcı tarafından bildirilen çıktı tokenları"
               : "Model fazının başlangıcından itibaren toplam çıktı / geçen süre"}
           </title>
+          <rect x={left} y={top} width={width - left - right} height={height - top - bottom} rx="4" className="plot-surface" />
           <text x={left} y="11" className="plot-unit">
             {metric === "tokens" ? "token" : "tok/sn"}
           </text>
@@ -236,6 +237,9 @@ export function PerformanceChart({
                     />
                   ))}
                   {last && (
+                    <g>
+                    <line x1={x(last.time)} x2={x(last.time)} y1={y(last.value!)} y2={height - bottom} stroke={model.color} className="plot-final-guide" />
+                    <circle cx={x(last.time)} cy={y(last.value!)} r="9" fill={model.color} opacity="0.14" />
                     <circle
                       cx={x(last.time)}
                       cy={y(last.value!)}
@@ -244,6 +248,7 @@ export function PerformanceChart({
                       stroke="#fff"
                       strokeWidth="1.5"
                     />
+                    </g>
                   )}
                 </g>
               );
@@ -342,6 +347,8 @@ export function PerformanceChart({
         </div>
       )}
       <p className="performance-caption">
+        {hasData && visible.every(({ points }) => points.filter((point) => point.value !== null).length <= 1) &&
+          "Ara token ölçümü yok; yalnızca kayıtlı ölçüm noktası gösteriliyor. "}
         Her eğri kendi model fazının başlangıcına göre hizalanır. Token sayısı
         sağlayıcıdan geldikçe güncellenir. Faz tamamlandığında son nokta toplam
         sonucu gösterir.

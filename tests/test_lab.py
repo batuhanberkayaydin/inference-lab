@@ -6,6 +6,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.request import Request, build_opener, HTTPCookieProcessor
 from urllib.error import HTTPError
@@ -112,6 +113,7 @@ class MetricsTests(unittest.TestCase):
     def test_endpoint_normalizes_v1(self):
         self.assertEqual(endpoint('http://localhost:8000/v1/'), 'http://localhost:8000/v1/chat/completions')
         self.assertEqual(endpoint('http://localhost:8000'), 'http://localhost:8000/v1/chat/completions')
+        self.assertEqual(endpoint('http://localhost:8000/v1/chat/completions'), 'http://localhost:8000/v1/chat/completions')
 
 
 class IntegrationTests(unittest.TestCase):
@@ -225,8 +227,9 @@ class IntegrationTests(unittest.TestCase):
         self.assertLess(run['phases'][0]['models'][0]['requests'][0]['e2e_s'],1.3)
 
     def test_cancel_retains_partial_output_and_report(self):
-        run = self.engine.start(self.config | {'demo':True})
-        time.sleep(.5)
+        live = self.store.save_model(self.model | {'model':'live'})
+        run = self.engine.start(self.config | {'model_ids':[live['id']]})
+        time.sleep(.15)
         self.engine.stop(run['id'])
         final = await_report(self.engine,run['id'])
         self.assertEqual(final['status'],'cancelled')
@@ -237,11 +240,19 @@ class IntegrationTests(unittest.TestCase):
         for changes in ({'prompts': ['x']*17}, {'prompts':['']}, {'model_ids':['missing']}, {'max_tokens':0}, {'temperature':float('nan')}, {'mode':'single'}, {'model_ids':[self.model['id']]*2}):
             with self.assertRaises(ValueError):
                 self.engine.start(self.config | changes)
-        run=self.engine.start(self.config | {'demo':True})
+        run=self.engine.start(self.config)
         with self.assertRaises(ValueError):
             self.engine.start(self.config)
         self.engine.stop(run['id'])
         await_report(self.engine,run['id'])
+
+    def test_demo_runs_and_models_cannot_be_selected(self):
+        with self.assertRaisesRegex(ValueError, 'Demo modu kaldırıldı'):
+            self.engine.start(self.config | {'demo': True})
+        legacy = self.store.get('models', self.model['id']) | {'id': 'old-demo', 'demo': True}
+        self.store.put('models', legacy)
+        self.assertNotIn('old-demo', [m['id'] for m in self.store.public_models()])
+        self.assertIsNotNone(self.store.get('models', 'old-demo'))
 
     def test_four_models_sixteen_requests_supported(self):
         ids=[]
@@ -260,14 +271,26 @@ class IntegrationTests(unittest.TestCase):
             headers={'Content-Type':'application/json'}
             if origin:headers['Origin']=origin
             return client.open(Request(base+path,json.dumps(body).encode(),headers))
+        def delete(path):
+            return client.open(Request(base+path,method='DELETE'))
         try:
+            with self.assertRaises(HTTPError) as result:delete('/api/reports/'+'a'*16)
+            self.assertEqual(result.exception.code,401)
+            result.exception.close()
             with self.assertRaises(HTTPError) as result:client.open(base+'/api/models')
+            self.assertEqual(result.exception.code,401)
+            result.exception.close()
+            with self.assertRaises(HTTPError) as result:post('/api/models/'+self.model['id']+'/test',{})
             self.assertEqual(result.exception.code,401)
             result.exception.close()
             with self.assertRaises(HTTPError) as result:post('/api/login',{'username':'admin','password':'wrong'})
             result.exception.close()
             post('/api/login',{'username':'admin','password':'admin'}).close()
             self.assertNotIn('api_key',client.open(base+'/api/models').read().decode())
+            with post('/api/models/'+self.model['id']+'/test',{}) as response:
+                check = json.load(response)
+            self.assertTrue(check['ok'])
+            self.assertNotIn('test-only-secret', json.dumps(check))
             with self.assertRaises(HTTPError) as result:post('/api/runs',self.config,'https://attacker.invalid')
             self.assertEqual(result.exception.code,403)
             result.exception.close()
@@ -286,12 +309,34 @@ class IntegrationTests(unittest.TestCase):
             completed = await_report(self.engine, large_run['id'])
             self.assertEqual(completed['phases'][0]['models'][0]['summary']['completed'], 16)
             self.assertEqual(completed['config']['prompts'], [long_prompt] * 16)
+            delete('/api/reports/'+run['id']).close()
+            self.assertIsNone(self.engine.snapshot(run['id']))
+            self.assertIsNone(self.store.get('reports',run['id']))
+            self.assertIsNotNone(self.store.get('reports',completed['id']))
+            with self.assertRaises(HTTPError) as result:delete('/api/reports/'+run['id'])
+            self.assertEqual(result.exception.code,404)
+            result.exception.close()
             post('/api/logout',{}).close()
             with self.assertRaises(HTTPError) as result:client.open(base+'/api/contexts')
             result.exception.close()
         finally:
             app.shutdown()
             app.server_close()
+
+    def test_connection_check_uses_saved_model_and_sanitizes_failure(self):
+        result = self.engine.test_model(self.model['id'])
+        self.assertTrue(result['ok'])
+        self.assertEqual(Fixture.authorizations[-1], 'Bearer test-only-secret')
+        self.assertEqual(Fixture.bodies[-1]['model'], 'fixture')
+        self.assertEqual(Fixture.bodies[-1]['max_tokens'], 1)
+        self.assertFalse(Fixture.bodies[-1]['stream'])
+        with patch('server.build_opener') as mocked:
+            mocked.return_value.open.side_effect = HTTPError(self.base, 401, 'test-only-secret', {}, None)
+            result = self.engine.test_model(self.model['id'])
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['http_status'], 401)
+        self.assertNotIn('test-only-secret', json.dumps(result))
+        self.assertEqual(self.store.list('reports'), [])
 
     def test_keys_survive_restart_and_blank_edit_keeps_them(self):
         reference=self.store.get('models',self.model['id'])['api_key']
@@ -301,6 +346,13 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(reloaded.credentials.read(reference),'test-only-secret')
         self.store.save_model(self.model | {'clear_key':True})
         self.assertFalse(self.store.get('models',self.model['id'])['api_key'])
+
+    def test_active_report_cannot_be_deleted(self):
+        run = self.engine.start(self.config)
+        with self.assertRaisesRegex(ValueError, 'Çalışan rapor silinemez'):
+            self.engine.delete_report(run['id'])
+        self.engine.stop(run['id'])
+        await_report(self.engine, run['id'])
 
     def test_active_run_keeps_its_private_key_when_saved_model_key_is_removed(self):
         run = self.engine.start(self.config | {'mode': 'compare'})

@@ -26,7 +26,7 @@ Prepare identical request inputs, compare up to four configured models, inspect 
 - Docker Compose startup from the repository root, with unless-stopped restart, a persistent data volume, and localhost port 8080. Native data/ and Docker volume are separate.
 - Default Compose builds the local Dockerfile. No automated GitHub image build/publication or required GHCR pull. Python runtime setup needs no pip/PyPI; frontend builds still need npm packages and the initial build may download base images.
 - API credentials persist as plaintext in owner-only files outside SQLite, the browser and reports. Preserve old encrypted records and key files; old keys need explicit reentry in model settings.
-- Fresh deployments have no automatic models, contexts, saved inputs or reports, and default to real API mode. Bundled 32K/64K Turkish prompt files are loaded only by explicit selection and never auto-inserted into user tables.
+- Fresh deployments have no automatic models, contexts, saved inputs or reports. New runs use real APIs only; legacy demo models are hidden and historical demo reports retain their synthetic label. Bundled 32K/64K Turkish prompt files load only by explicit selection.
 - Never invent provider token counts or speculative metrics. Clearly distinguish demonstration runs from real runs.
 - Development instructions and a small extensible test suite.
 

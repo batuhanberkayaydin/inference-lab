@@ -28,6 +28,15 @@ class DeploymentTests(unittest.TestCase):
         self.assertEqual(Store(self.temp.name).list('models'), [])
         self.assertEqual(Store(self.temp.name).list('contexts'), [])
 
+    def test_legacy_seed_is_hidden_but_user_edits_are_preserved(self):
+        item = {'id':'reasoning', 'name':'Mantıksal akıl yürütme', 'category':'Muhakeme', 'content':'Bir ekipte Ayşe, Bora ve Can çalışıyor. Ayşe pazartesi ve çarşamba, Bora salı ve çarşamba, Can pazartesi ve salı uygun. Her gün en az iki kişi çalışacak. Üç günün görev dağılımını tabloyla ver ve herkesin eşit sayıda görev alıp almadığını açıkla.'}
+        self.store.put('contexts', item)
+        self.assertEqual(self.store.public_contexts(), [])
+        self.assertEqual(self.store.get('contexts', 'reasoning'), item)
+        item['content'] += ' Kullanıcı düzenlemesi.'
+        self.store.put('contexts', item)
+        self.assertEqual(self.store.public_contexts(), [item])
+
     def test_existing_data_is_preserved_and_deleted_models_do_not_return(self):
         model = self.store.save_model({'name':'User model', 'model':'user-model', 'base_url':'http://localhost:8000/v1', 'api_key':'fixture-only-key'})
         context = self.store.put('contexts', {'id':'user-context', 'name':'User context', 'content':'My text', 'category':''})

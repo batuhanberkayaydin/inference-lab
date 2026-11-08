@@ -19,13 +19,14 @@
 | Giriş / kötü şifre / kötü Origin | 401/403; yetkisiz veri erişimi yok |
 | Markdown / CSV / JSON | Doğru koşu dışa aktarılır; API anahtarı yok |
 | Anahtar düzenleme / yeniden açma | Özel dosya referansı korunur, boş giriş anahtarı silmez |
+| Model bağlantı testi | Yetki gerekir; yerel sahte sağlayıcıya kayıtlı model ve anahtarla kısa istek; hata ve sonuç anahtar içermez, rapor oluşturmaz |
 
 ## Manuel arayüz kontrolü
 
 - Admin/admin ile giriş; hatalı şifre mesajı.
 - 1–4 model seçimi; 1–16 girdi; ayrı bağlam seçimi ve metin düzenleme.
 - Tek istek, eşzamanlı, seri vs. eşzamanlı modları.
-- Demo işaretinin sonuç ve rapor geçmişinde korunması.
+- Yeni demo istekleri reddedilir; geçmiş demo raporları sentetik olarak işaretli kalır.
 - Tüm metriğin görünmesi, referans model farkları ve istek çıktıları.
 - Koşunun otomatik kaydı, geçmişten açılması, arama/filtre ve dışa aktarım.
 - Model ekleme/düzenleme; anahtarın geri gönderilmemesi.
@@ -52,6 +53,8 @@
 - Docker kaynak izinleri: backend/examples/dist dosyaları 0600, dizinleri 0700 olan bir build context'ten alınsa da imajda kaynak dosyaları 0644/dizinler 0755 olmalı. `USER lab` sonrası backend `--help` kontrolü geçmeli; data/credentials izinleri bu normalizasyondan etkilenmemeli.
 - Anahtarlar: dosya/dizin izinleri, SQLite ve API çıktısında gizlilik, yeniden açma, boş düzenleme, değiştirme/kaldırma/silme, başarısız DB yazımında yeni dosyanın temizlenmesi. Eski Fernet kaydı ve credential.key korunur; açık yeniden giriş hatası verilir, anahtarsız sağlayıcı çağrısına düşülmez.
 - UI: genel bakışta metrik seçimi, model görünürlüğü, süre inceleme; iki karşılaştırma fazının ayrı seçimi; masaüstü ve mobilde okunur eksenler ve taşmasız mod açıklamaları.
+- Rapor silme: yetki kontrolü, tamamlanmış raporun kalıcı olarak kaldırılması, bulunamayan rapor ve devam eden koşunun korunması.
+- Metrik karşılaştırmasında metrikler alt alta, modeller yan yana görünür; açıklama düğmeleri fare, klavye ve dokunmayla kullanılabilir.
 
 ## Sonraki genişletmeler
 

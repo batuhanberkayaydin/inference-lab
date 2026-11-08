@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { createPortal } from "react-dom";
 import {
   Activity,
   ArrowDownToLine,
@@ -283,6 +284,49 @@ const metrics: [string, string, string, boolean][] = [
   ["acceptance_pct", "Ortalama kabul", "%", true],
 ];
 
+const metricHelp: Record<string, string> = {
+  throughput: "Başarılı isteklerde üretilen toplam çıktı tokenı, testin toplam süresine bölünür. Birden fazla isteğin toplam üretim kapasitesini gösterir; yüksek olması iyidir.",
+  ttft_avg_s: "İstek gönderildikten sonra ilk içerik veya düşünme parçası gelene kadar geçen sürelerin ortalaması. Kullanıcının yanıtın başlamasını ne kadar beklediğini gösterir; düşük olması iyidir.",
+  ttft_p95_s: "İlk token sürelerinin yüzde 95'inin altında kaldığı yaklaşık süre. Yavaş başlayan istekleri ortalamadan daha görünür kılar; düşük olması iyidir.",
+  ttft_p99_s: "İlk token sürelerinin yüzde 99'unun altında kaldığı yaklaşık süre. Az sayıda istekte tek bir yavaş sonuçtan çok etkilenebilir; düşük olması iyidir.",
+  stream_avg_tps: "İlk yanıttan sonra saniyede üretilen çıktı tokenı sayısının istekler arası ortalaması. Sağlayıcının toplam token sayısıyla tahmin edilir; yüksek olması iyidir.",
+  e2e_avg_s: "İstek gönderiminden yanıtın tamamlanmasına kadar geçen sürenin ortalaması. Kullanıcının tüm cevabı ne kadar beklediğini gösterir; düşük olması iyidir.",
+  e2e_p95_s: "Yanıtların yüzde 95'inin tamamlandığı yaklaşık süre. Yavaş istekleri görmeye yardımcı olur; düşük olması iyidir.",
+  wall_s: "Bu modelin test fazının başından sonuna kadar geçen gerçek süre. Eşzamanlı isteklerin süreleri toplanmaz; düşük olması genellikle iyidir.",
+  output_tokens: "Başarılı yanıtlarda üretilen toplam çıktı tokenı. Token, metnin model tarafından işlenen parçasıdır; sağlayıcı bildirmezse bu değer bilinmez.",
+  input_tokens: "Başarılı isteklere gönderilen toplam giriş tokenı. Aynı girdi birden fazla isteğe gönderilirse her istek ayrı sayılır; sağlayıcı bildirmezse bilinmez.",
+  tpot_avg_s: "İlk yanıttan sonra çıktı tokenı başına geçen tahmini sürenin istekler arası ortalaması. Düşük değer, yanıtın daha hızlı üretildiğini gösterir.",
+  chunk_gap_p95_s: "Yanıtın art arda gelen parçaları arasındaki gecikmelerin her istekteki p95 değerlerinden hesaplanan p95. Parçalar token ile aynı şey değildir; düşük olması iyidir.",
+  requests_per_s: "Başarıyla tamamlanan istek sayısının testin gerçek süresine bölümü. Saniyede kaç isteğin tamamlandığını gösterir; yüksek olması iyidir.",
+  drafted_per_step: "Tahminli üretimde her adım için önerilen ortalama token sayısı. Yalnızca sağlayıcının ilgili sayaçları varsa ölçülür; sayaçlar sunucudaki diğer trafikten etkilenebilir.",
+  acceptance_pct: "Tahminli üretimde önerilen tokenların kabul edilen yüzdesi. Yalnızca ilgili sayaçlar varsa hesaplanır; diğer sunucu trafiği sonucu etkileyebilir.",
+};
+
+function MetricHelp({metric, label}: {metric: string; label: string}) {
+  const id = useId();
+  const [position, setPosition] = useState<{left: number; top: number; above: boolean} | null>(null);
+  function show(element: HTMLElement) {
+    const rect = element.getBoundingClientRect();
+    const width = Math.min(310, window.innerWidth - 24);
+    const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
+    const above = window.innerHeight - rect.bottom < 170;
+    setPosition({left, top: above ? rect.top - 8 : rect.bottom + 8, above});
+  }
+  useEffect(() => {
+    const close = () => setPosition(null);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => { window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); };
+  }, []);
+  return <>
+    <button type="button" className="metric-help-button" aria-label={`${label} hakkında bilgi`} aria-describedby={position ? id : undefined}
+      onMouseEnter={e => show(e.currentTarget)} onMouseLeave={() => setPosition(null)}
+      onFocus={e => show(e.currentTarget)} onBlur={() => setPosition(null)}
+      onClick={e => show(e.currentTarget)} onKeyDown={e => { if (e.key === 'Escape') setPosition(null); }}><CircleHelp size={15} aria-hidden="true" /></button>
+    {position && createPortal(<div id={id} role="tooltip" className="metric-help-popover" style={{left: position.left, top: position.top, transform: position.above ? 'translateY(-100%)' : undefined}}>{metricHelp[metric]}</div>, document.body)}
+  </>;
+}
+
 function RequestMatrix({ phase }: { phase: Phase }) {
   return (
     <div className="request-matrix">
@@ -559,9 +603,26 @@ function Results({
               </div>
             </div>
           </div>
+          <section className="model-metric-overview" aria-label="Model performans özeti">
+            {phase.models.map((model) => (
+              <div className="model-metric-summary" key={model.id} style={{"--summary-color": model.color} as React.CSSProperties}>
+                <div className="model-metric-title"><span><i style={{background: model.color}} />{model.name}</span><small>{model.summary ? `${model.summary.completed} / ${model.summary.total} başarılı` : statusLabels[model.status]}</small></div>
+                <div className="model-metric-values">
+                  {([
+                    ["throughput", "Toplam verim", "tok/sn"],
+                    ["ttft_avg_s", "İlk token · ort.", "sn"],
+                    ["stream_avg_tps", "Akış hızı · ort.¹", "tok/sn"],
+                    ["e2e_avg_s", "Uçtan uca · ort.", "sn"],
+                  ] as const).map(([key, label, unit]) => (
+                    <div key={key}><span>{label} <MetricHelp metric={key} label={label} /></span><strong>{fmt(model.summary?.[key], 2)} <small>{unit}</small></strong></div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
           <div className="table-heading">
             <h3>Metrik karşılaştırması</h3>
-            <label className="inline-label">
+            {phase.models.length > 1 && <label className="inline-label">
               Referans model
               <select
                 value={baseline?.id || ""}
@@ -573,46 +634,20 @@ function Results({
                   </option>
                 ))}
               </select>
-            </label>
+            </label>}
           </div>
           <div className="table-scroll">
             <table className="metrics-table">
               <thead>
                 <tr>
-                  <th>Metrik</th>
-                  {phase.models.map((m) => (
-                    <th key={m.id}>
-                      <div>
-                        <i style={{ background: m.color }} />
-                        {m.name}
-                      </div>
-                      <small>
-                        {m.summary
-                          ? `${m.summary.completed} / ${m.summary.total} başarılı`
-                          : statusLabels[m.status]}
-                      </small>
-                    </th>
-                  ))}
+                  <th scope="col">Metrik</th>
+                  {phase.models.map(m => <th scope="col" key={m.id}><div><i style={{background: m.color}} />{m.name}</div><small>{m.summary ? `${m.summary.completed} / ${m.summary.total} başarılı` : statusLabels[m.status]}</small></th>)}
                 </tr>
               </thead>
               <tbody>
                 {metrics.map(([key, label, unit, higher]) => (
                   <tr key={key}>
-                    <td>
-                      {label}
-                      <small>
-                        {[
-                          "output_tokens",
-                          "input_tokens",
-                          "drafted_per_step",
-                          "acceptance_pct",
-                        ].includes(key)
-                          ? ""
-                          : higher
-                            ? "Yüksek daha iyi"
-                            : "Düşük daha iyi"}
-                      </small>
-                    </td>
+                    <th scope="row" className="metric-row-label"><div className="metric-column-heading"><span>{label}</span><MetricHelp metric={key} label={label} /></div>{!['output_tokens','input_tokens','drafted_per_step','acceptance_pct'].includes(key) && <small>{higher ? 'Yüksek daha iyi' : 'Düşük daha iyi'}</small>}</th>
                     {phase.models.map((m) => (
                       <td key={m.id}>
                         <div className="metric-value">
@@ -755,7 +790,7 @@ function ModelForm({
   const [form, setForm] = useState({
     id: model?.id,
     name: model?.name || "",
-    provider: model?.provider || "OpenAI uyumlu",
+    provider: "OpenAI uyumlu",
     model: model?.model || "",
     base_url: model?.base_url || "",
     api_key: "",
@@ -803,13 +838,14 @@ function ModelForm({
             />
           </label>
           <label>
-            Sağlayıcı
-            <input
+            API protokolü
+            <select
               value={form.provider}
               onChange={(e) => update("provider", e.target.value)}
-              placeholder="Örn. vLLM / CBOT"
-              required
-            />
+            >
+              <option value="OpenAI uyumlu">OpenAI uyumlu · Chat Completions</option>
+            </select>
+            <small>vLLM ve bu protokolü sunan diğer sağlayıcılar desteklenir.</small>
           </label>
           <label className="full">
             Model kimliği
@@ -830,8 +866,7 @@ function ModelForm({
               required
             />
             <small>
-              /v1/chat/completions yolu otomatik eklenir. /v1 ile veya olmadan
-              yazabilirsiniz.
+              Temel URL'yi veya tam /v1/chat/completions adresini girebilirsiniz.
             </small>
           </label>
           <label className="full">
@@ -1018,6 +1053,8 @@ function App() {
       : "benchmark";
   });
   const [models, setModels] = useState<Model[]>([]);
+  const [testingModel, setTestingModel] = useState<string | null>(null);
+  const [modelChecks, setModelChecks] = useState<Record<string, {ok: boolean; message: string; elapsed_s?: number}>>({});
   const [examples, setExamples] = useState<PromptExample[]>([]);
   const [contexts, setContexts] = useState<Context[]>([]);
   const [savedInputs, setSavedInputs] = useState<SavedInputSummary[]>([]);
@@ -1029,7 +1066,6 @@ function App() {
   const [selected, setSelected] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<string[]>(["", "", "", ""]);
   const [mode, setMode] = useState("concurrent");
-  const [demo, setDemo] = useState(false);
   const [stream, setStream] = useState(true);
   const [schedule, setSchedule] = useState("sequential");
   const [maxTokens, setMaxTokens] = useState(512);
@@ -1247,6 +1283,16 @@ function App() {
           : prev,
     );
   }
+  async function testModel(id: string) {
+    setTestingModel(id);
+    setModelChecks(prev => { const next = {...prev}; delete next[id]; return next; });
+    try {
+      const result = await api<{ok: boolean; message: string; elapsed_s?: number}>(`/models/${id}/test`, 'POST', {});
+      setModelChecks(prev => ({...prev, [id]: result}));
+    } catch (e) {
+      setModelChecks(prev => ({...prev, [id]: {ok: false, message: (e as Error).message}}));
+    } finally { setTestingModel(null); }
+  }
   async function start() {
     setBusy(true);
     setError("");
@@ -1255,7 +1301,7 @@ function App() {
         model_ids: selected,
         prompts: effectivePrompts,
         mode,
-        demo,
+        demo: false,
         max_tokens: maxTokens,
         temperature,
         timeout,
@@ -1297,6 +1343,18 @@ function App() {
       setBusy(false);
     }
   }
+  async function deleteReport(report: Report) {
+    if (!window.confirm(`“${report.name}” raporu silinsin mi? Bu işlem geri alınamaz.`)) return;
+    setBusy(true);
+    try {
+      await api(`/reports/${report.id}`, "DELETE");
+      setReports(prev => prev.filter(item => item.id !== report.id));
+      if (historic?.id === report.id) setHistoric(null);
+      if (run?.id === report.id) { setRun(null); sessionStorage.removeItem("lab_run"); }
+      setToast("Rapor silindi.");
+    } catch (e) { setError((e as Error).message); }
+    finally { setBusy(false); }
+  }
   async function remove(kind: "models" | "contexts", id: string) {
     try {
       await api(`/${kind}/${id}`, "DELETE");
@@ -1308,6 +1366,7 @@ function App() {
   }
   async function save() {
     await load();
+    setModelChecks({});
     setModelEdit(undefined);
     setContextEdit(undefined);
     setToast("Değişiklikler kaydedildi.");
@@ -1515,7 +1574,7 @@ function App() {
                 sonuçlarla birlikte değerlendir.
               </p>
               <p>
-                Demo modu arayüzü denemek içindir. Gerçek ölçümde token sayısı
+                Token sayısı
                 sağlayıcı usage yanıtından gelir. Draft ve kabul oranı için
                 model ayarlarına metrics URL ekle.
               </p>
@@ -1547,6 +1606,7 @@ function App() {
                         <button
                           disabled={running || busy}
                           className={mode === id ? "active" : ""}
+                          aria-pressed={mode === id}
                           key={id as string}
                           onClick={() => setMode(id as string)}
                         >
@@ -1556,16 +1616,6 @@ function App() {
                       );
                     })}
                   </div>
-                  <label className="demo-switch">
-                    <span>{demo ? "Demo modu" : "Gerçek API"}</span>
-                    <input
-                      type="checkbox"
-                      checked={demo}
-                      disabled={running || busy}
-                      onChange={(e) => setDemo(e.target.checked)}
-                    />
-                    <span className="switch-track" />
-                  </label>
                 </div>
                 <ModeExplanation
                   mode={mode}
@@ -1623,7 +1673,7 @@ function App() {
                         <div className="model-choice-bottom">
                           <span>
                             <i className="dot" />
-                            {m.provider.split(" · ")[0]}
+                            OpenAI uyumlu
                           </span>
                           <small>{m.demo ? "DEMO" : "API"}</small>
                         </div>
@@ -1644,9 +1694,7 @@ function App() {
                   </div>
                   <div className="model-notice">
                     <ShieldCheck size={14} />
-                    {demo
-                      ? "Demo modunda gerçek API çağrısı yapılmaz."
-                      : "Gerçek API modu seçili. İstekler seçili sağlayıcılara gönderilir."}
+                    İstekler seçili sağlayıcılara gönderilir.
                     <label>
                       Modeller
                       <select
@@ -1892,7 +1940,7 @@ function App() {
                         girdi{mode === "compare" ? " × 2 faz" : ""}
                       </b>
                       <small>
-                        {demo ? "Sentetik demo" : "Gerçek API ölçümü"} ·{" "}
+                        Gerçek API ölçümü ·{" "}
                         {mode === "compare"
                           ? "Seri + eşzamanlı"
                           : mode === "single"
@@ -2060,6 +2108,7 @@ function App() {
                                 </span>
                               </td>
                               <td>
+                                <div className="row-actions">
                                 <button
                                   aria-label={`${r.name} raporunu aç`}
                                   className="icon-button"
@@ -2068,6 +2117,8 @@ function App() {
                                 >
                                   <ArrowUpRight size={17} />
                                 </button>
+                                <button aria-label={`${r.name} raporunu sil`} title="Raporu sil" className="icon-button" disabled={busy || active(r)} onClick={() => deleteReport(r)}><Trash2 size={17} /></button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -2121,6 +2172,7 @@ function App() {
                     <h2>Model sağlayıcıları</h2>
                     <span>{models.length} model</span>
                   </div>
+                  <p className="model-test-help">Bağlantıyı test et, kayıtlı modele kısa bir gerçek istek gönderir; sağlayıcıya göre ücret veya kota kullanabilir.</p>
                   <div className="table-scroll">
                     <table className="settings-table">
                       <thead>
@@ -2160,11 +2212,14 @@ function App() {
                               <span
                                 className={`type-tag ${m.demo ? "" : "real"}`}
                               >
-                                {m.demo ? "Demo" : "Gerçek API"}
+                                OpenAI uyumlu
                               </span>
                             </td>
                             <td>
                               <div className="row-actions">
+                                <button className="button small-button" disabled={testingModel !== null} onClick={() => testModel(m.id)}>
+                                  {testingModel === m.id ? "Test ediliyor…" : "Bağlantıyı test et"}
+                                </button>
                                 <button
                                   className="button small-button"
                                   onClick={() => setModelEdit(m)}
@@ -2180,6 +2235,9 @@ function App() {
                                   <Trash2 size={15} />
                                 </button>
                               </div>
+                              {modelChecks[m.id] && <small role="status" className={modelChecks[m.id].ok ? "model-test-success" : "model-test-error"}>
+                                {modelChecks[m.id].message}{modelChecks[m.id].elapsed_s !== undefined ? ` · ${modelChecks[m.id].elapsed_s} sn` : ""}
+                              </small>}
                             </td>
                           </tr>
                         ))}

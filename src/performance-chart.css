@@ -68,6 +68,8 @@
   fill: #5f7485;
   font-variant-numeric: tabular-nums;
 }
+.plot-surface { fill: #f5f7fa; }
+.plot-final-guide { stroke-width: 1; stroke-dasharray: 3 5; opacity: .45; }
 .performance-plot .plot-unit,
 .performance-plot .plot-axis-title {
   font-size: 11px;

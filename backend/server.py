@@ -23,7 +23,7 @@ from datetime import datetime, timezone
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
-from urllib.request import Request, build_opener, ProxyHandler
+from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler
 from urllib.error import HTTPError
 import duration
 import bundled_examples
@@ -32,6 +32,11 @@ from credentials import CredentialFiles
 
 ROOT = Path(__file__).resolve().parents[1]
 COLORS = ['#3f6eeb', '#dd693b', '#0b8b78', '#9772cc']
+LEGACY_CONTEXT_HASHES = {
+    'insurance': '9129ad3437be55b7e1d4ba62665d8d223675f23e21ffbd108cf5590c76b59d85',
+    'reasoning': 'aa45e1c7e6b4399fd95798b4c2c5c90356ee49a634dd1abb4518b86c22014cd6',
+    'summary': '87c5ad5228fbb0ccaebe1933462e2c53586ee36eb7684711300f878e11bbc66d',
+}
 
 
 def now():
@@ -63,7 +68,10 @@ def valid_url(value, allow_empty=False):
 
 
 def endpoint(base, suffix='chat/completions'):
-    return base.rstrip('/') + ('/' if base.rstrip('/').endswith('/v1') else '/v1/') + suffix
+    base = base.rstrip('/')
+    if base.endswith('/' + suffix):
+        return base
+    return base + ('/' if base.endswith('/v1') else '/v1/') + suffix
 
 
 def guard_headers(headers):
@@ -251,14 +259,24 @@ class Store:
         return [{k: v for k, v in m.items() if k != 'api_key'} | {
             'has_key': bool(m['api_key']),
             'key_requires_reentry': bool(m['api_key']) and not self.credentials.is_reference(m['api_key']),
-        } for m in self.list('models')]
+        } for m in self.list('models') if not m.get('demo')]
+
+    def public_contexts(self):
+        result = []
+        for item in self.list('contexts'):
+            fingerprint = hashlib.sha256(json.dumps(
+                [item.get('name'), item.get('category'), item.get('content')], ensure_ascii=False
+            ).encode()).hexdigest()
+            if LEGACY_CONTEXT_HASHES.get(item.get('id')) != fingerprint:
+                result.append(item)
+        return result
 
     def save_model(self, data):
         old = self.get('models', data.get('id')) or {}
         if not str(data.get('name', '')).strip() or not str(data.get('model', '')).strip():
             raise ValueError('Görünen ad ve model kimliği zorunludur.')
         item = { 'id': old.get('id', secrets.token_hex(6)), 'name': data['name'].strip()[:100],
-                 'provider': str(data.get('provider', 'OpenAI uyumlu'))[:100], 'model': data['model'].strip()[:300],
+                 'provider': 'OpenAI uyumlu', 'model': data['model'].strip()[:300],
                  'base_url': valid_url(data.get('base_url', '')), 'metrics_url': valid_url(data.get('metrics_url', ''), True),
                  'api_key': old.get('api_key', ''), 'demo': False, 'color': old.get('color', COLORS[len(self.list('models')) % 4]) }
         new_reference = None
@@ -296,6 +314,41 @@ class Engine:
         # Capture it once so clearing/editing a model cannot break an in-flight test.
         return dict(model, api_key='' if demo else self.store.credentials.read(model.get('api_key', '')))
 
+    def test_model(self, ident):
+        model = self.store.get('models', ident)
+        if not model or model.get('demo'):
+            raise ValueError('Kayıtlı model bulunamadı.')
+        model = self.runtime_model(model, False)
+        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
+        if model['api_key']:
+            headers['Authorization'] = 'Bearer ' + model['api_key']
+        body = {'model': model['model'], 'messages': [{'role': 'user', 'content': 'Merhaba'}],
+                'max_tokens': 1, 'stream': False}
+        class NoRedirect(HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None
+        started = time.perf_counter()
+        try:
+            opener = build_opener(ProxyHandler({}), NoRedirect())
+            with opener.open(Request(endpoint(model['base_url']), data=json.dumps(body).encode(), headers=headers), timeout=15) as response:
+                status = response.status
+                payload = json.loads(response.read(2_000_001))
+            choices = payload.get('choices') if isinstance(payload, dict) else None
+            if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict) or not isinstance(choices[0].get('message'), dict):
+                return {'ok': False, 'message': 'Sağlayıcı OpenAI uyumlu bir sohbet yanıtı döndürmedi.', 'http_status': status}
+            return {'ok': True, 'message': 'Bağlantı başarılı. Model geçerli bir yanıt döndürdü.', 'http_status': status,
+                    'elapsed_s': round(time.perf_counter() - started, 2)}
+        except HTTPError as error:
+            code = error.code
+            error.close()
+            detail = {401: 'API anahtarı veya yetkilendirmeyi kontrol edin.', 403: 'Bu model veya uç nokta için erişim iznini kontrol edin.',
+                      404: 'API URL ve model kimliğini kontrol edin.', 429: 'Sağlayıcı istek veya kota sınırına ulaşıldığını bildirdi.'}.get(code, 'Sağlayıcı isteği reddetti; model kimliğini ve sağlayıcı ayarlarını kontrol edin.')
+            return {'ok': False, 'message': f'HTTP {code}: {detail}', 'http_status': code}
+        except (ValueError, TypeError, UnicodeError):
+            return {'ok': False, 'message': 'Sağlayıcı geçerli bir JSON sohbet yanıtı döndürmedi.', 'http_status': None}
+        except Exception:
+            return {'ok': False, 'message': 'Sağlayıcıya bağlanılamadı veya istek zaman aşımına uğradı. URL ve ağ erişimini kontrol edin.', 'http_status': None}
+
     def snapshot(self, ident):
         with self.lock:
             report = self.runs.get(ident) or self.store.get('reports', ident) or self.store.get('duration_runs', ident)
@@ -304,6 +357,20 @@ class Engine:
     def persist(self, run):
         with self.lock:
             self.store.put('duration_runs' if run.get('kind') == 'duration' else 'reports', run)
+
+    def delete_report(self, ident):
+        with self.lock:
+            report = self.store.get('reports', ident)
+            if not report:
+                return False
+            if report.get('status') in ('running', 'queued', 'stopping') or not report.get('finished_at'):
+                raise ValueError('Çalışan rapor silinemez; testin tamamlanmasını bekleyin.')
+            with self.store.connect() as db:
+                db.execute('DELETE FROM reports WHERE id = ?', (ident,))
+            self.runs.pop(ident, None)
+            self.events.pop(ident, None)
+            self.responses.pop(ident, None)
+            return True
 
     def start(self, data):
         prompts = data.get('prompts', [])
@@ -334,6 +401,8 @@ class Engine:
         demo = data.get('demo', False)
         if type(demo) is not bool:
             raise ValueError('demo true veya false olmalıdır.')
+        if demo:
+            raise ValueError('Demo modu kaldırıldı. Gerçek API için bir model seçin.')
         if not demo and any(m['demo'] or not m['base_url'] for m in models):
             raise ValueError('Gerçek ölçüm için sağlayıcı URL’si olan modeller seçin veya ayarlardan ekleyin.')
         with self.lock:
@@ -725,7 +794,7 @@ def handler_for(engine):
                     if path == '/api/models':
                         return self.reply(engine.store.public_models())
                     if path == '/api/contexts':
-                        return self.reply(engine.store.list('contexts'))
+                        return self.reply(engine.store.public_contexts())
                     if path == '/api/examples':
                         return self.reply(bundled_examples.summaries())
                     if path.startswith('/api/examples/'):
@@ -810,6 +879,9 @@ def handler_for(engine):
                     return self.reply({'ok': True}, headers={'Set-Cookie': 'lab_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'})
                 if path == '/api/models':
                     return self.reply(engine.store.save_model(data))
+                match = re.fullmatch(r'/api/models/([a-f0-9]{12})/test', path)
+                if match:
+                    return self.reply(engine.test_model(match.group(1)))
                 if path == '/api/inputs':
                     return self.reply(engine.store.save_input(data))
                 if path == '/api/contexts':
@@ -840,6 +912,12 @@ def handler_for(engine):
                 return self.reply({'error': 'Bu kaynaktan istek kabul edilmiyor.'}, 403)
             if not self.authenticated():
                 return self.reply({'error': 'Devam etmek için giriş yapın.'}, 401)
+            report = re.fullmatch(r'/api/reports/([a-f0-9]{16})', urlparse(self.path).path)
+            if report:
+                try:
+                    return self.reply({'ok': True}) if engine.delete_report(report.group(1)) else self.reply({'error': 'Rapor bulunamadı.'}, 404)
+                except ValueError as error:
+                    return self.reply({'error': str(error)}, 409)
             match = re.fullmatch(r'/api/(models|contexts|inputs)/([\w-]+)', urlparse(self.path).path)
             if not match:
                 return self.reply({'error': 'Uç nokta bulunamadı.'}, 404)

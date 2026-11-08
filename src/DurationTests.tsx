@@ -46,7 +46,6 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
   const [duration, setDuration] = useState(60);
   const [interval, setIntervalValue] = useState(1);
   const [timeout, setTimeoutValue] = useState(150);
-  const [demo, setDemo] = useState(false);
   const [inputMode, setInputMode] = useState("prompt");
   const [prompt, setPrompt] = useState("");
   const [maxTokens, setMaxTokens] = useState(1024);
@@ -117,7 +116,7 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
     try {
       const payload = inputMode === "prompt" ? { messages: [{ role: "user", content: prompt }], stream, max_tokens: maxTokens } : preview?.payload;
       if (!payload) throw new Error("Önce JSON/curl gövdesini doğrulayın.");
-      const next = await api<Run>("/duration-runs", "POST", { model_id: modelId, concurrency, duration_s: duration, interval_s: interval, timeout, demo, payload });
+      const next = await api<Run>("/duration-runs", "POST", { model_id: modelId, concurrency, duration_s: duration, interval_s: interval, timeout, demo: false, payload });
       setOffset(0); setRun(next); sessionStorage.setItem("duration_run", next.id);
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
@@ -159,7 +158,7 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
           {preview && <div className="duration-preview"><strong>Gövde hazır · model: {String(preview.payload.model || model?.model || "seçilmedi")}</strong>{preview.url && <p>curl adresi (bilgi): {preview.url}</p>}<p>Gönderilecek sağlayıcı: {model?.base_url || "Henüz model seçilmedi"}. JSON model kimliği, seçilen modelle eşleşmelidir. Stream isteklerinde usage istenir.</p><details><summary>Gönderilecek JSON’u incele</summary><pre>{JSON.stringify({...preview.payload, model: preview.payload.model || model?.model}, null, 2)}</pre></details></div>}
         </>}
       </div>
-      <div className="duration-launch"><label className="duration-demo"><input type="checkbox" checked={demo} disabled={locked} onChange={e => setDemo(e.target.checked)}/>Demo · gerçek API çağrısı yapılmaz</label><button className="button primary" disabled={locked || !modelId || (inputMode === "raw" ? !preview : !prompt.trim())} onClick={start}><Play size={16}/>{demo ? "Demo testi başlat" : "Süreli testi başlat"}</button></div>
+      <div className="duration-launch"><button className="button primary" disabled={locked || !modelId || (inputMode === "raw" ? !preview : !prompt.trim())} onClick={start}><Play size={16}/>Süreli testi başlat</button></div>
       <p className="duration-limit">En fazla 1 saat ve 10.000 istek. Sonuçlar otomatik kaydedilir. HTTP başarısı, dolu cevap ve guard başlıkları ayrı kontrol edilir.</p>
     </section>
     {error && <div className="error-message" role="alert">{error}</div>}
