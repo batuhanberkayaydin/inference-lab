@@ -49,6 +49,7 @@ import {
 import "./saved-inputs.css";
 import "./dark.css";
 import "./dark-accent.css";
+import { MetricGuide } from "./MetricGuide";
 
 type Model = {
   id: string;
@@ -1571,32 +1572,7 @@ function App() {
               </button>
             ) : null}
           </div>
-          {help && (
-            <section className="help-panel">
-              <div className="section-heading">
-                <h2>Doğru karşılaştırma için</h2>
-                <button
-                  aria-label="Rehberi kapat"
-                  className="icon-button"
-                  onClick={() => setHelp(false)}
-                >
-                  <X size={17} />
-                </button>
-              </div>
-              <p>
-                Aynı girdileri, çıktı limitini ve temperature değerini kullan.
-                Paylaşılan GPU kullanıyorsan modelleri sırayla çalıştır. “Seri
-                vs. eşzamanlı” modu aynı girdileri önce tek tek, sonra birlikte
-                gönderir. Farklı çıktı uzunluklarını ve başarısız istekleri
-                sonuçlarla birlikte değerlendir.
-              </p>
-              <p>
-                Token sayısı
-                sağlayıcı usage yanıtından gelir. Draft ve kabul oranı için
-                model ayarlarına metrics URL ekle.
-              </p>
-            </section>
-          )}
+          {help && <MetricGuide onClose={() => setHelp(false)} />}
           {error && (
             <div className="error-message global-error" role="alert">
               <span>{error}</span>

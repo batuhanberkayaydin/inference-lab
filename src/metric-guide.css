@@ -1,0 +1,18 @@
+.metric-guide h3 { font-size: 14px; margin-top: 24px; color: var(--ink); }
+.metric-guide .section-heading { align-items: flex-start; flex-direction: row; }
+.metric-guide .section-heading p { margin-top: 5px; }
+.guide-example { margin-top: 18px; padding: 16px 18px; border: 1px solid #cadce8; border-radius: 8px; background: #fff; color: var(--ink); }
+.metric-guide .guide-example p { margin-top: 7px; }
+.guide-metrics { margin-top: 13px; border-top: 1px solid var(--line); }
+.guide-metrics details { border-bottom: 1px solid var(--line); }
+.guide-metrics summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 2px; color: var(--ink); font-size: 13px; font-weight: 700; cursor: pointer; list-style: none; }
+.guide-metrics summary::-webkit-details-marker { display: none; }
+.guide-metrics details[open] summary svg { transform: rotate(180deg); }
+.guide-detail { padding: 0 2px 16px; }
+.metric-guide .guide-detail p { margin-top: 8px; }
+.guide-detail pre { margin: 12px 0; padding: 12px 14px; border-radius: 7px; background: #e6f0f7; color: #244459; font: 12px/1.8 ui-monospace, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.guide-notes { padding-top: 2px; }
+:root[data-theme="dark"] .guide-example { background: #1b2942; border-color: #486080; }
+:root[data-theme="dark"] .guide-detail pre { background: #203750; color: #d8eaff; }
+:root[data-theme="dark"] .metric-guide p { color: #c3d4e8; }
+@media (max-width: 680px) { .guide-example { padding: 14px; } .guide-detail pre { font-size: 11px; } }
