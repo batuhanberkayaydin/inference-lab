@@ -406,6 +406,7 @@ i:not(.dot) {
 .help-link:hover {
   color: #fff;
 }
+.help-link.active { background: #344c5d; color: #fff; border-radius: 6px; }
 .local-status {
   display: flex;
   align-items: flex-start;

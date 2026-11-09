@@ -112,7 +112,7 @@ type Report = {
   warnings?: string[];
   fingerprint?: string;
 };
-type Page = "duration" | "benchmark" | "reports" | "contexts" | "inputs" | "settings";
+type Page = "duration" | "benchmark" | "reports" | "contexts" | "inputs" | "settings" | "guide";
 const titles: Record<Page, string> = {
   benchmark: "Model karşılaştırma",
   duration: "Süreli test",
@@ -120,6 +120,7 @@ const titles: Record<Page, string> = {
   contexts: "Bağlam kütüphanesi",
   inputs: "Kayıtlı girdiler",
   settings: "Yönetici ayarları",
+  guide: "Ölçüm rehberi",
 };
 const statusLabels: Record<string, string> = {
   queued: "Bekliyor",
@@ -1061,7 +1062,7 @@ function App() {
   const [session, setSession] = useState<boolean | null>(null);
   const [page, setPage] = useState<Page>(() => {
     const value = window.location.hash.slice(1);
-    return ["benchmark", "duration", "reports", "contexts", "inputs", "settings"].includes(
+    return ["benchmark", "duration", "reports", "contexts", "inputs", "settings", "guide"].includes(
       value,
     )
       ? (value as Page)
@@ -1100,7 +1101,6 @@ function App() {
   );
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
-  const [help, setHelp] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
   const initial = useRef(true);
   useEffect(() => {
@@ -1475,7 +1475,7 @@ function App() {
           </button>
         </nav>
         <div className="sidebar-bottom">
-          <button className="help-link" onClick={() => setHelp(!help)}>
+          <button className={`help-link${page === "guide" ? " active" : ""}`} aria-current={page === "guide" ? "page" : undefined} onClick={() => navigate("guide")}>
             <CircleHelp size={17} />
             Ölçüm rehberi
             <ArrowUpRight size={14} />
@@ -1521,7 +1521,7 @@ function App() {
             <button
               className="icon-button mobile-tool"
               aria-label="Ölçüm rehberini aç"
-              onClick={() => setHelp(!help)}
+              onClick={() => navigate("guide")}
             >
               <CircleHelp size={16} />
             </button>
@@ -1549,7 +1549,9 @@ function App() {
                       ? "Tekrar kullanabileceğin girdileri hazırla. Testlerini aynı bağlamla tekrarla."
                       : page === "inputs"
                         ? "Uzun bağlam ve sorularını kaydet. Her testte aynı girdiyi yeniden seç."
-                        : "Model sağlayıcılarını bağla ve karşılaştırmaya hazır hale getir."}
+                        : page === "guide"
+                          ? "Metriklerin nasıl hesaplandığını, örneklerini ve ölçüm sınırlarını incele."
+                          : "Model sağlayıcılarını bağla ve karşılaştırmaya hazır hale getir."}
               </p>
             </div>
             {page === "benchmark" ? (
@@ -1572,7 +1574,7 @@ function App() {
               </button>
             ) : null}
           </div>
-          {help && <MetricGuide onClose={() => setHelp(false)} />}
+          {page === "guide" && <MetricGuide />}
           {error && (
             <div className="error-message global-error" role="alert">
               <span>{error}</span>

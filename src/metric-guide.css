@@ -1,7 +1,5 @@
 .metric-guide h3 { font-size: 14px; margin-top: 24px; color: var(--ink); }
-.metric-guide .section-heading { align-items: flex-start; flex-direction: row; }
-.metric-guide .section-heading p { margin-top: 5px; }
-.guide-example { margin-top: 18px; padding: 16px 18px; border: 1px solid #cadce8; border-radius: 8px; background: #fff; color: var(--ink); }
+.guide-example { padding: 16px 18px; border: 1px solid #cadce8; border-radius: 8px; background: #fff; color: var(--ink); }
 .metric-guide .guide-example p { margin-top: 7px; }
 .guide-metrics { margin-top: 13px; border-top: 1px solid var(--line); }
 .guide-metrics details { border-bottom: 1px solid var(--line); }

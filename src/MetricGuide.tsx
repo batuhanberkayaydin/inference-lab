@@ -1,4 +1,4 @@
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import "./metric-guide.css";
 
 type Metric = { title: string; meaning: string; formula: string; example: string; note?: string };
@@ -19,9 +19,8 @@ const metrics: Metric[] = [
   { title: "Ortalama kabul · %", meaning: "Speculative decoding sırasında önerilen taslak tokenların kabul edilen yüzdesi.", formula: "Kabul % = (Δ kabul edilen token / Δ taslak tokenı) × 100", example: "300 kabul / 400 taslak × 100 = %75.", note: "Sunucu sayaçları diğer trafiği ve yayın gecikmesini içerebilir. Aynı endpoint paylaşılıyorsa modeli tek başına temsil etmeyebilir. Sayaç veya geçerli fark yoksa — gösterilir." },
 ];
 
-export function MetricGuide({ onClose }: { onClose: () => void }) {
-  return <section className="help-panel metric-guide" aria-labelledby="metric-guide-title">
-    <div className="section-heading"><div><h2 id="metric-guide-title">Ölçüm rehberi</h2><p>Sonuçları anlamak için hesaplamalar, örnekler ve ölçüm sınırları.</p></div><button aria-label="Rehberi kapat" className="icon-button" onClick={onClose}><X size={17} /></button></div>
+export function MetricGuide() {
+  return <section className="help-panel metric-guide" aria-label="Metrik hesaplamaları">
     <div className="guide-example"><b>Örnek: 2 model × 10 paralel istek</b><p>Aynı 10 girdi iki modele de gönderilir: toplam 20 istek. Her modelin istekleri, tokenları ve süresi kendi içinde ayrı hesaplanır. Modeller aynı anda seçiliyse uygulama birbirini beklemeden başlatır; ağ ve sunucu varış zamanlarını etkileyebilir.</p><p>Örnekte Model A’nın 10 başarılı isteği toplam 160.000 giriş ve 5.000 çıktı tokenı, duvar süresi 20 saniyedir. Aşağıdaki sayılar açıklama amaçlıdır.</p></div>
     <h3>Metrikler nasıl hesaplanır?</h3><p>Bir metriğin formülünü ve örneğini görmek için başlığını aç.</p>
     <div className="guide-metrics">{metrics.map(item => <details key={item.title}><summary><span>{item.title}</span><ChevronDown size={17} aria-hidden="true" /></summary><div className="guide-detail"><p>{item.meaning}</p><pre>{item.formula}</pre><p><b>Örnek:</b> {item.example}</p>{item.note && <p><b>Not:</b> {item.note}</p>}</div></details>)}</div>
