@@ -139,7 +139,7 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
       {!models.length && <p>Henüz model eklenmedi. Gerçek test için Model ayarları bölümünden sağlayıcınızı ekleyin.</p>}
       <div className="duration-fields">
         <label className="duration-model">Model<select value={modelId} disabled={locked} onChange={e => { setModelId(e.target.value); }}><option value="" disabled>Model seçin</option>{models.map(m => <option key={m.id} value={m.id}>{m.name} · {m.model}{m.demo ? " · DEMO" : ""}</option>)}</select></label>
-        <label>Eşzamanlılık<select value={concurrency} disabled={locked} onChange={e => setConcurrency(Number(e.target.value))}>{Array.from({length:16}, (_, i) => <option key={i} value={i+1}>{i+1} paralel döngü</option>)}</select></label>
+        <label>Eşzamanlılık<select value={concurrency} disabled={locked} onChange={e => setConcurrency(Number(e.target.value))}>{Array.from({length:24}, (_, i) => <option key={i} value={i+1}>{i+1} paralel döngü</option>)}</select></label>
         <label>Test süresi (sn)<input type="number" min="1" max="3600" value={duration} disabled={locked} onChange={e => setDuration(Number(e.target.value))} /></label>
         <label>Yanıt sonrası bekleme (sn)<input type="number" min="0.1" max="600" step="0.1" value={interval} disabled={locked} onChange={e => setIntervalValue(Number(e.target.value))} /></label>
         <label>İstek zaman aşımı (sn)<input type="number" min="1" max="600" value={timeout} disabled={locked} onChange={e => setTimeoutValue(Number(e.target.value))} /></label>

@@ -24,7 +24,7 @@
 ## Manuel arayüz kontrolü
 
 - Admin/admin ile giriş; hatalı şifre mesajı.
-- 1–4 model seçimi; 1–16 girdi; ayrı bağlam seçimi ve metin düzenleme.
+- 1–4 model seçimi; 1–24 girdi; ayrı bağlam seçimi ve metin düzenleme.
 - Tek istek, eşzamanlı, seri vs. eşzamanlı modları.
 - Yeni demo istekleri reddedilir; geçmiş demo raporları sentetik olarak işaretli kalır.
 - Tüm metriğin görünmesi, referans model farkları ve istek çıktıları.
@@ -70,8 +70,8 @@ Gerçek sağlayıcı sözleşme testleri, farklı SSE/protokol adaptörleri, tok
 - HTTP 200, guard pass, attempts=1 veya >1, başlık/usage eksikliği ayrı korunur. Eksik usage hız üretmez; reasoning-only cevap başarısızdır.
 - JSON normal cevap, kesik SSE, HTTP 500, durdurma, süreç yeniden başlatma, sayfalama, kimlik doğrulama ve JSON dışa aktarımı yerel fixture ile doğrulanır.
 
-## 16 istek, temiz kurulum ve paketli örnekler
-- 4 model × 16 girdi yerel fixture ile tamamlanır; 17 girdi reddedilir. Süreli testte 16 paralel döngü desteklenir; 17 reddedilir.
+## 24 istek, temiz kurulum ve paketli örnekler
+- 4 model × 24 girdi yerel fixture ile tamamlanır; 25 girdi reddedilir. Süreli testte 24 paralel döngü desteklenir; 25 reddedilir.
 - Taze DB’de tüm kullanıcı tabloları boş; yeniden başlatma boş model/bağlam tablosunu doldurmaz. Mevcut kayıt ve anahtarlar korunur.
 - 32K/64K listesi içerik taşımamalı; detay UTF-8 dosyasının ve SHA-256 değerinin aynısı olmalı. Örnek yüklemek arşiv kaydı veya koşu yaratmamalı.
 - 16 adet 64K örnek gerçek HTTP uygulama uç noktasından kabul edilir. Örnekten kayıt oluşturmak yalnızca açık kaydetme eylemiyle gerçekleşir.

@@ -71,7 +71,7 @@ export function ModeExplanation({
               {compare ? "İkinci faz · aynı anda" : "Aynı anda gönderim"}
             </span>
             <div className="sequence-items concurrent">
-              {Array.from({ length: Math.min(inputs, 16) }, (_, i) => (
+              {Array.from({ length: Math.min(inputs, 24) }, (_, i) => (
                 <span className="sequence-request" key={i}>
                   Girdi {String(i + 1).padStart(2, "0")}
                 </span>

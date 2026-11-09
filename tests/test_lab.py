@@ -27,6 +27,8 @@ class Fixture(BaseHTTPRequestHandler):
     peak = 0
     bodies = []
     authorizations = []
+    barrier = threading.Event()
+    barrier_count = 0
 
     def log_message(self, *args):
         pass
@@ -38,10 +40,16 @@ class Fixture(BaseHTTPRequestHandler):
             type(self).authorizations.append(self.headers.get('Authorization'))
             type(self).current += 1
             type(self).peak = max(type(self).peak, type(self).current)
+            if body['model'] == 'barrier':
+                type(self).barrier_count += 1
+                if type(self).barrier_count == 48:
+                    type(self).barrier.set()
         self.send_response(200)
         self.send_header('Content-Type', 'application/json' if not body.get('stream', True) or body['model'] == 'json-response' else 'text/event-stream')
         self.end_headers()
         try:
+            if body['model'] == 'barrier':
+                type(self).barrier.wait(5)
             if not body.get('stream', True) or body['model'] == 'json-response':
                 time.sleep(.06)
                 self.wfile.write(json.dumps({'choices': [{'message': {'content': 'Normal cevap'}, 'finish_reason': 'stop'}], 'usage': {'prompt_tokens': 21, 'completion_tokens': 10}}).encode())
@@ -237,7 +245,7 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(self.store.get('reports',run['id'])['status'],'cancelled')
 
     def test_validation_and_active_run_guard(self):
-        for changes in ({'prompts': ['x']*17}, {'prompts':['']}, {'model_ids':['missing']}, {'max_tokens':0}, {'temperature':float('nan')}, {'mode':'single'}, {'model_ids':[self.model['id']]*2}):
+        for changes in ({'prompts': ['x']*25}, {'prompts':['']}, {'model_ids':['missing']}, {'max_tokens':0}, {'temperature':float('nan')}, {'mode':'single'}, {'model_ids':[self.model['id']]*2}):
             with self.assertRaises(ValueError):
                 self.engine.start(self.config | changes)
         run=self.engine.start(self.config)
@@ -254,13 +262,23 @@ class IntegrationTests(unittest.TestCase):
         self.assertNotIn('old-demo', [m['id'] for m in self.store.public_models()])
         self.assertIsNotNone(self.store.get('models', 'old-demo'))
 
-    def test_four_models_sixteen_requests_supported(self):
+    def test_four_models_twenty_four_requests_supported(self):
         ids=[]
         for i in range(4):
             ids.append(self.store.save_model({'name':f'Test{i}','model':'fixture','base_url':self.base})['id'])
-        run=self.run_config(model_ids=ids,prompts=['x']*16,model_schedule='parallel')
+        run=self.run_config(model_ids=ids,prompts=['x']*24,model_schedule='parallel')
         self.assertEqual(run['status'],'completed')
-        self.assertEqual(sum(m['summary']['completed'] for m in run['phases'][0]['models']),64)
+        self.assertEqual(sum(m['summary']['completed'] for m in run['phases'][0]['models']),96)
+
+    def test_two_models_dispatch_24_each_without_waiting(self):
+        Fixture.barrier.clear()
+        Fixture.barrier_count = 0
+        ids = [self.store.save_model({'name': f'Parallel {i}', 'model': 'barrier', 'base_url': self.base})['id'] for i in range(2)]
+        run = self.engine.start(self.config | {'model_ids': ids, 'prompts': ['x'] * 24, 'timeout': 10})
+        result = await_report(self.engine, run['id'], timeout=15)
+        self.assertTrue(Fixture.barrier.is_set(), '48 requests must reach the provider before any can finish')
+        self.assertEqual(Fixture.barrier_count, 48)
+        self.assertEqual([m['summary']['completed'] for m in result['phases'][0]['models']], [24, 24])
 
     def test_http_auth_origin_and_exports(self):
         app=ThreadingHTTPServer(('127.0.0.1',0),handler_for(self.engine))

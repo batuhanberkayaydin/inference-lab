@@ -137,10 +137,10 @@ class DurationTests(unittest.TestCase):
         self.assertEqual(len(duration.page(self.engine,run['id'],2,3)['requests']),3)
         self.assertNotIn('text',duration.page(self.engine,run['id'])['requests'][0])
 
-    def test_sixteen_parallel_lanes(self):
-        run = self.run_case('pass',concurrency=16,interval_s=1)
-        self.assertEqual(len(run['requests']),16)
-        self.assertEqual(Provider.peak,16)
+    def test_twenty_four_parallel_lanes(self):
+        run = self.run_case('pass',concurrency=24,interval_s=1)
+        self.assertEqual(len(run['requests']),24)
+        self.assertEqual(Provider.peak,24)
 
     def test_retry_and_normal_json(self):
         run = self.run_case('retry',interval_s=1,payload=self.config['payload'] | {'stream':False})
@@ -185,7 +185,7 @@ class DurationTests(unittest.TestCase):
         self.assertEqual(restarted['requests'][0]['status'],'cancelled')
 
     def test_validation(self):
-        for change in ({'concurrency':17},{'duration_s':0},{'interval_s':0},{'payload':self.config['payload'] | {'model':'different'}}):
+        for change in ({'concurrency':25},{'duration_s':0},{'interval_s':0},{'payload':self.config['payload'] | {'model':'different'}}):
             with self.assertRaises(ValueError): duration.start(self.engine,self.config | change)
 
     def test_authenticated_routes_and_export(self):

@@ -1,6 +1,6 @@
 # Inference Lab
 
-Yerel model karşılaştırma ve eşzamanlı yük ölçüm aracı. 1–16 ayrı girdi, 1–4 model, yönetici ayarları, hazır bağlamlar ve otomatik kayıtlı raporlar.
+Yerel model karşılaştırma ve eşzamanlı yük ölçüm aracı. 1–24 ayrı girdi, 1–4 model, yönetici ayarları, hazır bağlamlar ve otomatik kayıtlı raporlar.
 
 ## Başlatma
 
@@ -75,7 +75,7 @@ Vite arayüzü [http://127.0.0.1:5173](http://127.0.0.1:5173) üzerinden API ça
 ## Test modları
 
 - **Tek istek:** tek girdi seçilen bütün modellerde ölçülür.
-- **Eşzamanlı yük:** 1–16 ayrı girdi, her model için aynı anda gönderilir.
+- **Eşzamanlı yük:** 1–24 ayrı girdi, her model için aynı anda gönderilir.
 - **Seri vs. eşzamanlı:** aynı girdiler önce tek tek (C1), ardından birlikte (CN) gönderilir; iki faz ayrı kaydedilir.
 - Modeller varsayılan olarak sırayla ölçülür. Ayrı donanımdaki sağlayıcıları aynı anda karşılaştırmak için “Aynı anda çalışsın” seçilebilir.
 
@@ -103,7 +103,7 @@ Kayıtlar SQLite `inputs` tablosunda saklanır; uygulama tekrar açıldığında
 
 Örnek seçmek API isteği başlatmaz. Dosyalar ilk kurulumda kullanıcı tablolarına veya istek kutularına otomatik eklenmez. 32K / 64K etiketleri hedef uzunluk adlarıdır; tam 32.768 / 65.536 token garantisi vermez. Gerçek token sayısı modelin tokenizer’ına ve chat template’ine bağlıdır. Mevcut kurulumların model, girdi ve raporları korunur; eski demo kayıtları otomatik silinmez.
 
-2 model × 16 istek için “Modeller aynı anda çalışsın” ayarında toplam 32 eşzamanlı istek; 4 modelde toplam 64 eşzamanlı istek mümkündür. “Modeller sırayla” ayarında aynı anda yalnızca bir modelin 16 isteği çalışır.
+2 model × 24 istek için varsayılan “Modeller aynı anda çalışsın” ayarında toplam 48 eşzamanlı istek; 4 modelde toplam 96 eşzamanlı istek başlatılır. İşletim sistemi, ağ ve sağlayıcı kapasitesi gerçek varış ve işlenme zamanlarını etkileyebilir. “Modeller sırayla” ayarında aynı anda yalnızca bir modelin 24 isteği çalışır.
 
 ## Metrikler ve raporlar
 
@@ -115,7 +115,7 @@ Genel bakış grafiği benchmark ve kayıtlı raporlarda ortaktır. Verim veya k
 
 Draft/kabul oranı için isteğe bağlı metrics URL eklenir. Desteklenen sayaçlar: `spec_decode_num_drafts_total`, `spec_decode_num_draft_tokens_total`, `spec_decode_num_accepted_tokens_total`. [vLLM kaynak dokümanı](https://github.com/vllm-project/vllm/blob/main/docs/features/speculative_decoding/acceptance_metrics.md) bu sayaçların anlamlarını açıklar. Öncesi/sonrası farklar kullanılır; sayaçlar sunucu kapsamında olduğu için diğer trafik ve yayın gecikmesi sonucu etkileyebilir. Küçük ilk sürümde warmup, çoklu tekrar veya donanım izolasyonu doğrulaması yoktur.
 
-Bu uygulama performans ölçer; model cevaplarının doğruluğunu otomatik değerlendirmez. İlk sürümde her fazda 1–16 örnek kullanılır; p95/p99 istatistiksel genelleme yerine koşu özeti olarak okunmalıdır.
+Bu uygulama performans ölçer; model cevaplarının doğruluğunu otomatik değerlendirmez. İlk sürümde her fazda 1–24 örnek kullanılır; p95/p99 istatistiksel genelleme yerine koşu özeti olarak okunmalıdır.
 
 Koşular, durdurma ve hata durumları dahil, `data/lab.sqlite3` içinde saklanır. Raporlar geçmişten açılabilir, onay verilerek silinebilir ve **Markdown / CSV / JSON** olarak dışa aktarılabilir. Devam eden koşular silinemez. PDF için tarayıcı **PDF / Yazdır** seçeneği vardır. Girdiler ve model çıktıları raporlarda saklandığından kendi veri saklama politikanıza uygun içerik kullanın.
 
@@ -141,7 +141,7 @@ Protokol referansı: [OpenAI Chat Completions](https://developers.openai.com/api
 
 ## Süreli test ve vLLM empty guard
 
-**Süreli test** sayfasında tek model, 1–16 paralel döngü, süre (en fazla 1 saat), yanıt sonrası bekleme ve istek zaman aşımı seçilir. Her döngü kendi yanıtını alır, bekler ve yeniden gönderir; yavaş bir döngü diğerini bekletmez. Süre dolunca yeni istek başlatılmaz; devam eden istekler tamamlanır veya zaman aşımına uğrar. Bu yüzden gerçek bitiş zamanı belirtilen süreden uzun olabilir. 10.000 istek sınırında gönderim biter ve kayıt kısmi sonuç olarak işaretlenir. Durdur butonu açık bağlantıları da keser.
+**Süreli test** sayfasında tek model, 1–24 paralel döngü, süre (en fazla 1 saat), yanıt sonrası bekleme ve istek zaman aşımı seçilir. Her döngü kendi yanıtını alır, bekler ve yeniden gönderir; yavaş bir döngü diğerini bekletmez. Süre dolunca yeni istek başlatılmaz; devam eden istekler tamamlanır veya zaman aşımına uğrar. Bu yüzden gerçek bitiş zamanı belirtilen süreden uzun olabilir. 10.000 istek sınırında gönderim biter ve kayıt kısmi sonuç olarak işaretlenir. Durdur butonu açık bağlantıları da keser.
 
 Metin/kayıtlı girdi veya doğrudan chat/completions JSON gövdesi kullanılabilir. curl heredoc (`--data-binary @- <<'JSON'`) ve inline `--data-raw` içeri aktarılır. curl çalıştırılmaz ve dosyadan veri okunmaz; komuttaki anahtarlar/başlıklar aktarılmaz. Gövde ve --max-time okunur. Model kimliği seçilen kayıtlı modelle eşleşmelidir; sağlayıcı URL’si ve anahtarı admin ayarlarından alınır. Docker’da host servisi için `host.docker.internal` adresini kullanın. `chat_template_kwargs.enable_thinking` ve `reasoning_effort` korunur; stream isteklerinde usage istenir.
 

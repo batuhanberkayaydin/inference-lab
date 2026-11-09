@@ -11,7 +11,7 @@
 
 ## Değişmez ölçüm kuralları
 
-- En fazla 16 dolu girdi ve 4 farklı model. Karşılaştırılan modeller aynı girdi ve generation ayarlarını almalı.
+- En fazla 24 dolu girdi ve 4 farklı model. Karşılaştırılan modeller aynı girdi ve generation ayarlarını almalı.
 - Toplam verim = başarılı çıktı tokenları / model fazının duvar süresi; istek başına hızların toplamı değildir.
 - Token sayısı sağlayıcı `usage` alanından gelir. SSE parçaları token değildir. Eksik usage için token sayısı veya hız üretme.
 - TTFT ilk content/reasoning parçasına kadar geçen süredir. Akış hızı/TPOT tahmin etiketi taşımalıdır.

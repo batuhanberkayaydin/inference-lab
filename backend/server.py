@@ -376,8 +376,8 @@ class Engine:
         prompts = data.get('prompts', [])
         ids = data.get('model_ids', [])
         mode = data.get('mode', 'concurrent')
-        if not isinstance(prompts, list) or not 1 <= len(prompts) <= 16 or any(not isinstance(p, str) or not p.strip() or len(p) > 1_000_000 for p in prompts):
-            raise ValueError('1–16 adet dolu girdi gerekir; her girdi en fazla 1 milyon karakter olabilir.')
+        if not isinstance(prompts, list) or not 1 <= len(prompts) <= 24 or any(not isinstance(p, str) or not p.strip() or len(p) > 1_000_000 for p in prompts):
+            raise ValueError('1–24 adet dolu girdi gerekir; her girdi en fazla 1 milyon karakter olabilir.')
         if not isinstance(ids, list) or not 1 <= len(ids) <= 4 or len(set(ids)) != len(ids):
             raise ValueError('1–4 farklı model seçin.')
         if mode not in ('single', 'concurrent', 'compare') or (mode == 'single' and len(prompts) != 1):
@@ -391,7 +391,7 @@ class Engine:
             raise ValueError('Temperature 0–2 arasında olmalıdır.')
         if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 1 <= timeout <= 600:
             raise ValueError('Zaman aşımı 1–600 saniye arasında olmalıdır.')
-        if data.get('model_schedule', 'sequential') not in ('sequential', 'parallel'):
+        if data.get('model_schedule', 'parallel') not in ('sequential', 'parallel'):
             raise ValueError('Geçerli model çalışma düzeni seçin.')
         if type(data.get('stream', True)) is not bool:
             raise ValueError('Yanıt biçimi stream veya normal olmalıdır.')
@@ -412,7 +412,7 @@ class Engine:
             ident = secrets.token_hex(8)
             clean_models = [{k: m[k] for k in ('id', 'name', 'model', 'provider', 'color', 'base_url', 'metrics_url')} for m in models]
             config = {'mode': mode, 'prompts': prompts, 'max_tokens': max_tokens, 'temperature': temperature,
-                      'timeout': timeout, 'model_schedule': data.get('model_schedule', 'sequential'), 'demo': demo, 'stream': data.get('stream', True)}
+                      'timeout': timeout, 'model_schedule': data.get('model_schedule', 'parallel'), 'demo': demo, 'stream': data.get('stream', True)}
             run = {'id': ident, 'name': str(data.get('name', '')).strip()[:120] or f'{"Demo" if demo else "Benchmark"} · {len(prompts)} istek',
                    'created_at': now(), 'finished_at': None, 'status': 'running', 'config': config, 'models': clean_models,
                    'fingerprint': hashlib.sha256(json.dumps({'config': config, 'models': clean_models}, sort_keys=True).encode()).hexdigest(),
@@ -721,7 +721,7 @@ def markdown_report(run):
                 stats = {k:row.get(k) for k in ('input_tokens', 'output_tokens', 'ttft_s', 'e2e_s', 'stream_tps', 'tpot_s', 'finish_reason', 'usage_source')}
                 lines += ['', f'### {model["name"]} · Girdi {row["index"]+1} · {row["status"]}', '', '```json', json.dumps(stats,ensure_ascii=False,indent=2), '```', '', row.get('error') or row['text']]
         lines.append('')
-    lines += ['## Ölçüm yöntemi', '', 'Verim = başarılı çıktı tokenları / model fazının duvar süresi. TTFT ilk içerik veya reasoning parçasına kadardır. Akış hızı ve TPOT, sağlayıcı token sayısı ile içerik parçalarının zaman aralığından türetilen tahminlerdir; SSE parçaları token sayılmaz. Eksik usage değerleri boş bırakılır. p95 doğrusal interpolasyonla hesaplanır; 1–16 örnek istatistiksel genelleme sağlamaz.', '', '## Notlar', ''] + ['- ' + w for w in dict.fromkeys(run['warnings'])]
+    lines += ['## Ölçüm yöntemi', '', 'Verim = başarılı çıktı tokenları / model fazının duvar süresi. TTFT ilk içerik veya reasoning parçasına kadardır. Akış hızı ve TPOT, sağlayıcı token sayısı ile içerik parçalarının zaman aralığından türetilen tahminlerdir; SSE parçaları token sayılmaz. Eksik usage değerleri boş bırakılır. p95 doğrusal interpolasyonla hesaplanır; 1–24 örnek istatistiksel genelleme sağlamaz.', '', '## Notlar', ''] + ['- ' + w for w in dict.fromkeys(run['warnings'])]
     return '\n'.join(lines)
 
 

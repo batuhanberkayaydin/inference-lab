@@ -751,7 +751,7 @@ function Results({
             </dd>
             <dt>p95 / p99</dt>
             <dd>
-              Başarılı istekler üzerinde doğrusal interpolasyon. 1–16 örneklik
+              Başarılı istekler üzerinde doğrusal interpolasyon. 1–24 örneklik
               ilk sürüm; istatistiksel genelleme için tekrarlı koşular gerekir.
             </dd>
             <dt>Draft / kabul</dt>
@@ -1081,7 +1081,7 @@ function App() {
   const [prompts, setPrompts] = useState<string[]>(["", "", "", ""]);
   const [mode, setMode] = useState("concurrent");
   const [stream, setStream] = useState(true);
-  const [schedule, setSchedule] = useState("sequential");
+  const [schedule, setSchedule] = useState("parallel");
   const [maxTokens, setMaxTokens] = useState(512);
   const [temperature, setTemperature] = useState(0);
   const [timeout, setTimeoutValue] = useState(120);
@@ -1770,7 +1770,7 @@ function App() {
                       {mode !== "single" && (
                         <div className="count-control">
                           <span>İstek sayısı</span>
-                          {[1, 2, 4, 8, 16].map((n) => (
+                          {[1, 2, 4, 8, 16, 24].map((n) => (
                             <button
                               key={n}
                               disabled={running || busy}
@@ -1786,7 +1786,7 @@ function App() {
                             disabled={running || busy}
                             onChange={(e) => count(Number(e.target.value))}
                           >
-                            {Array.from({ length: 16 }, (_, i) => (
+                            {Array.from({ length: 24 }, (_, i) => (
                               <option key={i + 1}>{i + 1}</option>
                             ))}
                           </select>
