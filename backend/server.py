@@ -78,6 +78,15 @@ def endpoint(base, suffix='chat/completions'):
     return base + ('/' if base.endswith('/v1') else '/v1/') + suffix
 
 
+def reset_endpoint(base):
+    base = base.rstrip('/')
+    for suffix in ('/v1/chat/completions', '/v1'):
+        if base.endswith(suffix):
+            base = base[:-len(suffix)]
+            break
+    return base + '/reset_prefix_cache'
+
+
 def guard_headers(headers):
     raw = headers.get('x-vllm-empty-guard-attempts')
     attempts = int(raw) if raw and re.fullmatch(r'[0-9]{1,6}', raw.strip()) and int(raw) >= 1 else None
@@ -399,6 +408,8 @@ class Engine:
             raise ValueError('Geçerli model çalışma düzeni seçin.')
         if type(data.get('stream', True)) is not bool:
             raise ValueError('Yanıt biçimi stream veya normal olmalıdır.')
+        if type(data.get('reset_prefix_cache', False)) is not bool:
+            raise ValueError('Cache sıfırlama seçimi geçersiz.')
         models = [self.store.get('models', ident) for ident in ids]
         if any(m is None for m in models):
             raise ValueError('Seçilen model bulunamadı. Ayarlardan model ekleyin.')
@@ -416,7 +427,8 @@ class Engine:
             ident = secrets.token_hex(8)
             clean_models = [{k: m[k] for k in ('id', 'name', 'model', 'provider', 'color', 'base_url', 'metrics_url')} for m in models]
             config = {'mode': mode, 'prompts': prompts, 'max_tokens': max_tokens, 'temperature': temperature,
-                      'timeout': timeout, 'model_schedule': data.get('model_schedule', 'parallel'), 'demo': demo, 'stream': data.get('stream', True)}
+                      'timeout': timeout, 'model_schedule': data.get('model_schedule', 'parallel'), 'demo': demo, 'stream': data.get('stream', True),
+                      'reset_prefix_cache': data.get('reset_prefix_cache', False)}
             run = {'id': ident, 'name': str(data.get('name', '')).strip()[:120] or f'{"Demo" if demo else "Benchmark"} · {len(prompts)} istek',
                    'created_at': now(), 'finished_at': None, 'status': 'running', 'config': config, 'models': clean_models,
                    'fingerprint': hashlib.sha256(json.dumps({'config': config, 'models': clean_models}, sort_keys=True).encode()).hexdigest(),
@@ -463,12 +475,60 @@ class Engine:
         except Exception:
             return {}, 'Metrics uç noktasına erişilemedi; draft ve kabul oranı ölçülemedi.'
 
+    def reset_prefix_cache(self, run, phase, model):
+        class NoRedirect(HTTPRedirectHandler):
+            def redirect_request(self, req, fp, code, msg, headers, newurl):
+                return None
+        headers = {'Accept': 'application/json'}
+        if model['api_key']:
+            headers['Authorization'] = 'Bearer ' + model['api_key']
+        status, reason, success = None, 'connection_error', False
+        try:
+            opener = build_opener(ProxyHandler({}), NoRedirect())
+            with opener.open(Request(reset_endpoint(model['base_url']), data=b'', headers=headers, method='POST'), timeout=5) as response:
+                status = response.status
+                data = json.loads(response.read(4097))
+            success = isinstance(data, dict) and data.get('success') is True
+            reason = 'success' if success else 'not_confirmed'
+        except HTTPError as exc:
+            status, reason = exc.code, 'http_error'
+            exc.close()
+        except (ValueError, UnicodeError):
+            reason = 'invalid_response'
+        except Exception:
+            reason = 'connection_error'
+        LOGGER.warning('%s', json.dumps({'event': 'prefix_cache_reset', 'run_id': run['id'], 'phase': phase,
+            'model_id': model['id'], 'success': success, 'http_status': status, 'reason': reason}))
+        return {'model_id': model['id'], 'success': success, 'http_status': status, 'reason': reason}
+
     def execute(self, run, models):
         cancel = self.events[run['id']]
         try:
             for phase in run['phases']:
                 if cancel.is_set():
                     break
+                if run['config']['reset_prefix_cache']:
+                    results = []
+                    for model in models:
+                        if cancel.is_set():
+                            break
+                        results.append(self.reset_prefix_cache(run, phase['name'], model))
+                    with self.lock:
+                        phase['cache_resets'] = results
+                        self.persist(run)
+                    if cancel.is_set():
+                        break
+                    if any(not result['success'] for result in results):
+                        with self.lock:
+                            run['status'] = 'failed'
+                            run['warnings'].append(f"{phase['name']} fazı için prefix cache sıfırlama doğrulanamadı; faz ve sonraki fazlar başlatılmadı. HTTP durumunu ve vLLM erişimini kontrol edin.")
+                            for pending_phase in run['phases']:
+                                for target in pending_phase['models']:
+                                    if target['status'] == 'queued':
+                                        target['status'] = 'cancelled'
+                                        for row in target['requests']:
+                                            row['status'] = 'cancelled'
+                        return
                 if run['config']['model_schedule'] == 'parallel':
                     with concurrent.futures.ThreadPoolExecutor(max_workers=len(models)) as pool:
                         list(pool.map(lambda pair: self.measure_model(run, phase, *pair), zip(phase['models'], models)))

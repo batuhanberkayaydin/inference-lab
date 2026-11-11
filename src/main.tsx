@@ -1084,9 +1084,10 @@ function App() {
   const [mode, setMode] = useState("concurrent");
   const [stream, setStream] = useState(true);
   const [schedule, setSchedule] = useState("parallel");
-  const [maxTokens, setMaxTokens] = useState(512);
-  const [temperature, setTemperature] = useState(0);
-  const [timeout, setTimeoutValue] = useState(120);
+  const [maxTokens, setMaxTokens] = useState('512');
+  const [temperature, setTemperature] = useState('0');
+  const [timeout, setTimeoutValue] = useState('120');
+  const [resetPrefixCache, setResetPrefixCache] = useState(false);
   const [name, setName] = useState("");
   const [run, setRun] = useState<Report | null>(null);
   const [historic, setHistoric] = useState<Report | null>(null);
@@ -1309,6 +1310,15 @@ function App() {
     } finally { setTestingModel(null); }
   }
   async function start() {
+    const outputLimit = maxTokens.trim() === '' ? 512 : Number(maxTokens);
+    const tempValue = temperature.trim() === '' ? 0 : Number(temperature);
+    const timeoutValue = timeout.trim() === '' ? 120 : Number(timeout);
+    if (!Number.isInteger(outputLimit) || outputLimit < 1 || outputLimit > 32768 ||
+        !Number.isFinite(tempValue) || tempValue < 0 || tempValue > 2 ||
+        !Number.isFinite(timeoutValue) || timeoutValue < 1 || timeoutValue > 600) {
+      setError('Çıktı limiti 1–32768, temperature 0–2 ve zaman aşımı 1–600 arasında olmalıdır.');
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -1317,9 +1327,10 @@ function App() {
         prompts: effectivePrompts,
         mode,
         demo: false,
-        max_tokens: maxTokens,
-        temperature,
-        timeout,
+        max_tokens: outputLimit,
+        temperature: tempValue,
+        timeout: timeoutValue,
+        reset_prefix_cache: resetPrefixCache,
         model_schedule: schedule,
         stream,
         name,
@@ -1873,7 +1884,8 @@ function App() {
                           max="32768"
                           value={maxTokens}
                           disabled={running || busy}
-                          onChange={(e) => setMaxTokens(Number(e.target.value))}
+                          placeholder="512"
+                          onChange={(e) => setMaxTokens(e.target.value)}
                         />
                         <small>token</small>
                       </span>
@@ -1887,7 +1899,8 @@ function App() {
                         max="2"
                         value={temperature}
                         disabled={running || busy}
-                        onChange={(e) => setTemperature(Number(e.target.value))}
+                        placeholder="0"
+                        onChange={(e) => setTemperature(e.target.value)}
                       />
                     </label>
                     <label>
@@ -1899,9 +1912,8 @@ function App() {
                           max="600"
                           value={timeout}
                           disabled={running || busy}
-                          onChange={(e) =>
-                            setTimeoutValue(Number(e.target.value))
-                          }
+                          placeholder="120"
+                          onChange={(e) => setTimeoutValue(e.target.value)}
                         />
                         <small>sn</small>
                       </span>
@@ -1922,6 +1934,11 @@ function App() {
                         placeholder="Örn. 16K · 4 concurrent"
                       />
                     </label>
+                  </div>
+                  <p className="generation-defaults">Boş bırakılan alanlarda 512 token, temperature 0 ve 120 sn kullanılır. Ayarlar seçilen tüm modellere aynı uygulanır.</p>
+                  <div className="cache-reset-option">
+                    <label><input type="checkbox" checked={resetPrefixCache} disabled={running || busy} onChange={e => setResetPrefixCache(e.target.checked)} /> <span>Başlamadan önce modellerin prefix cache’ini sıfırla</span></label>
+                    <p>Yalnızca erişimi kısıtlı vLLM test ortamında kullanın. Her faz öncesi tüm modellerde sıfırlama doğrulanır; başarısızsa faz başlamaz. Çalışan diğer istekleri etkileyebilir.</p>
                   </div>
                 </div>
                 <div className="launch-bar">

@@ -28,6 +28,9 @@ class Fixture(BaseHTTPRequestHandler):
     peak = 0
     bodies = []
     authorizations = []
+    reset_results = []
+    reset_calls = []
+    reset_counts_at_inference = []
     barrier = threading.Event()
     barrier_count = 0
 
@@ -35,8 +38,23 @@ class Fixture(BaseHTTPRequestHandler):
         pass
 
     def do_POST(self):
+        if self.path.endswith('/reset_prefix_cache'):
+            with self.lock:
+                type(self).reset_calls.append(self.path)
+                success = type(self).reset_results.pop(0) if type(self).reset_results else True
+            if success == '404':
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b'private-error-body')
+                return
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'success': success}).encode())
+            return
         body = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
         with self.lock:
+            type(self).reset_counts_at_inference.append(len(type(self).reset_calls))
             type(self).bodies.append(body)
             type(self).authorizations.append(self.headers.get('Authorization'))
             type(self).current += 1
@@ -147,6 +165,9 @@ class IntegrationTests(unittest.TestCase):
             Fixture.peak = 0
             Fixture.bodies = []
             Fixture.authorizations = []
+            Fixture.reset_results = []
+            Fixture.reset_calls = []
+            Fixture.reset_counts_at_inference = []
 
     def tearDown(self):
         self.temp.cleanup()
@@ -154,6 +175,51 @@ class IntegrationTests(unittest.TestCase):
     def run_config(self, **changes):
         run = self.engine.start(self.config | changes)
         return await_report(self.engine, run['id'])
+
+    def test_reset_success_precedes_requests_and_each_compare_phase(self):
+        ids = [self.store.save_model({'name': f'Model {i}', 'model': f'fixture-{i}', 'base_url': self.base, 'api_key': 'test-only-secret'})['id'] for i in range(2)]
+        with self.assertLogs('inference_lab.requests', level='WARNING') as logs:
+            run = self.run_config(model_ids=ids, prompts=['x'], mode='compare', reset_prefix_cache=True, max_tokens=600, temperature=0.7, timeout=3)
+        self.assertEqual(run['status'], 'completed')
+        self.assertEqual(len(Fixture.reset_calls), 4)
+        self.assertEqual([len(p['cache_resets']) for p in run['phases']], [2, 2])
+        self.assertTrue(all(r['success'] for p in run['phases'] for r in p['cache_resets']))
+        self.assertEqual(len(logs.records), 4)
+        self.assertTrue(all(json.loads(r.getMessage())['success'] for r in logs.records))
+        self.assertNotIn('test-only-secret', ''.join(logs.output))
+        self.assertEqual(len(Fixture.bodies), 4)
+        self.assertEqual(Fixture.reset_counts_at_inference, [2, 2, 4, 4])
+        self.assertTrue(all(b['max_tokens'] == 600 and b['temperature'] == 0.7 for b in Fixture.bodies))
+        self.assertEqual(run['config']['timeout'], 3)
+
+    def test_reset_failure_aborts_before_any_inference(self):
+        Fixture.reset_results = [False]
+        with self.assertLogs('inference_lab.requests', level='WARNING') as logs:
+            run = self.run_config(prompts=['x'], reset_prefix_cache=True)
+        self.assertEqual(run['status'], 'failed')
+        self.assertEqual(Fixture.bodies, [])
+        self.assertFalse(run['phases'][0]['cache_resets'][0]['success'])
+        self.assertEqual(json.loads(logs.records[0].getMessage())['reason'], 'not_confirmed')
+        self.assertTrue(any('sıfırlama' in w for w in run['warnings']))
+
+    def test_reset_http_error_does_not_start_inference_or_log_body(self):
+        Fixture.reset_results = ['404']
+        with self.assertLogs('inference_lab.requests', level='WARNING') as logs:
+            run = self.run_config(prompts=['x'], reset_prefix_cache=True)
+        self.assertEqual(run['status'], 'failed')
+        self.assertEqual(Fixture.bodies, [])
+        entry = json.loads(logs.records[0].getMessage())
+        self.assertEqual((entry['success'], entry['http_status'], entry['reason']), (False, 404, 'http_error'))
+        self.assertNotIn('private-error-body', ''.join(logs.output))
+
+    def test_generation_defaults_match_for_each_model(self):
+        ids = [self.store.save_model({'name': f'Model {i}', 'model': f'fixture-{i}', 'base_url': self.base})['id'] for i in range(2)]
+        run = self.engine.start({'model_ids': ids, 'prompts': ['x'], 'mode': 'concurrent'})
+        result = await_report(self.engine, run['id'])
+        self.assertEqual(result['status'], 'completed')
+        self.assertEqual((result['config']['max_tokens'], result['config']['temperature'], result['config']['timeout']), (512, 0, 120))
+        self.assertEqual([(b['max_tokens'], b['temperature']) for b in Fixture.bodies], [(512, 0), (512, 0)])
+        self.assertEqual(Fixture.reset_calls, [])
 
     def test_provider_http_failures_log_status_without_request_or_response_secrets(self):
         secret_prompt = 'private-prompt-not-for-logs'

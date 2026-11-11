@@ -107,6 +107,10 @@ Kayıtlar SQLite `inputs` tablosunda saklanır; uygulama tekrar açıldığında
 
 ## Metrikler ve raporlar
 
+Benchmark ayarlarında **Başlamadan önce modellerin prefix cache’ini sıfırla** isteğe bağlıdır ve varsayılan olarak kapalıdır. Açılırsa her fazdan önce seçili modellerin kayıtlı sağlayıcı adresindeki `/reset_prefix_cache` uç noktasına POST gönderilir. Her modelden `{"success": true}` gelmedikçe o faz başlamaz; önceki fazların sonuçları korunur. Sonuçlar raporun JSON verisinde ve `docker compose logs -f -t inference-lab` çıktısında `prefix_cache_reset` olayında bulunur. Yalnızca yerel prefix cache istenir; dış cache ayrıca sıfırlanmaz. vLLM geliştirme endpoint'leri tehlikelidir ve normal API anahtarıyla korunmayabilir: yalnızca erişimi kısıtlı, yetkili test ortamında kullanın. Ortak sunucudaki diğer kullanımları etkileyebilir. Başlangıçta sıfırlamak, aynı fazdaki ortak prefix kullanımını engellemez.
+
+Çıktı limiti, temperature ve zaman aşımı boş bırakıldığında sırasıyla 512 token, 0 ve 120 saniyedir. Çıktı limiti ve temperature her model isteğine aynı gönderilir; zaman aşımı istemcide her istek için uygulanır. Sunucunun yapılandırması değiştirilmez; sağlayıcının isteği nasıl ele aldığı ve sınırları ayrıca sağlayıcıya bağlıdır.
+
 Başarısız sağlayıcı istekleri Docker loglarında `provider_request_failed` olayı olarak görünür: `docker compose logs -f inference-lab`. Olay; koşu ve model kimliği, faz, girdi sıra numarası (süreli testte döngü), HTTP durum kodu varsa kod, hata kategorisi, aşama, geçen süre, timeout ve kısmi yanıt bilgisi içerir. `waiting_for_headers` bağlantı kurulması ve HTTP yanıt başlıklarının beklenmesini, `receiving_response` yanıt gövdesinin okunmasını kapsar. API anahtarı, URL, girdi, yanıt ve sağlayıcının ham hata gövdesi loglanmaz; sağlayıcının ayrıntılı hata mesajı için kendi loglarına bakın. Hatalar otomatik yeniden denenmez.
 
 Toplam çıktı verimi, TTFT ortalama/p95/p99, tahmini akış hızı, uçtan uca ortalama/p95, duvar süresi, giriş/çıktı token sayısı, tahmini TPOT, p95 içerik parçası aralığı, istek/sn, draft/adım ve ortalama kabul oranı.

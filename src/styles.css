@@ -929,6 +929,11 @@ main {
   align-items: flex-end;
   margin-top: 21px;
 }
+.cache-reset-option { margin-top: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; }
+.generation-defaults { margin-top: 9px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.cache-reset-option label { display: flex; flex-direction: row; align-items: center; gap: 9px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.cache-reset-option input { width: 16px; height: 16px; accent-color: var(--accent); flex: none; }
+.cache-reset-option p { margin: 7px 0 0 25px; max-width: 90ch; color: var(--muted); font-size: 12px; line-height: 1.6; }
 .generation-settings > label {
   font-size: 11px;
   font-weight: 550;

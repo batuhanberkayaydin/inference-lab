@@ -36,6 +36,9 @@
 
 ## Kayıtlı girdi regresyonları
 
+- Prefix cache sıfırlama varsayılan kapalıdır; açıldığında her fazdan önce her modelin `success: true` yanıtı gerekir. Sıfırlama başarısızsa o fazda istek gönderilmez; sonuç rapor ve logda, anahtarlar log dışında kalır.
+- Varsayılan 512 / 0 / 120 ve özel 600 / 0,7 ayarları modeller arasında tutarlıdır; zaman aşımı istemci ayarıdır.
+
 - Başarısız sağlayıcı isteği: HTTP kodu, aşama, süre, istek ve koşu kimliği loglanır; prompt, anahtar, URL ve ham hata içeriği loga girmez. Timeout ve HTTP 429 ayrı kategorilerde görünür; iptal hata olarak loglanmaz.
 
 - Uzun Türkçe bağlam, satır sonları ve soru birleşimi kayıpsız korunur.
