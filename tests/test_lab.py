@@ -217,8 +217,8 @@ class IntegrationTests(unittest.TestCase):
         run = self.engine.start({'model_ids': ids, 'prompts': ['x'], 'mode': 'concurrent'})
         result = await_report(self.engine, run['id'])
         self.assertEqual(result['status'], 'completed')
-        self.assertEqual((result['config']['max_tokens'], result['config']['temperature'], result['config']['timeout']), (512, 0, 120))
-        self.assertEqual([(b['max_tokens'], b['temperature']) for b in Fixture.bodies], [(512, 0), (512, 0)])
+        self.assertEqual((result['config']['max_tokens'], result['config']['temperature'], result['config']['timeout']), (20000, 0.1, 120))
+        self.assertEqual([(b['max_tokens'], b['temperature']) for b in Fixture.bodies], [(20000, 0.1), (20000, 0.1)])
         self.assertEqual(Fixture.reset_calls, [])
 
     def test_provider_http_failures_log_status_without_request_or_response_secrets(self):

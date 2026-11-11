@@ -1130,8 +1130,8 @@ function App() {
   const [mode, setMode] = useState("concurrent");
   const [stream, setStream] = useState(true);
   const [schedule, setSchedule] = useState("parallel");
-  const [maxTokens, setMaxTokens] = useState('512');
-  const [temperature, setTemperature] = useState('0');
+  const [maxTokens, setMaxTokens] = useState('20000');
+  const [temperature, setTemperature] = useState('0.1');
   const [timeout, setTimeoutValue] = useState('120');
   const [resetPrefixCache, setResetPrefixCache] = useState(false);
   const [name, setName] = useState("");
@@ -1356,8 +1356,8 @@ function App() {
     } finally { setTestingModel(null); }
   }
   async function start() {
-    const outputLimit = maxTokens.trim() === '' ? 512 : Number(maxTokens);
-    const tempValue = temperature.trim() === '' ? 0 : Number(temperature);
+    const outputLimit = maxTokens.trim() === '' ? 20000 : Number(maxTokens);
+    const tempValue = temperature.trim() === '' ? 0.1 : Number(temperature);
     const timeoutValue = timeout.trim() === '' ? 120 : Number(timeout);
     if (!Number.isInteger(outputLimit) || outputLimit < 1 || outputLimit > 32768 ||
         !Number.isFinite(tempValue) || tempValue < 0 || tempValue > 2 ||
@@ -1930,7 +1930,7 @@ function App() {
                           max="32768"
                           value={maxTokens}
                           disabled={running || busy}
-                          placeholder="512"
+                          placeholder="20000"
                           onChange={(e) => setMaxTokens(e.target.value)}
                         />
                         <small>token</small>
@@ -1945,7 +1945,7 @@ function App() {
                         max="2"
                         value={temperature}
                         disabled={running || busy}
-                        placeholder="0"
+                        placeholder="0.1"
                         onChange={(e) => setTemperature(e.target.value)}
                       />
                     </label>
@@ -1981,7 +1981,7 @@ function App() {
                       />
                     </label>
                   </div>
-                  <p className="generation-defaults">Boş bırakılan alanlarda 512 token, temperature 0 ve 120 sn kullanılır. Ayarlar seçilen tüm modellere aynı uygulanır.</p>
+                  <p className="generation-defaults">Boş bırakılan alanlarda 20.000 token, temperature 0,1 ve 120 sn kullanılır. Ayarlar seçilen tüm modellere aynı uygulanır.</p>
                   <div className="cache-reset-option">
                     <label><input type="checkbox" checked={resetPrefixCache} disabled={running || busy} onChange={e => setResetPrefixCache(e.target.checked)} /> <span>Başlamadan önce modellerin prefix cache’ini sıfırla</span></label>
                     <p>Yalnızca erişimi kısıtlı vLLM test ortamında kullanın. Her faz öncesi tüm modellerde sıfırlama doğrulanır; başarısızsa faz başlamaz. Çalışan diğer istekleri etkileyebilir.</p>

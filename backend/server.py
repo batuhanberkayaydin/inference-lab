@@ -395,8 +395,8 @@ class Engine:
             raise ValueError('1–4 farklı model seçin.')
         if mode not in ('single', 'concurrent', 'compare') or (mode == 'single' and len(prompts) != 1):
             raise ValueError('Geçerli bir test modu seçin; tek istek modu bir girdi gerektirir.')
-        max_tokens = data.get('max_tokens', 512)
-        temperature = data.get('temperature', 0)
+        max_tokens = data.get('max_tokens', 20000)
+        temperature = data.get('temperature', 0.1)
         timeout = data.get('timeout', 120)
         if type(max_tokens) is not int or not 1 <= max_tokens <= 32768:
             raise ValueError('Çıktı limiti 1–32768 arasında olmalıdır.')
