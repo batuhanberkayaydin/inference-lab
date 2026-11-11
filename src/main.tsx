@@ -408,6 +408,51 @@ function Results({
 }) {
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [tab, setTab] = useState("summary");
+  const [printError, setPrintError] = useState("");
+  function printReport(event: React.MouseEvent<HTMLButtonElement>) {
+    const report = event.currentTarget.closest('.results');
+    const preview = window.open('', '_blank');
+    if (!report || !preview) {
+      if (preview) preview.close();
+      setPrintError('Yazdırma sekmesi açılamadı. Tarayıcının açılır pencerelere izin verdiğini kontrol edin.');
+      return;
+    }
+    setPrintError('');
+    preview.opener = null;
+    const doc = preview.document;
+    doc.title = 'Inference Lab · Rapor';
+    doc.documentElement.lang = 'tr';
+    doc.documentElement.dataset.theme = 'light';
+    const viewport = doc.createElement('meta');
+    viewport.name = 'viewport';
+    viewport.content = 'width=device-width, initial-scale=1';
+    doc.head.append(viewport);
+    const loads: Promise<void>[] = [];
+    document.querySelectorAll('link[rel="stylesheet"], style').forEach((style) => {
+      const copy = doc.importNode(style, true);
+      if (style.tagName === 'LINK') {
+        loads.push(new Promise(resolve => {
+          copy.addEventListener('load', () => resolve(), { once: true });
+          copy.addEventListener('error', () => resolve(), { once: true });
+        }));
+      }
+      doc.head.append(copy);
+    });
+    const controls = doc.createElement('div');
+    controls.className = 'print-preview-controls';
+    const button = doc.createElement('button');
+    button.className = 'button primary';
+    button.textContent = 'PDF / Yazdır';
+    button.addEventListener('click', () => preview.print());
+    controls.append(button);
+    const copy = doc.importNode(report, true);
+    copy.querySelector('.result-actions')?.remove();
+    doc.body.className = 'print-preview';
+    doc.body.append(controls, copy);
+    void Promise.all(loads).then(() => doc.fonts.ready).then(() => {
+      if (!preview.closed) { preview.focus(); preview.print(); }
+    });
+  }
   const phases = run.phases || [];
   const phase = phases[Math.min(phaseIndex, phases.length - 1)];
   const running = active(run);
@@ -501,12 +546,13 @@ function Results({
                       : f.toUpperCase() + " dosyası"}
                   </a>
                 ))}
-                <button onClick={() => window.print()}>PDF / Yazdır</button>
+                <button onClick={printReport}>PDF / Yazdır</button>
               </div>
             </details>
           )}
         </div>
       </div>
+      {printError && <p className="print-error" role="alert">{printError}</p>}
       {run.config.demo && (
         <div className="demo-banner">
           <FlaskConical size={16} />

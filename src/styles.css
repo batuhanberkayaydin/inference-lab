@@ -3092,11 +3092,16 @@ tbody tr:last-child td {
   .chart text{font-size:13px}
   .chart-empty{top:47%;padding:8px 10px}
 }
+.print-preview { padding: 24px; background: #f5f6f8; }
+.print-preview-controls { max-width: 1200px; margin: 0 auto 16px; display: flex; justify-content: flex-end; }
+.print-preview > .results { max-width: 1200px; margin: 0 auto; }
+.print-error { color: #aa4b3c; margin: 12px 0; font-size: 13px; }
 @media print {
   body {
     background: #fff;
   }
   .sidebar,
+  .print-preview-controls,
   .topbar,
   .page-heading,
   .setup-panel,

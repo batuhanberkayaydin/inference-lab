@@ -123,7 +123,7 @@ Draft/kabul oranı için isteğe bağlı metrics URL eklenir. Desteklenen sayaç
 
 Bu uygulama performans ölçer; model cevaplarının doğruluğunu otomatik değerlendirmez. İlk sürümde her fazda 1–24 örnek kullanılır; p95/p99 istatistiksel genelleme yerine koşu özeti olarak okunmalıdır.
 
-Koşular, durdurma ve hata durumları dahil, `data/lab.sqlite3` içinde saklanır. Raporlar geçmişten açılabilir, onay verilerek silinebilir ve **Markdown / CSV / JSON** olarak dışa aktarılabilir. Devam eden koşular silinemez. PDF için tarayıcı **PDF / Yazdır** seçeneği vardır. Girdiler ve model çıktıları raporlarda saklandığından kendi veri saklama politikanıza uygun içerik kullanın.
+Koşular, durdurma ve hata durumları dahil, `data/lab.sqlite3` içinde saklanır. Raporlar geçmişten açılabilir, onay verilerek silinebilir ve **Markdown / CSV / JSON** olarak dışa aktarılabilir. Devam eden koşular silinemez. **PDF / Yazdır** raporun ekrandaki görünümünü yeni sekmede açıp tarayıcının yazdırma penceresini gösterir; açılır pencerelere izin verilmesi gerekebilir. Girdiler ve model çıktıları raporlarda saklandığından kendi veri saklama politikanıza uygun içerik kullanın.
 
 ## Yerel ayarlar
 
