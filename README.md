@@ -107,7 +107,7 @@ Kayıtlar SQLite `inputs` tablosunda saklanır; uygulama tekrar açıldığında
 
 ## Metrikler ve raporlar
 
-Benchmark ayarlarında **Başlamadan önce modellerin prefix cache’ini sıfırla** isteğe bağlıdır ve varsayılan olarak kapalıdır. Açılırsa her fazdan önce seçili modellerin kayıtlı sağlayıcı adresindeki `/reset_prefix_cache` uç noktasına POST gönderilir. Her modelden `{"success": true}` gelmedikçe o faz başlamaz; önceki fazların sonuçları korunur. Sonuçlar raporun JSON verisinde ve `docker compose logs -f -t inference-lab` çıktısında `prefix_cache_reset` olayında bulunur. Yalnızca yerel prefix cache istenir; dış cache ayrıca sıfırlanmaz. vLLM geliştirme endpoint'leri tehlikelidir ve normal API anahtarıyla korunmayabilir: yalnızca erişimi kısıtlı, yetkili test ortamında kullanın. Ortak sunucudaki diğer kullanımları etkileyebilir. Başlangıçta sıfırlamak, aynı fazdaki ortak prefix kullanımını engellemez.
+Benchmark arayüzünde **Başlamadan önce modellerin prefix cache’ini sıfırla** seçeneği şimdilik devre dışıdır; arayüzden başlatılan koşular cache sıfırlama isteği göndermez. vLLM'de bu uç nokta geliştirme modu gerektirir; bu mod hassas yönetim uç noktalarını açabileceğinden yalnızca erişimi kısıtlı test ortamlarında kullanılmalıdır. Backend'in mevcut API davranışı ve eski raporlar korunur.
 
 Çıktı limiti, temperature ve zaman aşımı boş bırakıldığında sırasıyla 20.000 token, 0,1 ve 120 saniyedir. Çıktı limiti ve temperature her model isteğine aynı gönderilir; zaman aşımı istemcide her istek için uygulanır. Sunucunun yapılandırması değiştirilmez; sağlayıcının isteği nasıl ele aldığı ve sınırları ayrıca sağlayıcıya bağlıdır.
 

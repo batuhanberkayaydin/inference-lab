@@ -36,7 +36,7 @@
 
 ## Kayıtlı girdi regresyonları
 
-- Prefix cache sıfırlama varsayılan kapalıdır; açıldığında her fazdan önce her modelin `success: true` yanıtı gerekir. Sıfırlama başarısızsa o fazda istek gönderilmez; sonuç rapor ve logda, anahtarlar log dışında kalır.
+- Benchmark arayüzünde prefix cache sıfırlama seçeneği devre dışıdır; başlatılan koşular sıfırlama isteği göndermez. Mevcut backend API'sinde seçenek açılırsa her fazdan önce her modelin `success: true` yanıtı gerekir. Sıfırlama başarısızsa o fazda istek gönderilmez; sonuç rapor ve logda, anahtarlar log dışında kalır.
 - Varsayılan 20.000 / 0,1 / 120 ve özel 600 / 0,7 ayarları modeller arasında tutarlıdır; zaman aşımı istemci ayarıdır.
 
 - Başarısız sağlayıcı isteği: HTTP kodu, aşama, süre, istek ve koşu kimliği loglanır; prompt, anahtar, URL ve ham hata içeriği loga girmez. Timeout ve HTTP 429 ayrı kategorilerde görünür; iptal hata olarak loglanmaz.

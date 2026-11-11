@@ -1133,7 +1133,6 @@ function App() {
   const [maxTokens, setMaxTokens] = useState('20000');
   const [temperature, setTemperature] = useState('0.1');
   const [timeout, setTimeoutValue] = useState('120');
-  const [resetPrefixCache, setResetPrefixCache] = useState(false);
   const [name, setName] = useState("");
   const [run, setRun] = useState<Report | null>(null);
   const [historic, setHistoric] = useState<Report | null>(null);
@@ -1376,7 +1375,7 @@ function App() {
         max_tokens: outputLimit,
         temperature: tempValue,
         timeout: timeoutValue,
-        reset_prefix_cache: resetPrefixCache,
+        reset_prefix_cache: false,
         model_schedule: schedule,
         stream,
         name,
@@ -1983,8 +1982,8 @@ function App() {
                   </div>
                   <p className="generation-defaults">Boş bırakılan alanlarda 20.000 token, temperature 0,1 ve 120 sn kullanılır. Ayarlar seçilen tüm modellere aynı uygulanır.</p>
                   <div className="cache-reset-option">
-                    <label><input type="checkbox" checked={resetPrefixCache} disabled={running || busy} onChange={e => setResetPrefixCache(e.target.checked)} /> <span>Başlamadan önce modellerin prefix cache’ini sıfırla</span></label>
-                    <p>Yalnızca erişimi kısıtlı vLLM test ortamında kullanın. Her faz öncesi tüm modellerde sıfırlama doğrulanır; başarısızsa faz başlamaz. Çalışan diğer istekleri etkileyebilir.</p>
+                    <label><input type="checkbox" checked={false} disabled readOnly /> <span>Başlamadan önce modellerin prefix cache’ini sıfırla</span></label>
+                    <p>Bu seçenek şimdilik kullanılamıyor. vLLM'de cache sıfırlama uç noktası için geliştirme modu gerekir; bu mod yalnızca erişimi kısıtlı test ortamlarında kullanılmalıdır.</p>
                   </div>
                 </div>
                 <div className="launch-bar">
