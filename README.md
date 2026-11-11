@@ -107,6 +107,8 @@ Kayıtlar SQLite `inputs` tablosunda saklanır; uygulama tekrar açıldığında
 
 ## Metrikler ve raporlar
 
+Başarısız sağlayıcı istekleri Docker loglarında `provider_request_failed` olayı olarak görünür: `docker compose logs -f inference-lab`. Olay; koşu ve model kimliği, faz, girdi sıra numarası (süreli testte döngü), HTTP durum kodu varsa kod, hata kategorisi, aşama, geçen süre, timeout ve kısmi yanıt bilgisi içerir. `waiting_for_headers` bağlantı kurulması ve HTTP yanıt başlıklarının beklenmesini, `receiving_response` yanıt gövdesinin okunmasını kapsar. API anahtarı, URL, girdi, yanıt ve sağlayıcının ham hata gövdesi loglanmaz; sağlayıcının ayrıntılı hata mesajı için kendi loglarına bakın. Hatalar otomatik yeniden denenmez.
+
 Toplam çıktı verimi, TTFT ortalama/p95/p99, tahmini akış hızı, uçtan uca ortalama/p95, duvar süresi, giriş/çıktı token sayısı, tahmini TPOT, p95 içerik parçası aralığı, istek/sn, draft/adım ve ortalama kabul oranı.
 
 Token sayısı sağlayıcı usage alanından alınır. Sağlayıcı usage göndermiyorsa token tabanlı hızlar boş kalır; karakter tahmini sadece girdi hazırlığında gösterilir. Grafik, sağlayıcı sayıları geldikçe toplam çıktı / geçen süreyi gösterir. Ara usage olmayan sağlayıcılarda tamamlanma anında güncellenir; gerçek zamanlı decode token hızını temsil etmez.

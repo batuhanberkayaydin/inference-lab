@@ -10,6 +10,7 @@ import hashlib
 import hmac
 import io
 import json
+import logging
 import math
 import mimetypes
 import os
@@ -17,6 +18,8 @@ from pathlib import Path
 import re
 import secrets
 import sqlite3
+import socket
+import ssl
 import threading
 import time
 from datetime import datetime, timezone
@@ -24,13 +27,14 @@ from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 import duration
 import bundled_examples
 from request_input import parse_input
 from credentials import CredentialFiles
 
 ROOT = Path(__file__).resolve().parents[1]
+LOGGER = logging.getLogger('inference_lab.requests')
 COLORS = ['#3f6eeb', '#dd693b', '#0b8b78', '#9772cc']
 LEGACY_CONTEXT_HASHES = {
     'insurance': '9129ad3437be55b7e1d4ba62665d8d223675f23e21ffbd108cf5590c76b59d85',
@@ -542,6 +546,8 @@ class Engine:
         prompt_index = row.get('prompt_index', row['index'])
         started = time.perf_counter()
         times, usage, finish, done, response = [], None, None, False, None
+        stage = 'waiting_for_headers'
+        deadline_fired = threading.Event()
         with self.lock:
             row['status'] = 'running'
         try:
@@ -584,13 +590,17 @@ class Engine:
                     headers['Authorization'] = 'Bearer ' + model['api_key']
                 opener = build_opener(ProxyHandler({}))
                 response = opener.open(Request(endpoint(model['base_url']), data=json.dumps(payload).encode(), headers=headers), timeout=config['timeout'])
+                stage = 'receiving_response'
                 with self.lock:
                     row['http_status'] = response.status
                     row['guard'] = guard_headers(response.headers)
                     self.responses.setdefault(run['id'], []).append(response)
                 # Absolute deadline also interrupts stalled streams, not just continuously arriving chunks.
                 remaining = config['timeout'] - (time.perf_counter() - started)
-                timer = threading.Timer(max(.001, remaining), self.shutdown_response, args=(response,))
+                def expire_response():
+                    deadline_fired.set()
+                    self.shutdown_response(response)
+                timer = threading.Timer(max(.001, remaining), expire_response)
                 timer.daemon = True
                 timer.start()
                 try:
@@ -676,14 +686,50 @@ class Engine:
                     if warning not in run['warnings']:
                         run['warnings'].append(warning)
         except Exception as exc:
+            cancelled = cancel.is_set() or isinstance(exc, Cancelled)
+            status = exc.code if isinstance(exc, HTTPError) else row.get('http_status')
+            reason = exc.reason if isinstance(exc, URLError) and not isinstance(exc, HTTPError) else exc
+            if isinstance(exc, HTTPError):
+                category = 'http_error'
+                error = f'Sağlayıcı HTTP {exc.code} hatası döndürdü. Ayrıntı için sunucu loglarını ve sağlayıcı loglarını kontrol edin.'
+            elif deadline_fired.is_set() or isinstance(reason, (TimeoutError, socket.timeout)):
+                category, error = 'timeout', 'Sağlayıcı isteği zaman aşımına uğradı.'
+            elif isinstance(reason, ssl.SSLError):
+                category, error = 'tls_error', 'Sağlayıcı ile TLS bağlantısı kurulamadı.'
+            elif isinstance(reason, socket.gaierror):
+                category, error = 'dns_error', 'Sağlayıcı adresi çözümlenemedi.'
+            elif isinstance(reason, ConnectionRefusedError):
+                category, error = 'connection_refused', 'Sağlayıcı bağlantıyı reddetti.'
+            elif isinstance(reason, (ConnectionResetError, BrokenPipeError)):
+                category, error = 'connection_interrupted', 'Sağlayıcı bağlantısı kesildi.'
+            elif isinstance(exc, json.JSONDecodeError):
+                category, error = 'invalid_json', 'Sağlayıcı geçersiz JSON döndürdü.'
+            elif isinstance(exc, ValueError):
+                error = str(exc)
+                category = {
+                    'Eksik SSE akışı: DONE, bitiş nedeni veya içerik yok.': 'incomplete_stream',
+                    'Sağlayıcı akış hatası bildirdi.': 'provider_stream_error',
+                    'Sağlayıcı yanıt hatası bildirdi.': 'provider_response_error',
+                    'Sağlayıcı yanıtında choices bulunamadı.': 'missing_choices',
+                    'Sağlayıcı yanıtında metin bulunamadı.': 'empty_response',
+                    'Boş cevap: reasoning gelse bile kullanıcıya yönelik content alınmadı.': 'empty_response',
+                }.get(error, 'invalid_response')
+            else:
+                category, error = 'request_error', f'Sağlayıcı isteği başarısız ({type(exc).__name__}). Bağlantıyı ve zaman aşımını kontrol edin.'
+            elapsed = time.perf_counter() - started
             with self.lock:
                 if isinstance(exc, HTTPError):
                     row['http_status'] = exc.code
                     row['guard'] = guard_headers(exc.headers)
                     exc.close()
-                cancelled = cancel.is_set() or isinstance(exc, Cancelled)
-                error = None if cancelled else (str(exc) if isinstance(exc, ValueError) else f'Sağlayıcı isteği başarısız ({type(exc).__name__}). URL, anahtar ve zaman aşımını kontrol edin.')
-                row.update(status='cancelled' if cancelled else 'failed', error=error, e2e_s=time.perf_counter()-started)
+                row.update(status='cancelled' if cancelled else 'failed', error=None if cancelled else error, e2e_s=elapsed)
+            if not cancelled:
+                phase = next((p['name'] for p in run.get('phases', []) if any(t is target for t in p['models'])), 'duration' if run.get('kind') == 'duration' else 'unknown')
+                LOGGER.warning('%s', json.dumps({'event': 'provider_request_failed', 'run_id': run['id'], 'phase': phase,
+                    'model_id': model['id'], 'request': row['index'] + 1, 'lane': row.get('lane'), 'http_status': status,
+                    'category': category, 'exception_type': type(exc).__name__, 'stage': stage, 'elapsed_s': round(elapsed, 3),
+                    'timeout_s': run['config']['timeout'], 'content_chunks': len(times),
+                    'partial_content': bool(row.get('text')), 'partial_reasoning': bool(row.get('reasoning'))}, ensure_ascii=False))
         finally:
             if response:
                 with self.lock:

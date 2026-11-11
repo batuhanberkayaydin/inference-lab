@@ -1,5 +1,6 @@
 """Small, offline regression suite; provider behavior comes from a local SSE fixture."""
 import json
+import io
 from pathlib import Path
 import sys
 import tempfile
@@ -9,7 +10,7 @@ import unittest
 from unittest.mock import patch
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.request import Request, build_opener, HTTPCookieProcessor
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from http.cookiejar import CookieJar
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
@@ -154,6 +155,32 @@ class IntegrationTests(unittest.TestCase):
         run = self.engine.start(self.config | changes)
         return await_report(self.engine, run['id'])
 
+    def test_provider_http_failures_log_status_without_request_or_response_secrets(self):
+        secret_prompt = 'private-prompt-not-for-logs'
+        def fail(*args, **kwargs):
+            raise HTTPError(self.base, 429, 'private-reason', {}, io.BytesIO(b'{"error":{"message":"private-provider-body"}}'))
+        with self.assertLogs('inference_lab.requests', level='WARNING') as logs, patch('server.build_opener') as opener:
+            opener.return_value.open.side_effect = fail
+            run = self.run_config(prompts=[secret_prompt])
+        row = run['phases'][0]['models'][0]['requests'][0]
+        self.assertEqual(row['http_status'], 429)
+        self.assertIn('HTTP 429', row['error'])
+        entry = json.loads(logs.records[0].getMessage())
+        self.assertEqual((entry['run_id'], entry['phase'], entry['request'], entry['http_status']), (run['id'], 'concurrent', 1, 429))
+        self.assertEqual((entry['category'], entry['stage'], entry['content_chunks']), ('http_error', 'waiting_for_headers', 0))
+        self.assertNotIn(secret_prompt, logs.output[0])
+        self.assertNotIn('test-only-secret', logs.output[0])
+        self.assertNotIn('private-provider-body', logs.output[0])
+        self.assertNotIn('private-reason', logs.output[0])
+
+    def test_wrapped_timeout_is_logged_without_endpoint_or_secret(self):
+        with self.assertLogs('inference_lab.requests', level='WARNING') as logs, patch('server.build_opener') as opener:
+            opener.return_value.open.side_effect = URLError(TimeoutError('secret-endpoint'))
+            run = self.run_config(prompts=['bir'])
+        self.assertEqual(json.loads(logs.records[0].getMessage())['category'], 'timeout')
+        self.assertNotIn('secret-endpoint', logs.output[0])
+        self.assertIn('zaman aşımı', run['phases'][0]['models'][0]['requests'][0]['error'])
+
     def test_normal_response_and_json_fallback(self):
         for stream, model_name in [(False, 'fixture'), (True, 'json-response')]:
             self.store.save_model(self.model | {'model': model_name})
@@ -230,9 +257,11 @@ class IntegrationTests(unittest.TestCase):
 
     def test_timeout_interrupts_stalled_response(self):
         m = self.store.save_model(self.model | {'model':'stall'})
-        run = self.run_config(model_ids=[m['id']], prompts=['one'], timeout=1)
+        with self.assertLogs('inference_lab.requests', level='WARNING') as logs:
+            run = self.run_config(model_ids=[m['id']], prompts=['one'], timeout=1)
         self.assertEqual(run['status'],'partial')
         self.assertLess(run['phases'][0]['models'][0]['requests'][0]['e2e_s'],1.3)
+        self.assertEqual(json.loads(logs.records[0].getMessage())['category'], 'timeout')
 
     def test_cancel_retains_partial_output_and_report(self):
         live = self.store.save_model(self.model | {'model':'live'})

@@ -36,6 +36,8 @@
 
 ## Kayıtlı girdi regresyonları
 
+- Başarısız sağlayıcı isteği: HTTP kodu, aşama, süre, istek ve koşu kimliği loglanır; prompt, anahtar, URL ve ham hata içeriği loga girmez. Timeout ve HTTP 429 ayrı kategorilerde görünür; iptal hata olarak loglanmaz.
+
 - Uzun Türkçe bağlam, satır sonları ve soru birleşimi kayıpsız korunur.
 - Liste uç noktası uzun metni taşımaz; içerik detaydan yüklenir.
 - Tek başına bağlam veya soru ek başlık olmadan saklanır.
