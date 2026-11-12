@@ -22,6 +22,7 @@ import socket
 import ssl
 import threading
 import time
+import uuid
 from datetime import datetime, timezone
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -643,6 +644,11 @@ class Engine:
                            'max_tokens': config['max_tokens'], 'temperature': config.get('temperature', 0), 'stream': config.get('stream', True)}
                 if config.get('request_payload'):
                     payload = copy.deepcopy(config['request_payload'])
+                # A fresh prefix per actual request prevents reuse of the input prefix.
+                prefix_id = uuid.uuid4().hex[:12]
+                payload['messages'][0]['content'] = prefix_id + '\n' + payload['messages'][0]['content']
+                with self.lock:
+                    row['prompt_prefix_id'] = prefix_id
                 if payload['stream']:
                     payload['stream_options'] = dict(payload.get('stream_options', {}), include_usage=True)
                 headers = {'Content-Type': 'application/json', 'Accept': 'text/event-stream' if payload['stream'] else 'application/json'}

@@ -131,6 +131,15 @@ class DurationTests(unittest.TestCase):
             self.assertEqual(row['reasoning'], 'Reasoning.')
             self.assertAlmostEqual(row['tokens_per_s'], 49/row['e2e_s'])
         self.assertEqual(Provider.calls[0]['body']['chat_template_kwargs'], self.config['payload']['chat_template_kwargs'])
+        prefixes = []
+        for call in Provider.calls:
+            prefix, content = call['body']['messages'][0]['content'].split('\n', 1)
+            self.assertRegex(prefix, r'^[0-9a-f]{12}$')
+            self.assertEqual(content, 'Selam')
+            prefixes.append(prefix)
+        self.assertEqual(len(set(prefixes)), len(prefixes))
+        self.assertCountEqual(prefixes, [row['prompt_prefix_id'] for row in run['requests']])
+        self.assertEqual(run['config']['request_payload']['messages'][0]['content'], 'Selam')
         self.assertTrue(Provider.calls[0]['body']['stream_options']['include_usage'])
         self.assertEqual(self.store.get('duration_runs',run['id'])['summary'],run['summary'])
         self.assertNotIn('local-secret',json.dumps(run))

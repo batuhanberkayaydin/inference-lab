@@ -1984,6 +1984,7 @@ function App() {
                   <div className="cache-reset-option">
                     <label><input type="checkbox" checked={false} disabled readOnly /> <span>Başlamadan önce modellerin prefix cache’ini sıfırla</span></label>
                     <p>Bu seçenek şimdilik kullanılamıyor. vLLM'de cache sıfırlama uç noktası için geliştirme modu gerekir; bu mod yalnızca erişimi kısıtlı test ortamlarında kullanılmalıdır.</p>
+                    <p>Önceki girdinin prefix cache ile eşleşmesini azaltmak için her isteğin başına farklı bir kimlik eklenir. Bu işlem mevcut cache'i silmez.</p>
                   </div>
                 </div>
                 <div className="launch-bar">

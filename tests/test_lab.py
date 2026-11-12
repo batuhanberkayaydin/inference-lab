@@ -294,12 +294,21 @@ class IntegrationTests(unittest.TestCase):
         self.assertNotIn('api_key', json.dumps(self.store.public_models()))
         self.assertNotIn('test-only-secret', Path(self.temp.name, 'lab.sqlite3').read_bytes().decode(errors='ignore'))
 
-    def test_serial_and_concurrent_use_identical_payloads(self):
+    def test_serial_and_concurrent_use_unique_prefixes_and_same_inputs(self):
         run = self.run_config(mode='compare', prompts=[str(i) for i in range(16)])
         self.assertEqual([p['name'] for p in run['phases']], ['serial', 'concurrent'])
         self.assertGreaterEqual(Fixture.peak, 2)
         bodies = Fixture.bodies
         self.assertEqual(len(bodies),32)
+        prefixes = []
+        for body in bodies:
+            prefix, content = body['messages'][0]['content'].split('\n', 1)
+            self.assertRegex(prefix, r'^[0-9a-f]{12}$')
+            prefixes.append(prefix)
+            body['messages'][0]['content'] = content
+        self.assertEqual(len(set(prefixes)), 32)
+        recorded = [r['prompt_prefix_id'] for p in run['phases'] for m in p['models'] for r in m['requests']]
+        self.assertCountEqual(recorded, prefixes)
         serial = sorted(json.dumps(b,sort_keys=True) for b in bodies[:16])
         parallel = sorted(json.dumps(b,sort_keys=True) for b in bodies[16:])
         self.assertEqual(serial,parallel)
