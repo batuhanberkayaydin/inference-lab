@@ -63,6 +63,7 @@ type Model = {
   has_key?: boolean;
   key_requires_reentry?: boolean;
   has_ca_certificate?: boolean;
+  use_shared_ca?: boolean;
 };
 type Context = { id: string; name: string; category: string; content: string };
 type Row = {
@@ -831,12 +832,88 @@ function Results({
   );
 }
 
+function SharedCaForm({
+  configured,
+  onSave,
+}: {
+  configured: boolean;
+  onSave: (configured: boolean) => void;
+}) {
+  const [file, setFile] = useState<File | null>(null);
+  const [clear, setClear] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    setError("");
+    setBusy(true);
+    try {
+      let certificate = "";
+      if (!clear) {
+        if (!file?.size || file.size > 65536) {
+          throw new Error("Boş olmayan ve en fazla 64 KB boyutunda bir PEM dosyası seçin.");
+        }
+        certificate = await file.text();
+      }
+      const settings = await api<{configured: boolean}>("/settings/shared-ca", "POST", {
+        ca_certificate: certificate,
+        clear_ca_certificate: clear,
+      });
+      form.reset();
+      setFile(null);
+      setClear(false);
+      onSave(settings.configured);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="edit-panel shared-ca-panel" aria-labelledby="shared-ca-heading">
+      <div className="section-heading">
+        <h2 id="shared-ca-heading">Ortak HTTPS sertifikası</h2>
+        <small>{configured ? "CA sertifikası kayıtlı" : "CA sertifikası yüklenmedi"}</small>
+      </div>
+      <p>Kurum içi HTTPS sağlayıcılarınızın CA sertifikasını bir kez yükleyin. Ortak CA kullanımı açık modeller yeni bağlantılarda bu sertifikayı kullanır.</p>
+      <form onSubmit={submit}>
+        <div className="form-grid">
+          <label className="full">
+            CA sertifikası (PEM)
+            <input
+              type="file"
+              accept=".pem,.crt,.cer"
+              disabled={busy || clear}
+              onChange={e => setFile(e.target.files?.[0] ?? null)}
+            />
+          </label>
+          {configured && (
+            <label className="checkbox-label full">
+              <input type="checkbox" checked={clear} disabled={busy} onChange={e => setClear(e.target.checked)} />
+              Ortak CA sertifikasını kaldır
+            </label>
+          )}
+        </div>
+        {error && <div className="error-message" role="alert">{error}</div>}
+        <div className="form-actions">
+          <button className="button primary" disabled={busy || (!file && !clear)}>
+            {busy ? "Kaydediliyor…" : "Sertifika ayarını kaydet"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
 function ModelForm({
   model,
+  sharedCaConfigured,
   onSave,
   onClose,
 }: {
   model: Model | null;
+  sharedCaConfigured: boolean;
   onSave: () => void;
   onClose: () => void;
 }) {
@@ -850,6 +927,7 @@ function ModelForm({
     metrics_url: model?.metrics_url || "",
     clear_key: false,
     clear_ca_certificate: false,
+    use_shared_ca: model?.use_shared_ca ?? true,
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -857,18 +935,10 @@ function ModelForm({
     setForm({ ...form, [key]: value });
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const file = new FormData(e.currentTarget).get("ca_certificate");
     setError("");
     setBusy(true);
     try {
-      let certificate = "";
-      if (file instanceof File && file.name && !form.clear_ca_certificate) {
-        if (!file.size || file.size > 65536) {
-          throw new Error("Boş olmayan ve en fazla 64 KB boyutunda bir PEM dosyası seçin.");
-        }
-        certificate = await file.text();
-      }
-      await api("/models", "POST", { ...form, ca_certificate: certificate });
+      await api("/models", "POST", form);
       onSave();
     } catch (e) {
       setError((e as Error).message);
@@ -963,22 +1033,24 @@ function ModelForm({
               Kayıtlı API anahtarını kaldır
             </label>
           )}
-          <label className="full">
-            HTTPS CA sertifikası <span className="optional">isteğe bağlı</span>
-            <input
-              name="ca_certificate"
-              type="file"
-              accept=".pem,.crt,.cer"
-              disabled={busy || form.clear_ca_certificate}
-              aria-describedby="model-ca-help"
-            />
+          <div className="full">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                role="switch"
+                checked={form.use_shared_ca}
+                disabled={busy}
+                onChange={e => update("use_shared_ca", e.target.checked)}
+                aria-describedby="model-ca-help"
+              />
+              Ortak CA sertifikasını kullan
+            </label>
             <small id="model-ca-help">
-              Kurum içi veya kendinden imzalı TLS sertifikaları için PEM biçiminde sertifika veya sertifika zinciri yükleyin. Özel anahtar gerekmez.
-              {model?.has_ca_certificate
-                ? " Kayıtlı sertifikayı korumak için yeni dosya seçmeyin."
-                : " Sistem tarafından güvenilen sertifikalar için boş bırakın."}
+              {sharedCaConfigured
+                ? "Yönetici ayarlarında yüklenen sertifika HTTPS bağlantılarında kullanılır."
+                : "Yönetici ayarlarına ortak sertifika yüklendiğinde bu seçim devreye girer."}
             </small>
-          </label>
+          </div>
           {model?.has_ca_certificate && (
             <label className="checkbox-label full">
               <input
@@ -987,7 +1059,7 @@ function ModelForm({
                 disabled={busy}
                 onChange={(e) => update("clear_ca_certificate", e.target.checked)}
               />{" "}
-              Kayıtlı CA sertifikasını kaldır
+              Daha önce bu modele özel yüklenen CA sertifikasını kaldır
             </label>
           )}
           <label className="full">
@@ -1153,6 +1225,7 @@ function App() {
       : "benchmark";
   });
   const [models, setModels] = useState<Model[]>([]);
+  const [sharedCaConfigured, setSharedCaConfigured] = useState(false);
   const [testingModel, setTestingModel] = useState<string | null>(null);
   const [modelChecks, setModelChecks] = useState<Record<string, {ok: boolean; message: string; elapsed_s?: number}>>({});
   const [examples, setExamples] = useState<PromptExample[]>([]);
@@ -1196,18 +1269,20 @@ function App() {
       });
   }, []);
   async function load() {
-    const [m, c, r, saved, exampleList] = await Promise.all([
+    const [m, c, r, saved, exampleList, sharedCa] = await Promise.all([
       api<Model[]>("/models"),
       api<Context[]>("/contexts"),
       api<Report[]>("/reports"),
       api<SavedInputSummary[]>("/inputs"),
       api<PromptExample[]>("/examples"),
+      api<{configured: boolean}>("/settings/shared-ca"),
     ]);
     setModels(m);
     setContexts(c);
     setReports(r);
     setSavedInputs(saved);
     setExamples(exampleList);
+    setSharedCaConfigured(sharedCa.configured);
     setSelected((prev) =>
       prev.length
         ? prev.filter((id) => m.some((model) => model.id === id))
@@ -2258,11 +2333,20 @@ function App() {
               <ModelForm
                 key={modelEdit?.id || "new"}
                 model={modelEdit}
+                sharedCaConfigured={sharedCaConfigured}
                 onSave={save}
                 onClose={() => setModelEdit(undefined)}
               />
             ) : (
               <>
+                <SharedCaForm
+                  configured={sharedCaConfigured}
+                  onSave={configured => {
+                    setSharedCaConfigured(configured);
+                    setModelChecks({});
+                    setToast(configured ? "Ortak CA sertifikası kaydedildi." : "Ortak CA sertifikası kaldırıldı.");
+                  }}
+                />
                 <section className="list-panel">
                   <div className="panel-title">
                     <h2>Model sağlayıcıları</h2>
@@ -2298,6 +2382,7 @@ function App() {
                                   : "Metrics URL yok"}
                               </small>
                               {m.has_ca_certificate && <small>Özel CA sertifikası kayıtlı</small>}
+                              {sharedCaConfigured && <small>Ortak CA {m.use_shared_ca === false ? "kapalı" : "açık"}</small>}
                             </td>
                             <td>
                               <span className="key-status">

@@ -88,6 +88,22 @@ def provider_tls_context(certificate):
     return context
 
 
+def certificate_update(data, current):
+    certificate = data.get('ca_certificate', '')
+    clear = data.get('clear_ca_certificate', False)
+    if not isinstance(certificate, str) or len(certificate) > 65536 or type(clear) is not bool:
+        raise ValueError('TLS sertifikası en fazla 64 KB boyutunda PEM metni olmalıdır.')
+    certificate = certificate.strip().replace('\r\n', '\n')
+    if not certificate:
+        return '' if clear else current
+    if clear:
+        raise ValueError('Kayıtlı sertifikayı kaldırmayı veya yeni bir sertifika yüklemeyi seçin.')
+    if not re.fullmatch(r'(?:-----BEGIN CERTIFICATE-----\n(?:[A-Za-z0-9+/=]+\n)+-----END CERTIFICATE-----\n*)+', certificate):
+        raise ValueError('Yalnızca PEM sertifika blokları yükleyin. Özel anahtar yüklemeyin.')
+    provider_tls_context(certificate)
+    return certificate
+
+
 def provider_opener(model, *handlers):
     context = model.get('tls_context')
     if context is not None:
@@ -184,6 +200,7 @@ class Store:
             db.execute('CREATE TABLE IF NOT EXISTS inputs (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS reports (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS duration_runs (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
+            db.execute('CREATE TABLE IF NOT EXISTS settings (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
         os.chmod(self.db, 0o600)
         # A process restart cannot resume provider streams. Retain partial reports honestly.
         for report in self.list('duration_runs'):
@@ -216,7 +233,7 @@ class Store:
             connection.close()
 
     def put(self, table, item, db=None):
-        assert table in ('models', 'contexts', 'inputs', 'reports', 'duration_runs')
+        assert table in ('models', 'contexts', 'inputs', 'reports', 'duration_runs', 'settings')
         body = json.dumps(item, ensure_ascii=False, allow_nan=False)
         if db is not None:
             db.execute(f'INSERT OR REPLACE INTO {table} VALUES (?, ?)', (item['id'], body))
@@ -231,7 +248,7 @@ class Store:
             return [json.loads(row[0]) for row in db.execute(f'SELECT body FROM {table} ORDER BY rowid')]
 
     def get(self, table, ident):
-        assert table in ('models', 'contexts', 'inputs', 'reports', 'duration_runs')
+        assert table in ('models', 'contexts', 'inputs', 'reports', 'duration_runs', 'settings')
         with self.connect() as db:
             row = db.execute(f'SELECT body FROM {table} WHERE id = ?', (ident,)).fetchone()
         return json.loads(row[0]) if row else None
@@ -290,7 +307,16 @@ class Store:
             'has_key': bool(m['api_key']),
             'key_requires_reentry': bool(m['api_key']) and not self.credentials.is_reference(m['api_key']),
             'has_ca_certificate': bool(m.get('ca_certificate')),
+            'use_shared_ca': m.get('use_shared_ca', True),
         } for m in self.list('models') if not m.get('demo')]
+
+    def shared_ca_certificate(self):
+        return (self.get('settings', 'shared_ca') or {}).get('certificate', '')
+
+    def save_shared_ca(self, data):
+        certificate = certificate_update(data, self.shared_ca_certificate())
+        self.put('settings', {'id': 'shared_ca', 'certificate': certificate})
+        return {'configured': bool(certificate)}
 
     def public_contexts(self):
         result = []
@@ -310,18 +336,10 @@ class Store:
                  'provider': 'OpenAI uyumlu', 'model': data['model'].strip()[:300],
                  'base_url': valid_url(data.get('base_url', '')), 'metrics_url': valid_url(data.get('metrics_url', ''), True),
                  'api_key': old.get('api_key', ''), 'demo': False, 'color': old.get('color', COLORS[len(self.list('models')) % 4]) }
-        certificate = data.get('ca_certificate', '')
-        clear_certificate = data.get('clear_ca_certificate', False)
-        if not isinstance(certificate, str) or len(certificate) > 65536 or type(clear_certificate) is not bool:
-            raise ValueError('TLS sertifikası en fazla 64 KB boyutunda PEM metni olmalıdır.')
-        certificate = certificate.strip().replace('\r\n', '\n')
-        if certificate:
-            if clear_certificate:
-                raise ValueError('Kayıtlı sertifikayı kaldırmayı veya yeni bir sertifika yüklemeyi seçin.')
-            if not re.fullmatch(r'(?:-----BEGIN CERTIFICATE-----\n(?:[A-Za-z0-9+/=]+\n)+-----END CERTIFICATE-----\n*)+', certificate):
-                raise ValueError('Yalnızca PEM sertifika blokları yükleyin. Özel anahtar yüklemeyin.')
-            provider_tls_context(certificate)
-        item['ca_certificate'] = '' if clear_certificate else certificate or old.get('ca_certificate', '')
+        item['use_shared_ca'] = data.get('use_shared_ca', old.get('use_shared_ca', True))
+        if type(item['use_shared_ca']) is not bool:
+            raise ValueError('Ortak CA seçimi geçersiz.')
+        item['ca_certificate'] = certificate_update(data, old.get('ca_certificate', ''))
         new_reference = None
         if data.get('clear_key'):
             item['api_key'] = ''
@@ -352,9 +370,12 @@ class Engine:
         self.responses = {}
         self.sessions = {}
 
-    def runtime_model(self, model, demo):
+    def runtime_model(self, model, demo, *, shared_ca=None):
         # Capture private connection settings so edits cannot change an in-flight test.
-        certificate = model.get('ca_certificate')
+        certificates = [model.get('ca_certificate', '')]
+        if not demo and model.get('use_shared_ca', True):
+            certificates.append(self.store.shared_ca_certificate() if shared_ca is None else shared_ca)
+        certificate = '\n'.join(filter(None, certificates))
         return dict(model, api_key='' if demo else self.store.credentials.read(model.get('api_key', '')),
                     tls_context=provider_tls_context(certificate) if certificate and not demo else None)
 
@@ -459,7 +480,8 @@ class Engine:
         with self.lock:
             if any(r['status'] in ('running', 'stopping', 'queued') for r in self.runs.values()):
                 raise ValueError('Bir test zaten çalışıyor. Önce tamamlanmasını bekleyin veya durdurun.')
-            models = [self.runtime_model(model, demo) for model in models]
+            shared_ca = self.store.shared_ca_certificate()
+            models = [self.runtime_model(model, demo, shared_ca=shared_ca) for model in models]
             ident = secrets.token_hex(8)
             clean_models = [{k: m[k] for k in ('id', 'name', 'model', 'provider', 'color', 'base_url', 'metrics_url')} for m in models]
             config = {'mode': mode, 'prompts': prompts, 'max_tokens': max_tokens, 'temperature': temperature,
@@ -940,6 +962,8 @@ def handler_for(engine):
                         return self.reply({'error': 'Devam etmek için giriş yapın.'}, 401)
                     if path == '/api/models':
                         return self.reply(engine.store.public_models())
+                    if path == '/api/settings/shared-ca':
+                        return self.reply({'configured': bool(engine.store.shared_ca_certificate())})
                     if path == '/api/contexts':
                         return self.reply(engine.store.public_contexts())
                     if path == '/api/examples':
@@ -1026,6 +1050,8 @@ def handler_for(engine):
                     return self.reply({'ok': True}, headers={'Set-Cookie': 'lab_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0'})
                 if path == '/api/models':
                     return self.reply(engine.store.save_model(data))
+                if path == '/api/settings/shared-ca':
+                    return self.reply(engine.store.save_shared_ca(data))
                 match = re.fullmatch(r'/api/models/([a-f0-9]{12})/test', path)
                 if match:
                     return self.reply(engine.test_model(match.group(1)))

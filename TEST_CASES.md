@@ -31,6 +31,7 @@
 - Koşunun otomatik kaydı, geçmişten açılması, arama/filtre ve dışa aktarım.
 - Model ekleme/düzenleme; anahtarın geri gönderilmemesi.
 - Özel CA kullanan modelin HTTPS bağlantı kontrolü ve benchmark istekleri yerel TLS sağlayıcıyla doğrulanır. Sertifikasız ve sunucu adı uyuşmayan bağlantılar başarısız olur. Özel anahtar içeren dosya reddedilir, boş düzenleme CA kaydını korur, açık kaldırma seçeneği kaydı temizler.
+- Tek ortak CA yükleyerek yeni ve mevcut modelleri yerel HTTPS sağlayıcıya bağla. Bir modelde ortak CA kullanımını kapatınca sadece o modelin bağlantısının başarısız olduğunu, ortak sertifikayı kaldırınca diğer modelin de bağlantısının reddedildiğini kontrol et.
 - Bağlam ekleme/düzenleme; .txt içe aktarım; testte kullan.
 - Masaüstü 1440 px, mobil 390 px; yatay sayfa taşması yok, geniş tablolar kendi içinde kayar.
 - Klavyeyle gezinme, görünen focus, boş/hata/durdurulmuş durumlar.

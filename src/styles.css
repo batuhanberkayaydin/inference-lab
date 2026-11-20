@@ -1780,6 +1780,9 @@ tbody tr:last-child td {
   padding: 25px;
   max-width: 780px;
 }
+.shared-ca-panel {
+  margin-bottom: 20px;
+}
 .edit-panel > p {
   color: #72818d;
   margin-top: 10px;

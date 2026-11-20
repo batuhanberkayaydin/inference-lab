@@ -501,6 +501,18 @@ class IntegrationTests(unittest.TestCase):
             cleared = self.store.save_model(settings | {'clear_ca_certificate': True})
             self.assertFalse(cleared['has_ca_certificate'])
             self.assertFalse(self.engine.test_model(ident)['ok'])
+
+            self.assertEqual(self.store.save_shared_ca({'ca_certificate': certificate}), {'configured': True})
+            self.assertTrue(self.engine.test_model(ident)['ok'])
+            second = self.store.save_model({'name': 'Other TLS model', 'base_url': settings['base_url'], 'model': 'other'})
+            self.assertTrue(self.engine.test_model(second['id'])['ok'])
+            disabled = self.store.save_model(settings | {'use_shared_ca': False})
+            self.assertFalse(disabled['use_shared_ca'])
+            self.assertFalse(self.engine.test_model(ident)['ok'])
+            self.assertTrue(self.engine.test_model(second['id'])['ok'])
+            self.assertEqual(Store(self.temp.name).shared_ca_certificate(), certificate.strip())
+            self.assertEqual(self.store.save_shared_ca({'clear_ca_certificate': True}), {'configured': False})
+            self.assertFalse(self.engine.test_model(second['id'])['ok'])
         finally:
             provider.shutdown()
             provider.server_close()
