@@ -18,6 +18,7 @@ from http.cookiejar import CookieJar
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
 import bundled_examples
+from media import probe_image_url
 from server import Engine, Store, endpoint, handler_for, markdown_report, percentile, speculative_delta, summarize
 
 
@@ -231,6 +232,60 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual((result['config']['max_tokens'], result['config']['temperature'], result['config']['timeout']), (20000, 0.1, 120))
         self.assertEqual([(b['max_tokens'], b['temperature']) for b in Fixture.bodies], [(20000, 0.1), (20000, 0.1)])
         self.assertEqual(Fixture.reset_calls, [])
+
+    def test_lighton_image_only_request_and_report_survive_archive_delete(self):
+        source = self.store.media.add({'name': 'Sayfa 2.png', 'data_url': probe_image_url()})
+        saved = self.store.save_input({'name': 'Sayfa', 'images': [source]})
+        self.assertEqual(saved['content'], '')
+        self.assertEqual(self.store.list_inputs()[0]['image_count'], 1)
+        self.assertNotIn('data:', json.dumps(self.store.list_inputs()))
+        model = self.store.save_model(self.model | {'model': 'lightonai/LightOnOCR-3-1B'})
+        self.assertTrue(self.engine.test_model(model['id'])['ok'])
+        self.assertEqual(Fixture.bodies[-1]['messages'][0]['content'][0]['type'], 'image_url')
+
+        config = {'model_ids': [model['id']], 'prompts': [''], 'mode': 'single', 'stream': False}
+        with self.assertRaisesRegex(ValueError, 'tam bir görsel'):
+            self.engine.start(config | {'prompts': ['OCR metni']})
+        with self.assertRaisesRegex(ValueError, 'tam bir görsel'):
+            self.engine.start(config | {'prompt_images': {'0': [source, source]}})
+        self.store.delete('inputs', saved['id'])
+        run = await_report(self.engine, self.engine.start(config | {'prompt_images': {'0': [source]}})['id'])
+        self.assertEqual(run['status'], 'completed')
+        body = Fixture.bodies[-1]
+        self.assertEqual(body['max_tokens'], 4096)
+        self.assertEqual(body['messages'], [{
+            'role': 'user', 'content': [{'type': 'image_url', 'image_url': {'url': probe_image_url()}}],
+        }])
+        self.assertEqual(self.store.get('reports', run['id'])['config']['prompt_images'], {'0': [source]})
+        self.assertNotIn('data:image', json.dumps(run))
+
+    def test_vision_preserves_multiple_images_and_exact_text(self):
+        source = self.store.media.add({'name': 'local.png', 'data_url': probe_image_url()})
+        remote = {'name': 'remote.png', 'url': 'https://example.com/image.png'}
+        run = self.run_config(prompts=['grounding'], prompt_images={'0': [source, remote]}, stream=False)
+        self.assertEqual(run['status'], 'completed')
+        body = Fixture.bodies[-1]
+        self.assertEqual(body['messages'][0]['content'], [
+            {'type': 'image_url', 'image_url': {'url': probe_image_url()}},
+            {'type': 'image_url', 'image_url': {'url': remote['url']}},
+            {'type': 'text', 'text': 'grounding'},
+        ])
+        self.assertNotIn('prompt_prefix_id', run['phases'][0]['models'][0]['requests'][0])
+        with self.assertRaisesRegex(ValueError, 'HTTP'):
+            self.store.save_input({'name': 'Bad URL', 'images': [{'url': 'file:///app/config'}]})
+
+    def test_visual_archive_batch_rolls_back_if_one_page_is_invalid(self):
+        source = self.store.media.add({'name': 'Sayfa.png', 'data_url': probe_image_url()})
+        first = {'name': 'Belge · Sayfa 1', 'images': [source]}
+        with self.assertRaisesRegex(ValueError, 'bulunamadı'):
+            self.store.save_input_batch({'inputs': [first, {'name': 'Hatalı', 'images': [{'id': '0' * 64}]}]})
+        self.assertEqual(self.store.list_inputs(), [])
+        result = self.store.save_input_batch({
+            'shared': {'category': 'OCR', 'question': 'grounding'},
+            'inputs': [first, {'name': 'Belge · Sayfa 2', 'images': [source]}],
+        })
+        self.assertEqual(result, {'count': 2})
+        self.assertEqual([item['preview'] for item in self.store.list_inputs()], ['grounding', 'grounding'])
 
     def test_provider_http_failures_log_status_without_request_or_response_secrets(self):
         secret_prompt = 'private-prompt-not-for-logs'

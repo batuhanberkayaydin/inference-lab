@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { REQUESTS_PER_PAGE, RequestPage } from "./RequestCount";
+import { MediaPreviews, type MediaImage } from "./VisualInput";
 import "./responses.css";
 
 type ResponseRow = { index: number; status: string; text: string; error: string | null; output_tokens: number | null; e2e_s: number | null; response_format?: string };
@@ -29,7 +30,12 @@ function Answer({ model, row, stream }: { model: ResponseModel; row?: ResponseRo
   </article>;
 }
 
-export function ResponseComparison({ phase, prompts, stream }: { phase: { models: ResponseModel[] }; prompts: string[]; stream: boolean }) {
+export function ResponseComparison({ phase, prompts, images, stream }: {
+  phase: { models: ResponseModel[] };
+  prompts: string[];
+  images?: Record<number, MediaImage[]>;
+  stream: boolean;
+}) {
   const [page, setPage] = useState(0);
   const visiblePage = Math.max(0, Math.min(page, Math.ceil(prompts.length / REQUESTS_PER_PAGE) - 1));
   const offset = visiblePage * REQUESTS_PER_PAGE;
@@ -40,7 +46,11 @@ export function ResponseComparison({ phase, prompts, stream }: { phase: { models
     <RequestPage label="Cevap aralığı" total={prompts.length} page={visiblePage} onChange={setPage} />
     {visiblePrompts.map(({prompt, index}) => <section className="response-input" key={index} aria-label={`Girdi ${index + 1} cevapları`}>
       <div className="response-input-heading"><h3>Girdi {String(index + 1).padStart(2, "0")}</h3><span>{phase.models.length} model cevabı</span></div>
-      <details className="response-prompt"><summary><span>{prompt.length > 140 ? prompt.slice(0, 140) + "…" : prompt}</span><b>Girdiyi göster</b></summary><pre>{prompt}</pre></details>
+      <details className="response-prompt">
+        <summary><span>{prompt.length > 140 ? prompt.slice(0, 140) + "…" : prompt}{images?.[index]?.length ? `${prompt ? " · " : ""}${images[index].length} görsel` : ""}</span><b>Girdiyi göster</b></summary>
+        {prompt && <pre>{prompt}</pre>}
+        <MediaPreviews images={images?.[index] ?? []} />
+      </details>
       <div className="answer-grid" style={{ gridTemplateColumns: `repeat(${phase.models.length}, minmax(0, 1fr))` }}>{phase.models.map(model => <Answer key={model.id} model={model} row={model.requests.find(row => row.index === index)} stream={stream} />)}</div>
     </section>)}
   </section>;

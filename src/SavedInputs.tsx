@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { PromptExample } from "./examples";
 import { api } from "./api";
+import { VisualInput, type MediaImage, type PdfPageImage } from "./VisualInput";
 
 export type SavedInputSummary = {
   id: string;
@@ -26,11 +27,13 @@ export type SavedInputSummary = {
   created_at: string;
   updated_at: string;
   preview: string;
+  image_count?: number;
 };
 export type SavedInput = Omit<SavedInputSummary, "preview"> & {
   context: string;
   question: string;
   content: string;
+  images?: MediaImage[];
 };
 export type InputDraft = {
   name?: string;
@@ -38,6 +41,7 @@ export type InputDraft = {
   context?: string;
   question?: string;
   target_tokens?: number;
+  images?: MediaImage[];
 };
 const lengths = [0, 8192, 16384, 32768, 65536, 131072];
 export const lengthLabel = (n: number) => (n ? `${n / 1024}K` : "Serbest");
@@ -59,7 +63,7 @@ function InputEditor({
   record: SavedInput | null;
   draft?: InputDraft;
   onClose: () => void;
-  onSaved: () => Promise<void>;
+  onSaved: (count?: number) => Promise<void>;
 }) {
   const [form, setForm] = useState({
     id: record?.id,
@@ -68,8 +72,10 @@ function InputEditor({
     target_tokens: record?.target_tokens ?? draft?.target_tokens ?? 32768,
     context: record?.context || draft?.context || "",
     question: record?.question || draft?.question || "",
+    images: record?.images ?? draft?.images ?? [],
   });
   const [busy, setBusy] = useState(false);
+  const [mediaBusy, setMediaBusy] = useState(false);
   const [error, setError] = useState("");
   const [filename, setFilename] = useState("");
   const content =
@@ -80,6 +86,7 @@ function InputEditor({
         : form.question;
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (mediaBusy) return;
     setBusy(true);
     setError("");
     try {
@@ -113,6 +120,17 @@ function InputEditor({
       e.target.value = "";
     }
   }
+  async function savePdfPages(filename: string, pages: PdfPageImage[]) {
+    const name = form.name.trim() || filename.replace(/\.pdf$/i, "");
+    await api("/inputs/batch", "POST", {
+      shared: { category: form.category, context: form.context, question: form.question, target_tokens: form.target_tokens },
+      inputs: pages.map(({ page, image }) => ({
+        name: `${name.slice(0, 104)} · Sayfa ${page}`,
+        images: [image],
+      })),
+    });
+    await onSaved(pages.length);
+  }
   return (
     <section className="saved-editor">
       <div className="saved-editor-heading">
@@ -123,7 +141,7 @@ function InputEditor({
           </button>
           <h2>{record ? "Kayıtlı girdiyi düzenle" : "Yeni girdi hazırla"}</h2>
           <p>
-            Bağlamı ve soruyu bir kez hazırla, her koşuda aynı girdiyi kullan.
+            Metni, soruyu veya görselleri bir kez hazırla, her koşuda aynı girdiyi kullan.
           </p>
         </div>
         <button
@@ -173,6 +191,9 @@ function InputEditor({
               </select>
             </label>
           </div>
+          <VisualInput images={form.images} disabled={busy || mediaBusy} onBusyChange={setMediaBusy}
+            onSavePdfPages={record ? undefined : savePdfPages}
+            onChange={images => setForm(prev => ({ ...prev, images }))} />
           <div className="saved-editor-columns">
             <div className="saved-context">
               <div className="saved-field-heading">
@@ -215,11 +236,11 @@ function InputEditor({
                   <dd>{count(content.length)}</dd>
                   <dt>Yaklaşık token</dt>
                   <dd>~{count(Math.ceil(content.length / 3))}</dd>
+                  {!!form.images.length && <><dt>Görsel</dt><dd>{form.images.length}</dd></>}
                 </dl>
                 <p>
-                  Hedef etiketi metni uzatmaz veya kısaltmaz. Token tahmini
-                  karakter / 3 hesabıdır; gerçek sayı modele ve tokenizer’a
-                  bağlıdır.
+                  Hedef etiketi metni değiştirmez. Token tahmini yalnızca
+                  metin için karakter / 3 hesabıdır. Görsel tokenlarını sağlayıcı hesaplar.
                 </p>
                 <small>
                   Bağlam ve soru doluysa, soru bağlamın sonuna “Soru:”
@@ -250,7 +271,7 @@ function InputEditor({
             </button>
             <button
               className="button primary"
-              disabled={busy || !content.trim() || content.length > 1_000_000}
+              disabled={busy || mediaBusy || (!content.trim() && !form.images.length) || content.length > 1_000_000}
             >
               {busy ? (
                 <Loader2 size={16} className="spin" />
@@ -328,10 +349,10 @@ export function SavedInputs({
     setEditing(undefined);
     onDraftUsed();
   }
-  async function save() {
+  async function save(total?: number) {
     await onRefresh();
     close();
-    onMessage("Girdi arşive kaydedildi. Benchmark ekranından seçebilirsin.");
+    onMessage(total ? `${total} PDF sayfası ayrı girdiler olarak kaydedildi.` : "Girdi arşive kaydedildi. Benchmark ekranından seçebilirsin.");
   }
   async function apply(id: string) {
     setBusy(true);
@@ -371,7 +392,7 @@ export function SavedInputs({
     <>
       <div className="saved-page-actions">
         <p>
-          Uzun bağlamlarını adlandır, sorularınla birlikte sakla ve istediğin
+          Metinleri, soruları ve görselleri sakla ve istediğin
           girdi kutusuna yükle.
         </p>
         <button className="button primary" onClick={() => setEditing(null)}>
@@ -452,6 +473,7 @@ export function SavedInputs({
               <p>{item.preview}</p>
               <div className="saved-input-meta">
                 <span>{item.category || "Kategorisiz"}</span>
+                {!!item.image_count && <span>{item.image_count} görsel</span>}
                 <span>{count(item.characters)} karakter</span>
                 <span>
                   ~{count(item.estimated_tokens)} token <small>(tahmini)</small>

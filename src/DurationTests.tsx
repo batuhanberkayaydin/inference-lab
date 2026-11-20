@@ -3,9 +3,10 @@ import { Play, Square, FileText, ArrowDownToLine, ChevronLeft, ChevronRight } fr
 import { loadExample, type PromptExample } from "./examples";
 import { api } from "./api";
 import { RequestCount, parseRequestCount } from "./RequestCount";
+import { VisualInput, requiresSingleImage, type MediaImage, type ModelInputFormat } from "./VisualInput";
 import "./duration-tests.css";
 
-type Model = { id: string; name: string; model: string; base_url: string; demo: boolean };
+type Model = { id: string; name: string; model: string; base_url: string; demo: boolean; input_format?: ModelInputFormat };
 type Context = { id: string; name: string; content: string };
 type Saved = { id: string; name: string };
 type Guard = { result?: string | null; attempts?: number | null; version?: string; policy?: string };
@@ -50,6 +51,8 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
   const [timeout, setTimeoutValue] = useState(150);
   const [inputMode, setInputMode] = useState("prompt");
   const [prompt, setPrompt] = useState("");
+  const [images, setImages] = useState<MediaImage[]>([]);
+  const [mediaBusy, setMediaBusy] = useState(false);
   const [maxTokens, setMaxTokens] = useState(1024);
   const [stream, setStream] = useState(true);
   const [raw, setRaw] = useState("");
@@ -61,7 +64,8 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
   const [offset, setOffset] = useState(0);
   const model = models.find(m => m.id === modelId);
   const running = isActive(run);
-  const locked = busy || running;
+  const locked = busy || running || mediaBusy;
+  const invalidOcrInput = inputMode === "prompt" && !!model && requiresSingleImage(model) && images.length !== 1;
 
   useEffect(() => { if (!modelId && models.length) setModelId(models.find(m => !m.demo)?.id || models[0].id); }, [models, modelId]);
 
@@ -107,19 +111,29 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
   async function useSaved(source: string) {
     setError("");
     try {
-      if (source.startsWith("example:")) { setBusy(true); const item = await loadExample(source.slice(8)); setPrompt(item.content); }
-      else if (source.startsWith("context:")) setPrompt(contexts.find(c => c.id === source.slice(8))?.content || "");
-      else if (source) { setBusy(true); const item = await api<{ content: string }>(`/inputs/${source}`); setPrompt(item.content); }
+      if (source.startsWith("example:")) {
+        setBusy(true);
+        setPrompt((await loadExample(source.slice(8))).content);
+        setImages([]);
+      } else if (source.startsWith("context:")) {
+        setPrompt(contexts.find(c => c.id === source.slice(8))?.content || "");
+        setImages([]);
+      } else if (source) {
+        setBusy(true);
+        const item = await api<{ content: string; images?: MediaImage[] }>(`/inputs/${source}`);
+        setPrompt(item.content);
+        setImages(item.images ?? []);
+      }
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
   }
   async function start() {
-    if (concurrency === null) return;
+    if (concurrency === null || invalidOcrInput) return;
     setBusy(true); setError("");
     try {
       const payload = inputMode === "prompt" ? { messages: [{ role: "user", content: prompt }], stream, max_tokens: maxTokens } : preview?.payload;
       if (!payload) throw new Error("Önce JSON/curl gövdesini doğrulayın.");
-      const next = await api<Run>("/duration-runs", "POST", { model_id: modelId, concurrency, duration_s: duration, interval_s: interval, timeout, demo: false, payload });
+      const next = await api<Run>("/duration-runs", "POST", { model_id: modelId, concurrency, duration_s: duration, interval_s: interval, timeout, demo: false, payload, images: inputMode === "prompt" ? images : [] });
       setOffset(0); setRun(next); sessionStorage.setItem("duration_run", next.id);
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
@@ -149,10 +163,12 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
       </div>
       <div className="duration-endpoint"><span>Sağlayıcı: {model?.base_url || "Henüz model seçilmedi"}</span><button className="text-button" type="button" onClick={onSettings}>Model ayarları</button></div>
       <div className="duration-editor">
-        <div className="segmented compact"><button type="button" disabled={locked} className={inputMode === "prompt" ? "active" : ""} onClick={() => setInputMode("prompt")}>Metin girdisi</button><button type="button" disabled={locked} className={inputMode === "raw" ? "active" : ""} onClick={() => setInputMode("raw")}>JSON / curl</button></div>
+        <div className="segmented compact"><button type="button" disabled={locked} className={inputMode === "prompt" ? "active" : ""} onClick={() => setInputMode("prompt")}>Metin / görsel</button><button type="button" disabled={locked} className={inputMode === "raw" ? "active" : ""} onClick={() => setInputMode("raw")}>JSON / curl</button></div>
         {inputMode === "prompt" ? <>
           <label>Hazır girdi<select defaultValue="" disabled={locked} onChange={e => useSaved(e.target.value)}><option value="">Girdi, bağlam veya örnek seç</option><optgroup label="Örnek promptlar · hedef uzunluk">{examples.map(item => <option key={item.id} value={`example:${item.id}`}>{item.name}</option>)}</optgroup>{savedInputs.map(s => <option value={s.id} key={s.id}>{s.name}</option>)}{contexts.map(c => <option value={`context:${c.id}`} key={c.id}>{c.name}</option>)}</select></label>
           <p>32K / 64K örnekleri yalnızca seçilince yüklenir; etiketler gerçek tokenizer sayımı değildir.</p><label>Her istekte gönderilecek metin<textarea placeholder="Metin yazın veya yukarıdan bir örnek seçin." value={prompt} disabled={locked} onChange={e => setPrompt(e.target.value)} rows={5} /></label>
+          <VisualInput images={images} onChange={setImages} disabled={locked} onBusyChange={setMediaBusy} />
+          {invalidOcrInput && <p className="request-limit" role="status">LightOnOCR için tam bir görsel veya bir PDF sayfası ekleyin.</p>}
           <div className="duration-generation"><label>Çıktı limiti (token)<input type="number" min="1" max="32768" value={maxTokens} disabled={locked} onChange={e => setMaxTokens(Number(e.target.value))}/></label><label>Yanıt biçimi<select value={stream ? "stream" : "normal"} disabled={locked} onChange={e => setStream(e.target.value === "stream")}><option value="stream">Stream</option><option value="normal">Normal JSON</option></select></label></div>
         </> : <>
           <label>Chat/completions JSON gövdesi veya curl<textarea className="duration-json" placeholder="JSON gövdesini veya curl komutunu buraya yapıştırın." rows={13} value={raw} disabled={locked} onChange={e => { setRaw(e.target.value); setPreview(null); }} spellCheck={false}/></label>
@@ -161,7 +177,7 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
           {preview && <div className="duration-preview"><strong>Gövde hazır · model: {String(preview.payload.model || model?.model || "seçilmedi")}</strong>{preview.url && <p>curl adresi (bilgi): {preview.url}</p>}<p>Gönderilecek sağlayıcı: {model?.base_url || "Henüz model seçilmedi"}. JSON model kimliği, seçilen modelle eşleşmelidir. Stream isteklerinde usage istenir.</p><details><summary>Gönderilecek JSON’u incele</summary><pre>{JSON.stringify({...preview.payload, model: preview.payload.model || model?.model}, null, 2)}</pre></details></div>}
         </>}
       </div>
-      <div className="duration-launch"><button className="button primary" disabled={locked || concurrency === null || !modelId || (inputMode === "raw" ? !preview : !prompt.trim())} onClick={start}><Play size={16}/>Süreli testi başlat</button></div>
+      <div className="duration-launch"><button className="button primary" disabled={locked || concurrency === null || !modelId || invalidOcrInput || (inputMode === "raw" ? !preview : !prompt.trim() && !images.length)} onClick={start}><Play size={16}/>Süreli testi başlat</button></div>
       <p className="duration-limit">En fazla 1 saat ve 10.000 istek. Sonuçlar otomatik kaydedilir. HTTP başarısı, dolu cevap ve guard başlıkları ayrı kontrol edilir.</p>
     </section>
     {error && <div className="error-message" role="alert">{error}</div>}

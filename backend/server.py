@@ -32,6 +32,7 @@ from urllib.error import HTTPError, URLError
 import duration
 import bundled_examples
 from limits import MAX_CONCURRENT_REQUESTS
+from media import MEDIA_ID, MediaAssets, image_refs, model_input_format, probe_image_url, vision_content
 from request_input import parse_input
 from credentials import CredentialFiles
 
@@ -228,6 +229,7 @@ class Store:
         os.chmod(self.directory, 0o700)
         self.db = self.directory / 'lab.sqlite3'
         self.credentials = CredentialFiles(self.directory)
+        self.media = MediaAssets(self.connect)
         with self.connect() as db:
             db.execute('CREATE TABLE IF NOT EXISTS models (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS contexts (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
@@ -235,6 +237,7 @@ class Store:
             db.execute('CREATE TABLE IF NOT EXISTS reports (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS duration_runs (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS settings (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
+            db.execute('CREATE TABLE IF NOT EXISTS media_assets (id TEXT PRIMARY KEY, mime TEXT NOT NULL, data BLOB NOT NULL)')
         os.chmod(self.db, 0o600)
         # A process restart cannot resume provider streams. Retain partial reports honestly.
         for report in self.list('duration_runs'):
@@ -304,11 +307,13 @@ class Store:
             for row in db.execute('SELECT body FROM inputs ORDER BY rowid DESC'):
                 item = json.loads(row[0])
                 summary = {k: item[k] for k in ('id', 'name', 'category', 'target_tokens', 'characters', 'estimated_tokens', 'created_at', 'updated_at')}
-                summary['preview'] = (item['question'] or item['context'])[:180]
+                images = item.get('images', [])
+                summary['image_count'] = len(images)
+                summary['preview'] = (item['question'] or item['context'] or ', '.join(image['name'] for image in images))[:180]
                 summaries.append(summary)
         return summaries
 
-    def save_input(self, data):
+    def save_input(self, data, db=None):
         for field in ('name', 'category', 'context', 'question'):
             if not isinstance(data.get(field, ''), str):
                 raise ValueError('Girdi adı, kategori, bağlam ve soru metin olmalıdır.')
@@ -318,8 +323,6 @@ class Store:
             raise ValueError('1–120 karakter uzunluğunda bir girdi adı yazın.')
         if len(data.get('category', '')) > 80:
             raise ValueError('Kategori en fazla 80 karakter olabilir.')
-        if not context.strip() and not question.strip():
-            raise ValueError('Bağlam veya soru alanlarından en az birini doldurun.')
         target = data.get('target_tokens', 0)
         if type(target) is not int or target not in (0, 8192, 16384, 32768, 65536, 131072):
             raise ValueError('Desteklenen hedefler: serbest, 8K, 16K, 32K, 64K, 128K.')
@@ -332,11 +335,29 @@ class Store:
         old = self.get('inputs', ident) if ident else None
         if ident and not old:
             raise ValueError('Düzenlenecek kayıt bulunamadı; yeni girdi olarak kaydedin.')
+        images = image_refs(data.get('images', (old or {}).get('images', [])))
+        self.media.check(images)
+        if not content.strip() and not images:
+            raise ValueError('Bir bağlam, soru veya görsel ekleyin.')
         item = {'id': ident or secrets.token_hex(6), 'name': name, 'category': data.get('category', '').strip(),
                 'context': context, 'question': question, 'content': content, 'target_tokens': target,
                 'characters': len(content), 'estimated_tokens': math.ceil(len(content) / 3),
                 'created_at': old['created_at'] if old else now(), 'updated_at': now()}
-        return self.put('inputs', item)
+        if images:
+            item['images'] = images
+        return self.put('inputs', item, db=db)
+
+    def save_input_batch(self, data):
+        entries = data.get('inputs')
+        shared = data.get('shared', {})
+        if not isinstance(entries, list) or not 1 <= len(entries) <= 100 or any(not isinstance(entry, dict) or 'id' in entry for entry in entries):
+            raise ValueError('Bir defada en fazla 100 yeni girdi kaydedilebilir.')
+        if not isinstance(shared, dict) or set(shared) - {'category', 'context', 'question', 'target_tokens'}:
+            raise ValueError('Ortak girdi alanları geçersiz.')
+        with self.connect() as db:
+            for entry in entries:
+                self.save_input(shared | entry, db)
+        return {'count': len(entries)}
 
     def public_models(self):
         return [{k: v for k, v in m.items() if k not in ('api_key', 'ca_certificate')} | {
@@ -375,6 +396,9 @@ class Store:
         item['use_shared_ca'] = data.get('use_shared_ca', old.get('use_shared_ca', True))
         if type(item['use_shared_ca']) is not bool:
             raise ValueError('Ortak CA seçimi geçersiz.')
+        item['input_format'] = data.get('input_format', old.get('input_format', 'auto'))
+        if item['input_format'] not in ('auto', 'vision', 'ocr'):
+            raise ValueError('Geçerli bir model girdi profili seçin.')
         item['ca_certificate'] = certificate_update(data, old.get('ca_certificate', ''))
         new_reference = None
         if data.get('clear_key'):
@@ -423,7 +447,9 @@ class Engine:
         headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
         if model['api_key']:
             headers['Authorization'] = 'Bearer ' + model['api_key']
-        body = {'model': model['model'], 'messages': [{'role': 'user', 'content': 'Merhaba'}],
+        profile = model_input_format(model)
+        content = vision_content('' if profile == 'ocr' else 'Görseli betimle.', [probe_image_url()]) if profile in ('ocr', 'vision') else 'Merhaba'
+        body = {'model': model['model'], 'messages': [{'role': 'user', 'content': content}],
                 'max_tokens': 1, 'stream': False}
         class NoRedirect(HTTPRedirectHandler):
             def redirect_request(self, req, fp, code, msg, headers, newurl):
@@ -482,13 +508,26 @@ class Engine:
         prompts = unpack_benchmark_prompts(data)
         ids = data.get('model_ids', [])
         mode = data.get('mode', 'concurrent')
-        if not isinstance(prompts, list) or not 1 <= len(prompts) <= MAX_CONCURRENT_REQUESTS or any(not isinstance(p, str) or not p.strip() or len(p) > 1_000_000 for p in prompts):
+        if not isinstance(prompts, list) or not 1 <= len(prompts) <= MAX_CONCURRENT_REQUESTS or any(not isinstance(p, str) or len(p) > 1_000_000 for p in prompts):
             raise ValueError(f'1–{MAX_CONCURRENT_REQUESTS} adet dolu girdi gerekir; her girdi en fazla 1 milyon karakter olabilir.')
+        raw_images = data.get('prompt_images', {})
+        if not isinstance(raw_images, dict) or len(raw_images) > len(prompts):
+            raise ValueError('Görsellerin girdi eşlemesi geçersiz.')
+        images = {}
+        for index, refs in raw_images.items():
+            if not isinstance(index, str) or not re.fullmatch(r'0|[1-9][0-9]{0,3}', index) or int(index) >= len(prompts):
+                raise ValueError('Görsellerin girdi eşlemesi geçersiz.')
+            clean = image_refs(refs)
+            if clean:
+                images[index] = clean
+        if any(not prompt.strip() and str(index) not in images for index, prompt in enumerate(prompts)):
+            raise ValueError('Her girdiye metin veya görsel ekleyin.')
+        self.store.media.check(ref for refs in images.values() for ref in refs)
         if not isinstance(ids, list) or not 1 <= len(ids) <= 4 or len(set(ids)) != len(ids):
             raise ValueError('1–4 farklı model seçin.')
         if mode not in ('single', 'concurrent', 'compare') or (mode == 'single' and len(prompts) != 1):
             raise ValueError('Geçerli bir test modu seçin; tek istek modu bir girdi gerektirir.')
-        max_tokens = data.get('max_tokens', 20000)
+        max_tokens = data.get('max_tokens', 4096 if images else 20000)
         temperature = data.get('temperature', 0.1)
         timeout = data.get('timeout', 120)
         if type(max_tokens) is not int or not 1 <= max_tokens <= 32768:
@@ -516,6 +555,10 @@ class Engine:
             raise ValueError('Demo modu kaldırıldı. Gerçek API için bir model seçin.')
         if not demo and any(m['demo'] or not m['base_url'] for m in models):
             raise ValueError('Gerçek ölçüm için sağlayıcı URL’si olan modeller seçin veya ayarlardan ekleyin.')
+        if any(model_input_format(model) == 'ocr' for model in models) and (
+            len(images) != len(prompts) or any(len(refs) != 1 for refs in images.values())
+        ):
+            raise ValueError('LightOnOCR seçiliyken her isteğe tam bir görsel veya bir PDF sayfası ekleyin.')
         with self.lock:
             if any(r['status'] in ('running', 'stopping', 'queued') for r in self.runs.values()):
                 raise ValueError('Bir test zaten çalışıyor. Önce tamamlanmasını bekleyin veya durdurun.')
@@ -526,6 +569,8 @@ class Engine:
             config = {'mode': mode, 'prompts': prompts, 'max_tokens': max_tokens, 'temperature': temperature,
                       'timeout': timeout, 'model_schedule': schedule, 'demo': demo, 'stream': data.get('stream', True),
                       'reset_prefix_cache': data.get('reset_prefix_cache', False)}
+            if images:
+                config['prompt_images'] = images
             fingerprint_payload = pack_benchmark_prompts({'config': config, 'models': clean_models})
             run = {'id': ident, 'name': str(data.get('name', '')).strip()[:120] or f'{"Demo" if demo else "Benchmark"} · {len(prompts)} istek',
                    'created_at': now(), 'finished_at': None, 'status': 'running', 'config': config, 'models': clean_models,
@@ -764,19 +809,25 @@ class Engine:
                            'max_tokens': config['max_tokens'], 'temperature': config.get('temperature', 0), 'stream': config.get('stream', True)}
                 if config.get('request_payload'):
                     payload = copy.deepcopy(config['request_payload'])
-                # A fresh prefix per actual request prevents reuse of the input prefix.
-                prefix_id = uuid.uuid4().hex[:12]
-                payload['messages'][0]['content'] = prefix_id + '\n' + payload['messages'][0]['content']
-                with self.lock:
-                    row['prompt_prefix_id'] = prefix_id
-                if payload['stream']:
+                attachments = config.get('prompt_images', {}).get(str(prompt_index), [])
+                if attachments:
+                    payload['messages'][0]['content'] = vision_content(
+                        payload['messages'][0]['content'], [self.store.media.url(ref) for ref in attachments])
+                elif all(isinstance(message['content'], str) for message in payload['messages']):
+                    # A text prefix changes cache matching. Image-only OCR and vision instructions stay exact.
+                    prefix_id = uuid.uuid4().hex[:12]
+                    payload['messages'][0]['content'] = prefix_id + '\n' + payload['messages'][0]['content']
+                    with self.lock:
+                        row['prompt_prefix_id'] = prefix_id
+                stream_response = payload['stream']
+                if stream_response:
                     payload['stream_options'] = dict(payload.get('stream_options', {}), include_usage=True)
-                headers = {'Content-Type': 'application/json', 'Accept': 'text/event-stream' if payload['stream'] else 'application/json'}
+                headers = {'Content-Type': 'application/json', 'Accept': 'text/event-stream' if stream_response else 'application/json'}
                 if model['api_key']:
                     headers['Authorization'] = 'Bearer ' + model['api_key']
                 opener = provider_opener(model)
-                request_body = json.dumps(payload, ensure_ascii=False).encode()
-                response = opener.open(Request(endpoint(model['base_url']), data=request_body, headers=headers), timeout=config['timeout'])
+                response = opener.open(Request(endpoint(model['base_url']), data=json.dumps(payload, ensure_ascii=False).encode(), headers=headers), timeout=config['timeout'])
+                del payload
                 stage = 'receiving_response'
                 with self.lock:
                     row['http_status'] = response.status
@@ -785,7 +836,7 @@ class Engine:
                 try:
                     if cancel.is_set():
                         raise Cancelled()
-                    if not payload['stream'] or 'application/json' in response.headers.get('Content-Type', ''):
+                    if not stream_response or 'application/json' in response.headers.get('Content-Type', ''):
                         obj = json.loads(response.read())
                         if cancel.is_set():
                             raise Cancelled()
@@ -1026,6 +1077,13 @@ def handler_for(engine):
                         return self.reply(item) if item else self.reply({'error': 'Örnek prompt bulunamadı.'}, 404)
                     if path == '/api/inputs':
                         return self.reply(engine.store.list_inputs())
+                    if path.startswith('/api/media/'):
+                        ident = path.removeprefix('/api/media/')
+                        stored = engine.store.media.get(ident) if MEDIA_ID.fullmatch(ident) else None
+                        if not stored:
+                            return self.reply({'error': 'Görsel bulunamadı.'}, 404)
+                        mime, content = stored
+                        return self.reply(content, content_type=mime)
                     saved_match = re.fullmatch(r'/api/inputs/([a-f0-9]{12})', path)
                     if saved_match:
                         item = engine.store.get('inputs', saved_match.group(1))
@@ -1052,7 +1110,7 @@ def handler_for(engine):
                         if parse_qs(urlparse(self.path).query).get('summary') == ['1']:
                             for row in rows:
                                 config = row['config']
-                                row['config'] = {k: v for k, v in config.items() if k != 'prompts'} | {'prompt_count': len(config['prompts'])}
+                                row['config'] = {k: v for k, v in config.items() if k not in ('prompts', 'prompt_images')} | {'prompt_count': len(config['prompts'])}
                         return self.reply(rows)
                     match = re.fullmatch(r'/api/runs/([a-f0-9]{16})(?:/export)?', path)
                     if match:
@@ -1118,6 +1176,10 @@ def handler_for(engine):
                     return self.reply(engine.test_model(match.group(1)))
                 if path == '/api/inputs':
                     return self.reply(engine.store.save_input(data))
+                if path == '/api/inputs/batch':
+                    return self.reply(engine.store.save_input_batch(data), 201)
+                if path == '/api/media':
+                    return self.reply(engine.store.media.add(data), 201)
                 if path == '/api/contexts':
                     if not str(data.get('name', '')).strip() or not str(data.get('content', '')).strip():
                         raise ValueError('Bağlam adı ve içeriği zorunludur.')

@@ -38,6 +38,7 @@ import { DurationTests } from "./DurationTests";
 import { ResponseComparison } from "./ResponseComparison";
 import { ModeExplanation } from "./ModeExplanation";
 import { PromptDistribution, type PromptSourceGroup } from "./PromptDistribution";
+import { VisualInput, requiresSingleImage, type MediaImage, type ModelInputFormat } from "./VisualInput";
 import { PerformanceChart as Chart } from "./PerformanceChart";
 import { api } from "./api";
 import { MAX_CONCURRENT_REQUESTS, REQUESTS_PER_PAGE, RequestCount, RequestPage, parseRequestCount } from "./RequestCount";
@@ -66,6 +67,7 @@ type Model = {
   key_requires_reentry?: boolean;
   has_ca_certificate?: boolean;
   use_shared_ca?: boolean;
+  input_format?: ModelInputFormat;
 };
 type Context = { id: string; name: string; category: string; content: string };
 type Row = {
@@ -97,6 +99,7 @@ type Phase = { name: string; models: Target[] };
 type Config = {
   mode: string;
   prompts: string[];
+  prompt_images?: Record<number, MediaImage[]>;
   max_tokens: number;
   temperature: number;
   timeout: number;
@@ -117,7 +120,7 @@ type Report = {
   fingerprint?: string;
 };
 type ReportSummary = Omit<Report, "config"> & {
-  config: Omit<Config, "prompts"> & { prompt_count: number };
+  config: Omit<Config, "prompts" | "prompt_images"> & { prompt_count: number };
 };
 
 async function fetchBenchmarkReport(path: string, method = "GET", body?: unknown): Promise<Report> {
@@ -791,7 +794,7 @@ function Results({
         </>
       )}
       {(tab === "summary" || tab === "answers") && phase && (
-        <ResponseComparison phase={phase} prompts={run.config.prompts} stream={run.config.stream !== false} />
+        <ResponseComparison phase={phase} prompts={run.config.prompts} images={run.config.prompt_images} stream={run.config.stream !== false} />
       )}
       {tab === "requests" && phase && (
         <div className="request-results">
@@ -939,6 +942,7 @@ function ModelForm({
     id: model?.id,
     name: model?.name || "",
     provider: "OpenAI uyumlu",
+    input_format: model?.input_format ?? "auto",
     model: model?.model || "",
     base_url: model?.base_url || "",
     api_key: "",
@@ -1006,6 +1010,15 @@ function ModelForm({
               placeholder="Qwen/Qwen3.5-122B-A10B-FP8"
               required
             />
+          </label>
+          <label className="full">
+            Girdi profili
+            <select value={form.input_format} onChange={e => update("input_format", e.target.value)}>
+              <option value="auto">Otomatik · LightOnOCR kimliğini tanır</option>
+              <option value="vision">Vision · metin ve görsel</option>
+              <option value="ocr">LightOnOCR · istek başına tek görsel</option>
+            </select>
+            <small>LightOnOCR’u özel bir model adıyla yayınlıyorsanız OCR profilini seçin.</small>
           </label>
           <label className="full">
             Sağlayıcı API URL
@@ -1256,12 +1269,13 @@ function App() {
   const [reports, setReports] = useState<ReportSummary[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<string[]>(["", "", "", ""]);
+  const [promptImages, setPromptImages] = useState<Record<number, MediaImage[]>>({});
   const [requestCount, setRequestCount] = useState("4");
   const [promptPage, setPromptPage] = useState(0);
   const [mode, setMode] = useState("concurrent");
   const [stream, setStream] = useState(true);
   const [schedule, setSchedule] = useState("parallel");
-  const [maxTokens, setMaxTokens] = useState('20000');
+  const [maxTokens, setMaxTokens] = useState('');
   const [temperature, setTemperature] = useState('0.1');
   const [timeout, setTimeoutValue] = useState('120');
   const [name, setName] = useState("");
@@ -1362,6 +1376,12 @@ function App() {
   const running = active(run);
   const inputCount = mode === "single" ? 1 : parseRequestCount(requestCount);
   const effectivePrompts = Array.from({length: inputCount ?? 1}, (_, index) => prompts[index] ?? "");
+  const effectiveImages = Object.fromEntries(Object.entries(promptImages)
+    .filter(([index, images]) => Number(index) < effectivePrompts.length && images.length));
+  const defaultMaxTokens = Object.keys(effectiveImages).length ? 4096 : 20000;
+  const hasOcrModel = chosen.some(requiresSingleImage);
+  const invalidOcrInputs = hasOcrModel &&
+    effectivePrompts.some((_, index) => effectiveImages[index]?.length !== 1);
   const parallelCount = effectivePrompts.length * (schedule === "parallel" ? selected.length : Number(selected.length > 0));
   const overParallelLimit = parallelCount > MAX_CONCURRENT_REQUESTS;
   const shownPromptPage = Math.min(promptPage, Math.ceil(effectivePrompts.length / REQUESTS_PER_PAGE) - 1);
@@ -1370,7 +1390,9 @@ function App() {
     .map((prompt, index) => ({prompt, index: promptOffset + index}));
   const promptSourceGroups: PromptSourceGroup[] = [
     { label: "Kayıtlı girdiler", options: savedInputs.map(item => ({
-      key: "input:" + item.id, label: `${item.name} · ${lengthLabel(item.target_tokens)}`,
+      key: "input:" + item.id,
+      label: `${item.name} · ${item.image_count ? `${item.image_count} görsel` : lengthLabel(item.target_tokens)}`,
+      imageCount: item.image_count,
     })) },
     { label: "Kayıtlı bağlamlar", options: contexts.map(item => ({
       key: "context:" + item.id, label: item.name,
@@ -1393,20 +1415,22 @@ function App() {
     setModelEdit(undefined);
     setContextEdit(undefined);
   }
-  function setPrompt(index: number, content: string, source = "") {
+  function setPrompt(index: number, content: string, source = "", images?: MediaImage[]) {
     setPrompts((prev) => {
       const next = prev.slice();
       next[index] = content;
       return next;
     });
     setPromptSources((prev) => ({ ...prev, [index]: source }));
+    if (images) setPromptImages(prev => ({ ...prev, [index]: images }));
   }
-  function replaceActivePrompts(assignments: { content: string; source: string }[]) {
+  function replaceActivePrompts(assignments: { content: string; source: string; images?: MediaImage[] }[]) {
     setPrompts(prev => [...assignments.map(item => item.content), ...prev.slice(assignments.length)]);
     setPromptSources(prev => ({ ...prev, ...Object.fromEntries(assignments.map((item, index) => [index, item.source])) }));
+    setPromptImages(prev => ({ ...prev, ...Object.fromEntries(assignments.map((item, index) => [index, item.images ?? []])) }));
   }
-  function fillPrompts(content: string, source = "") {
-    replaceActivePrompts(effectivePrompts.map(() => ({content, source})));
+  function fillPrompts(content: string, source = "", images: MediaImage[] = []) {
+    replaceActivePrompts(effectivePrompts.map(() => ({content, source, images})));
   }
   async function distributePrompts(assignments: string[]) {
     if (busy || running || inputCount === null || assignments.length !== inputCount) return;
@@ -1416,13 +1440,14 @@ function App() {
       const uniqueSources = [...new Set(assignments)];
       const resolved = await Promise.all(uniqueSources.map(async source => {
         const [kind, id] = source.split(":", 2);
-        const content = kind === "input"
-          ? (await api<SavedInput>("/inputs/" + encodeURIComponent(id))).content
-          : kind === "example"
+        const item = kind === "input"
+          ? await api<SavedInput>("/inputs/" + encodeURIComponent(id))
+          : { content: kind === "example"
             ? (await loadExample(id)).content
-            : contexts.find(item => item.id === id)?.content;
-        if (!content?.trim()) throw new Error("Seçilen kaynaklardan biri boş veya artık bulunamıyor. Kaynakları kontrol edin.");
-        return [source, {content, source}] as const;
+            : contexts.find(item => item.id === id)?.content, images: undefined };
+        if (!item.content?.trim() && !item.images?.length)
+          throw new Error("Seçilen kaynaklardan biri boş veya artık bulunamıyor. Kaynakları kontrol edin.");
+        return [source, {content: item.content ?? "", source, images: item.images}] as const;
       }));
       const bySource = new Map(resolved);
       replaceActivePrompts(assignments.map(source => bySource.get(source)!));
@@ -1454,9 +1479,9 @@ function App() {
     setBusy(true);
     try {
       const record = await api<SavedInput>("/inputs/" + id);
-      if (target === "all") fillPrompts(record.content, "input:" + id);
+      if (target === "all") fillPrompts(record.content, "input:" + id, record.images ?? []);
       else {
-        setPrompt(target, record.content, "input:" + id);
+        setPrompt(target, record.content, "input:" + id, record.images ?? []);
         setPromptPage(Math.floor(target / REQUESTS_PER_PAGE));
       }
       navigate("benchmark");
@@ -1471,7 +1496,7 @@ function App() {
     setError("");
     if (source.startsWith("example:")) {
       setBusy(true);
-      try { const item = await loadExample(source.slice(8)); setPrompt(index, item.content, source); }
+      try { const item = await loadExample(source.slice(8)); setPrompt(index, item.content, source, []); }
       catch (e) { setError((e as Error).message); }
       finally { setBusy(false); }
     } else if (source.startsWith("input:")) {
@@ -1487,7 +1512,7 @@ function App() {
       const context = contexts.find(
         (c) => c.id === source.replace("context:", ""),
       );
-      if (context) setPrompt(index, context.content, source);
+      if (context) setPrompt(index, context.content, source, []);
     }
   }
   async function loadExampleIntoAll(id: string) {
@@ -1506,7 +1531,7 @@ function App() {
   }
   function archivePrompt(index: number) {
     navigate("inputs");
-    setInputDraft({ context: prompts[index], question: "", target_tokens: 0 });
+    setInputDraft({ context: prompts[index], question: "", target_tokens: 0, images: promptImages[index] });
   }
   function toggleModel(id: string) {
     setSelected((prev) =>
@@ -1528,8 +1553,8 @@ function App() {
     } finally { setTestingModel(null); }
   }
   async function start() {
-    if (inputCount === null || overParallelLimit) return;
-    const outputLimit = maxTokens.trim() === '' ? 20000 : Number(maxTokens);
+    if (inputCount === null || overParallelLimit || invalidOcrInputs) return;
+    const outputLimit = maxTokens.trim() === '' ? defaultMaxTokens : Number(maxTokens);
     const tempValue = temperature.trim() === '' ? 0.1 : Number(temperature);
     const timeoutValue = timeout.trim() === '' ? 120 : Number(timeout);
     if (!Number.isInteger(outputLimit) || outputLimit < 1 || outputLimit > 32768 ||
@@ -1544,6 +1569,7 @@ function App() {
       const next = await fetchBenchmarkReport("/runs", "POST", {
         model_ids: selected,
         ...packBenchmarkInputs(effectivePrompts),
+        prompt_images: effectiveImages,
         mode,
         demo: false,
         max_tokens: outputLimit,
@@ -1951,8 +1977,8 @@ function App() {
                       <div className="input-actions">
                         {effectivePrompts.length > 1 && (
                           <button type="button" className="text-button"
-                            disabled={running || busy || !effectivePrompts[0].trim()}
-                            onClick={() => fillPrompts(effectivePrompts[0], promptSources[0])}>
+                            disabled={running || busy || (!effectivePrompts[0].trim() && !promptImages[0]?.length)}
+                            onClick={() => fillPrompts(effectivePrompts[0], promptSources[0], promptImages[0])}>
                             İlk girdiyi tümüne kopyala
                           </button>
                         )}
@@ -1968,6 +1994,7 @@ function App() {
                           onClick={() => {
                             setPrompts([]);
                             setPromptSources({});
+                            setPromptImages({});
                           }}
                         >
                           <Trash2 size={15} />
@@ -2007,6 +2034,7 @@ function App() {
                         groups={promptSourceGroups}
                         count={effectivePrompts.length}
                         disabled={running || busy || inputCount === null}
+                        prefersOcr={hasOcrModel}
                         onDistribute={distributePrompts}
                       />
                     )}
@@ -2046,15 +2074,21 @@ function App() {
                             onChange={(e) => setPrompt(i, e.target.value)}
                             placeholder="Metin yaz veya kayıtlı girdi / örnek seç…"
                           />
+                          <VisualInput label={`Girdi ${i + 1} için görsel veya PDF sayfası ekle`}
+                            images={promptImages[i] ?? []} disabled={running || busy} onBusyChange={setBusy}
+                            onChange={images => {
+                              setPromptImages(prev => ({ ...prev, [i]: images }));
+                              setPromptSources(prev => ({ ...prev, [i]: "" }));
+                            }} />
                           <div className="prompt-footer">
                             <span>
                               {prompt.length.toLocaleString("tr-TR")} karakter
                             </span>
                             <button
                               className="prompt-save"
-                              disabled={running || busy || !prompt.trim()}
+                              disabled={running || busy || (!prompt.trim() && !promptImages[i]?.length)}
                               onClick={() => archivePrompt(i)}
-                              aria-label={`Girdi ${i + 1} metnini arşive kaydet`}
+                              aria-label={`Girdi ${i + 1} arşive kaydet`}
                             >
                               <Plus size={11} />
                               Girdiyi kaydet
@@ -2081,7 +2115,7 @@ function App() {
                           max="32768"
                           value={maxTokens}
                           disabled={running || busy}
-                          placeholder="20000"
+                          placeholder={String(defaultMaxTokens)}
                           onChange={(e) => setMaxTokens(e.target.value)}
                         />
                         <small>token</small>
@@ -2132,11 +2166,11 @@ function App() {
                       />
                     </label>
                   </div>
-                  <p className="generation-defaults">Boş bırakılan alanlarda 20.000 token, temperature 0,1 ve 120 sn kullanılır. Ayarlar seçilen tüm modellere aynı uygulanır.</p>
+                  <p className="generation-defaults">Boş bırakılan alanlarda {defaultMaxTokens.toLocaleString("tr-TR")} çıktı tokenı, temperature 0,1 ve 120 sn kullanılır. Ayarlar seçilen tüm modellere aynı uygulanır.</p>
                   <div className="cache-reset-option">
                     <label><input type="checkbox" checked={false} disabled readOnly /> <span>Başlamadan önce modellerin prefix cache’ini sıfırla</span></label>
                     <p>Bu seçenek şimdilik kullanılamıyor. vLLM'de cache sıfırlama uç noktası için geliştirme modu gerekir; bu mod yalnızca erişimi kısıtlı test ortamlarında kullanılmalıdır.</p>
-                    <p>Önceki girdinin prefix cache ile eşleşmesini azaltmak için her isteğin başına farklı bir kimlik eklenir. Bu işlem mevcut cache'i silmez.</p>
+                    <p>Metin isteklerine prefix cache eşleşmesini azaltmak için farklı bir kimlik eklenir. Görsel istekleri hazırladığınız içerikle gönderilir.</p>
                   </div>
                 </div>
                 <div className="launch-bar">
@@ -2162,6 +2196,7 @@ function App() {
                           Aynı anda en çok {parallelCount} istek{overParallelLimit ? ` · Sınır ${MAX_CONCURRENT_REQUESTS}` : ""}
                         </small>
                       )}
+                      {invalidOcrInputs && <small className="request-limit" role="status">LightOnOCR için her istek kutusunda tam bir görsel veya bir PDF sayfası bulunmalı.</small>}
                     </span>
                   </div>
                   <button
@@ -2172,7 +2207,8 @@ function App() {
                       !selected.length ||
                       inputCount === null ||
                       overParallelLimit ||
-                      effectivePrompts.some((p) => !p.trim())
+                      invalidOcrInputs ||
+                      effectivePrompts.some((p, index) => !p.trim() && !effectiveImages[index]?.length)
                     }
                     onClick={start}
                   >

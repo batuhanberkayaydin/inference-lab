@@ -2,13 +2,14 @@
 import json
 import re
 import shlex
+from media import MAX_IMAGES, image_bytes, remote_image_url
 
 ALLOWED = set('model messages stream stream_options max_tokens max_completion_tokens temperature top_p top_k min_p seed stop presence_penalty frequency_penalty repetition_penalty chat_template_kwargs response_format tools tool_choice parallel_tool_calls logprobs top_logprobs n min_tokens ignore_eos skip_special_tokens spaces_between_special_tokens'.split())
 
 
 def parse_input(text):
-    if not isinstance(text, str) or not text.strip() or len(text) > 1_000_000:
-        raise ValueError('En fazla 1 milyon karakterlik JSON veya curl isteği girin.')
+    if not isinstance(text, str) or not text.strip() or len(text) > 8_000_000:
+        raise ValueError('En fazla 8 milyon karakterlik JSON veya curl isteği girin.')
     text = text.replace('\u00a0', ' ').strip()
     url, timeout = None, None
     if text.startswith('{'):
@@ -50,10 +51,30 @@ def validate_payload(body):
     if not isinstance(body, dict) or set(body) - ALLOWED:
         raise ValueError('Geçerli bir chat/completions JSON gövdesi girin; desteklenmeyen alan var.')
     messages = body.get('messages')
-    if not isinstance(messages, list) or not messages or any(not isinstance(m, dict) or m.get('role') not in ('system', 'user', 'assistant', 'tool', 'developer') or not isinstance(m.get('content'), str) for m in messages):
-        raise ValueError('messages alanı dolu olmalı; her mesaj role ve metin content içermeli.')
-    if len(json.dumps(body)) > 6_000_000:
+    if not isinstance(messages, list) or not messages or any(not isinstance(m, dict) or m.get('role') not in ('system', 'user', 'assistant', 'tool', 'developer') for m in messages):
+        raise ValueError('messages alanı dolu olmalı; her mesajın geçerli bir role alanı olmalıdır.')
+    if len(json.dumps(body, ensure_ascii=False).encode()) > 8_000_000:
         raise ValueError('İstek gövdesi çok büyük.')
+    images = 0
+    for message in messages:
+        content = message.get('content')
+        if isinstance(content, str):
+            continue
+        if not isinstance(content, list) or not content:
+            raise ValueError('Mesaj içeriği metin veya text/image_url parçaları olmalıdır.')
+        for part in content:
+            if isinstance(part, dict) and part.get('type') == 'text' and isinstance(part.get('text'), str):
+                continue
+            if not isinstance(part, dict) or part.get('type') != 'image_url' or not isinstance(part.get('image_url'), dict) or message['role'] != 'user':
+                raise ValueError('Görseller kullanıcı mesajında image_url parçası olmalıdır.')
+            url = part['image_url'].get('url')
+            images += 1
+            if images > MAX_IMAGES:
+                raise ValueError(f'Bir istekte en fazla {MAX_IMAGES} görsel gönderilebilir.')
+            if isinstance(url, str) and url.startswith('data:'):
+                image_bytes(url)
+            else:
+                remote_image_url(url)
     if type(body.get('stream', True)) is not bool:
         raise ValueError('stream true veya false olmalıdır.')
     for field in ('max_tokens', 'max_completion_tokens'):

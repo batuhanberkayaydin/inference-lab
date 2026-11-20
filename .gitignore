@@ -4,6 +4,7 @@ node_modules/
 !.env.example
 .venv/
 dist/
+public/pdfjs/
 data/
 __pycache__/
 *.tsbuildinfo

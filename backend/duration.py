@@ -7,6 +7,7 @@ import threading
 import time
 from datetime import datetime, timezone
 from limits import MAX_CONCURRENT_REQUESTS
+from media import image_refs, model_input_format
 from request_input import validate_payload
 
 
@@ -48,6 +49,14 @@ def start(engine, data):
             raise ValueError(f'{label} {low}–{high} saniye arasında olmalıdır.')
     payload = copy.deepcopy(data.get('payload'))
     validate_payload(payload)
+    refs = image_refs(data.get('images', []))
+    engine.store.media.check(refs)
+    messages = payload['messages']
+    if refs and (len(messages) != 1 or messages[0]['role'] != 'user' or not isinstance(messages[0]['content'], str)):
+        raise ValueError('Eklenen dosyalar tek bir kullanıcı metniyle kullanılabilir.')
+    raw_parts = [part for msg in messages if isinstance(msg['content'], list) for part in msg['content']]
+    if model_input_format(model) == 'ocr' and len(refs) + sum(part['type'] == 'image_url' for part in raw_parts) != 1:
+        raise ValueError('LightOnOCR için tam bir görsel veya bir PDF sayfası ekleyin.')
     if payload.get('model') and payload['model'] != model['model']:
         raise ValueError('JSON model kimliği seçilen kayıtlı modelle eşleşmiyor.')
     payload['model'] = model['model']
@@ -64,10 +73,14 @@ def start(engine, data):
     if not demo and (model['demo'] or not model['base_url']):
         raise ValueError('Gerçek test için sağlayıcı URL’si olan bir model seçin.')
     clean = {k: model[k] for k in ('id', 'name', 'model', 'provider', 'color', 'base_url', 'metrics_url')}
+    texts = [m['content'] if isinstance(m['content'], str) else '\n'.join(
+        part['text'] for part in m['content'] if part['type'] == 'text') for m in messages]
     config = {'concurrency': lanes, 'duration_s': duration, 'interval_s': interval, 'timeout': timeout,
-              'request_payload': payload, 'prompts': ['\n'.join(m['content'] for m in payload['messages'])],
+              'request_payload': payload, 'prompts': ['\n'.join(texts)],
               'max_tokens': payload.get('max_tokens', payload.get('max_completion_tokens', 1024)),
               'stream': payload['stream'], 'demo': demo}
+    if refs:
+        config['prompt_images'] = {'0': refs}
     with engine.lock:
         if any(r['status'] in ('running', 'stopping', 'queued') for r in engine.runs.values()):
             raise ValueError('Başka bir test çalışıyor; önce tamamlanmasını bekleyin veya durdurun.')

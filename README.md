@@ -83,7 +83,7 @@ Vite arayüzü [http://127.0.0.1:5173](http://127.0.0.1:5173) üzerinden API ça
 
 Örnek: 2 model ve 4 girdi seçildiğinde **Eşzamanlı yük** her modelde 4 isteği birlikte gönderir (toplam 8 API isteği). **Sırayla → aynı anda** aynı 4 girdiyi önce tek tek, ardından birlikte gönderir (model başına 8, toplam 16 API isteği). Sonuçlarda iki faz ayrı seçilir. Model çalışma düzeni bu fazlardan bağımsızdır: “Modeller sırayla” ayarında ilk model kendi testini bitirir, sonra diğer model başlar. Paylaşılan GPU’da model testlerini paralel başlatmak ek kaynak rekabeti yaratabilir.
 
-**İstek girdileri → Girdileri rastgele dağıt** bölümünden kayıtlı girdileri, bağlamları ve hazır örnekleri birlikte seçebilirsiniz. **Rastgele doldur** etkin kutuların içeriğini değiştirir ve kaynakları dengeli olarak karıştırır. Yeterli kutu varsa her seçili kaynak en az bir kez kullanılır. Hazırlanan sıra tüm modeller ve fazlar için aynıdır. Kutuları düzenleyip benchmark’ı ayrıca başlatabilirsiniz.
+**İstek girdileri → Girdileri rastgele dağıt** bölümünden kayıtlı girdileri, bağlamları ve hazır örnekleri birlikte seçebilirsiniz. **Kaynak türü** filtresiyle metin, görsel veya tek görselli OCR kayıtlarını listeleyip **Tümünü seç** ile listedeki kaynakları işaretleyin. LightOnOCR seçiliyken liste varsayılan olarak tek görselli kaynakları gösterir. **Rastgele doldur** etkin kutuların içeriğini değiştirir ve kaynakları dengeli olarak karıştırır. Yeterli kutu varsa her seçili kaynak en az bir kez kullanılır. Hazırlanan sıra tüm modeller ve fazlar için aynıdır. Kutuları düzenleyip benchmark’ı ayrıca başlatabilirsiniz.
 
 Eski demo modelleri ve değiştirilmemiş eski örnek bağlamlar listelerden gizlenir. Kullanıcı tarafından değiştirilmiş bağlamlar gösterilir; eski demo raporları sentetik olarak etiketlenmiş halde korunur. Gerçek API modu OpenAI uyumlu `/v1/chat/completions`, SSE, `stream_options.include_usage` destekleyen uç noktalar içindir. Native Anthropic/Gemini API gibi farklı protokoller için sonradan sağlayıcı adaptörü eklenmelidir.
 
@@ -93,7 +93,15 @@ Eski demo modelleri ve değiştirilmemiş eski örnek bağlamlar listelerden giz
 
 32K etiketi metni otomatik büyütmez veya gerçek 32.768 token olduğunu doğrulamaz. Ekrandaki yaklaşık token sayısı karakter / 3 tahminidir; gerçek sayı model tokenizer’ına ve sağlayıcı usage yanıtına bağlıdır.
 
-Arşivdeki **Benchmark’ta kullan** düğmesi kaydı seçilen girdi kutusuna veya tüm kutulara yükler. Her kutunun seçim menüsünde ayrıca **Kayıtlı girdiler** grubu vardır. Mevcut kutu metnini **Girdiyi kaydet** ile arşive alabilirsiniz. İki alan doluysa birleşim `bağlam + "\n\nSoru:\n" + soru` şeklindedir; yalnızca bir alan doluysa metin aynen korunur.
+Arşivdeki **Benchmark’ta kullan** düğmesi kaydı seçilen girdi kutusuna veya tüm kutulara yükler. Her kutunun seçim menüsünde ayrıca **Kayıtlı girdiler** grubu vardır. Mevcut kutuyu metni ve görselleriyle **Girdiyi kaydet** üzerinden arşive alabilirsiniz. İki metin alanı doluysa birleşim `bağlam + "\n\nSoru:\n" + soru` şeklindedir.
+
+## OCR ve vision girdileri
+
+Benchmark, süreli test ve kayıtlı girdi ekranında **Görsel / PDF sayfası ekle** bölümünü kullanın. PNG, JPEG, WebP, GIF, BMP ve TIFF dosyaları en fazla 5 MB olabilir. HTTP(S) görsel adresini sağlayıcı açar. Genel vision girdisine en fazla sekiz görsel ve isteğe bağlı metin ekleyebilirsiniz. Sağlayıcının kabul ettiği biçimler ve görsel sayısı modele göre değişebilir.
+
+LightOnOCR, istek başına bir görsel alır. Düz OCR için metni boş bırakın. LightOnOCR-3 grounding modunda görev metnine `grounding` yazabilirsiniz. PDF sayfaları tarayıcıda PNG’ye çevrilir. Tek bir sayfa eklemek için sayfa numarasını seçin. Arşivde **Ayrı girdiler olarak kaydet** ile bir PDF’nin en fazla 100 sayfasını tek seferde ayrı kayıt olarak hazırlayabilirsiniz. Alan boşsa tüm sayfalar seçilir. PDF üst sınırı 30 MB’dir. [LightOnOCR kullanım örnekleri](https://github.com/lightonai/LightOnOCR)
+
+Model kimliği LightOnOCR olarak tanınır. Özel bir model kimliğiyle yayınlıyorsanız yönetici ayarlarında **LightOnOCR** profilini seçin. **Vision** ve **LightOnOCR** profillerinde bağlantı testi küçük bir örnek görsel gönderir. Yüklenen görseller yerel veritabanında saklanır. Raporlar, kayıt arşivden silinse de görselleri aynı kurulumdan gösterebilir.
 
 Kayıtlar SQLite `inputs` tablosunda saklanır; uygulama tekrar açıldığında korunur. Kütüphane listesi yalnızca küçük özetler yükler; uzun metin seçim/düzenleme sırasında alınır. Eski bağlamlar, model ayarları ve raporlar korunur.
 
@@ -113,9 +121,9 @@ Toplam 1024 istek aynı anda gönderilebilir. “Modeller aynı anda çalışsı
 
 Benchmark arayüzünde **Başlamadan önce modellerin prefix cache’ini sıfırla** seçeneği şimdilik devre dışıdır; arayüzden başlatılan koşular cache sıfırlama isteği göndermez. vLLM'de bu uç nokta geliştirme modu gerektirir; bu mod hassas yönetim uç noktalarını açabileceğinden yalnızca erişimi kısıtlı test ortamlarında kullanılmalıdır. Backend'in mevcut API davranışı ve eski raporlar korunur.
 
-Benchmark ve süreli testlerde gönderilen her isteğin ilk mesajının başına yeni, 12 karakterli UUID parçası eklenir; istek kaydında `prompt_prefix_id` olarak saklanır. Bu, önceki girdilerle prefix cache eşleşmesini azaltmayı amaçlar, mevcut cache'i silmez ve tüm cache kullanımının önlenmesini garanti etmez. Sohbet şablonu veya ilk mesajdan önce eklenen sabit içerik yine eşleşebilir. Modeller arası girdiler yalnızca bu rastgele kimlik bakımından farklıdır; kimlik ek token ve model davranışında farklılık yaratabilir. Süreli testte özel JSON'un ilk mesajı da bu şekilde gönderilir; kayıtlı özgün girdi değiştirilmez.
+Benchmark ve süreli testlerde metin isteklerinin ilk mesajına 12 karakterli UUID parçası eklenir. Kimlik `prompt_prefix_id` olarak saklanır ve önceki girdilerle prefix cache eşleşmesini azaltmayı amaçlar. Sohbet şablonunun ortak kısımları yine eşleşebilir. Görsel isteklerde içerik hazırlandığı biçimde gönderilir. Bu sayede LightOnOCR’a metinsiz görüntü veya `grounding` gibi tam görev metni verilebilir.
 
-Çıktı limiti, temperature ve zaman aşımı boş bırakıldığında sırasıyla 20.000 token, 0,1 ve 120 saniyedir. Çıktı limiti ve temperature her model isteğine aynı gönderilir; zaman aşımı istemcide her istek için uygulanır. Sunucunun yapılandırması değiştirilmez; sağlayıcının isteği nasıl ele aldığı ve sınırları ayrıca sağlayıcıya bağlıdır.
+Benchmark’ta boş bırakılan çıktı limiti metin koşularında 20.000, görsel içeren koşularda 4.096 token olarak uygulanır. Temperature 0,1 ve zaman aşımı 120 saniyedir. Çıktı limiti ve temperature her model isteğine aynı gönderilir. Zaman aşımı istemcide her istek için uygulanır.
 
 Başarısız sağlayıcı istekleri Docker loglarında `provider_request_failed` olayı olarak görünür: `docker compose logs -f inference-lab`. Olay; koşu ve model kimliği, faz, girdi sıra numarası (süreli testte döngü), HTTP durum kodu varsa kod, hata kategorisi, aşama, geçen süre, timeout ve kısmi yanıt bilgisi içerir. `waiting_for_headers` bağlantı kurulması ve HTTP yanıt başlıklarının beklenmesini, `receiving_response` yanıt gövdesinin okunmasını kapsar. API anahtarı, URL, girdi, yanıt ve sağlayıcının ham hata gövdesi loglanmaz; sağlayıcının ayrıntılı hata mesajı için kendi loglarına bakın. Hatalar otomatik yeniden denenmez.
 

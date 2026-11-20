@@ -47,6 +47,14 @@
   gap: 12px 22px;
   margin-top: 12px;
 }
+.distribution-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+  margin-top: 10px;
+}
+.distribution-filter label { font-size: 13px; }
 .distribution-sources fieldset {
   flex: 1 1 185px;
   min-inline-size: 0;

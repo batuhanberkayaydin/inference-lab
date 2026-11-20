@@ -15,6 +15,7 @@ from http.cookiejar import CookieJar
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'backend'))
 from server import Engine, Store, guard_headers, handler_for
 import duration
+from media import probe_image_url
 from request_input import parse_input
 
 
@@ -203,6 +204,21 @@ class DurationTests(unittest.TestCase):
             with self.subTest(count=count), patch('duration.threading.Thread.start'):
                 run = duration.start(Engine(self.store), self.config | {'concurrency': count})
                 self.assertEqual(run['config']['concurrency'], count)
+
+    def test_visual_attachment_and_raw_image_message_keep_image_without_text(self):
+        source = self.store.media.add({'name': 'Sayfa.png', 'data_url': probe_image_url()})
+        image_part = {'type': 'image_url', 'image_url': {'url': probe_image_url()}}
+        visual = {'messages': [{'role': 'user', 'content': [image_part]}], 'stream': False}
+        self.assertEqual(parse_input(json.dumps(visual))['payload'], visual)
+        with self.assertRaises(ValueError):
+            parse_input(json.dumps({'messages': [{'role': 'user', 'content': [
+                {'type': 'image_url', 'image_url': {'url': 'file:///data/avatar.png'}},
+            ]}]}))
+        run = self.run_case('pass', concurrency=1, interval_s=1, images=[source],
+                            payload={'messages': [{'role': 'user', 'content': ''}], 'stream': False})
+        self.assertTrue(run['summary']['all_success'])
+        self.assertEqual(Provider.calls[0]['body']['messages'][0]['content'], [image_part])
+        self.assertEqual(run['config']['prompt_images'], {'0': [source]})
 
     def test_authenticated_routes_and_export(self):
         server=ThreadingHTTPServer(('127.0.0.1',0),handler_for(self.engine))

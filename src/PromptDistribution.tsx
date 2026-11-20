@@ -4,7 +4,7 @@ import "./prompt-distribution.css";
 
 export type PromptSourceGroup = {
   label: string;
-  options: { key: string; label: string }[];
+  options: { key: string; label: string; imageCount?: number }[];
 };
 
 function shuffle<T>(items: T[]) {
@@ -21,17 +21,31 @@ function distributePromptSources(sources: string[], count: number) {
   return shuffle(Array.from({ length: count }, (_, index) => order[index % order.length]));
 }
 
-export function PromptDistribution({ groups, count, disabled, onDistribute }: {
+export function PromptDistribution({ groups, count, disabled, prefersOcr, onDistribute }: {
   groups: PromptSourceGroup[];
   count: number;
   disabled: boolean;
+  prefersOcr: boolean;
   onDistribute: (sources: string[]) => Promise<void>;
 }) {
   const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const available = groups.flatMap(group => group.options.map(option => option.key));
+  const [kindOverride, setKind] = useState<string | null>(null);
+  const kind = kindOverride ?? (prefersOcr ? "ocr" : "all");
+  const visible = groups.map(group => ({
+    ...group,
+    options: group.options.filter(option => {
+      const images = option.imageCount ?? 0;
+      if (kind === "ocr") return images === 1;
+      if (kind === "visual") return images > 0;
+      if (kind === "text") return images === 0;
+      return true;
+    }),
+  })).filter(group => group.options.length);
+  const available = visible.flatMap(group => group.options.map(option => option.key));
   const sources = available.filter(key => selected.includes(key));
+  const allSelected = !!available.length && sources.length === available.length;
 
   function toggle(key: string) {
     setError("");
@@ -56,9 +70,27 @@ export function PromptDistribution({ groups, count, disabled, onDistribute }: {
       <summary><Shuffle size={16} aria-hidden="true" /> Girdileri rastgele dağıt <ChevronDown size={15} aria-hidden="true" /></summary>
       <div className="distribution-body">
         <p>Bir veya daha fazla kaynak seçin. Dağıtım {count} etkin kutunun içeriğini değiştirir.</p>
+        <div className="distribution-filter">
+          <label>Kaynak türü
+            <select value={kind} disabled={disabled || loading} onChange={e => {
+              setKind(e.target.value);
+              setSelected([]);
+              setError("");
+            }}>
+              <option value="all">Tüm kaynaklar</option>
+              <option value="text">Metin kaynakları</option>
+              <option value="visual">Görsel kaynakları</option>
+              <option value="ocr">Tek görselli kaynaklar (OCR)</option>
+            </select>
+          </label>
+          <button type="button" className="button small-button" disabled={disabled || loading || !available.length} onClick={() => {
+            setError("");
+            setSelected(allSelected ? [] : available);
+          }}>{allSelected ? "Seçimi temizle" : "Tümünü seç"}</button>
+        </div>
         {available.length ? (
           <div className="distribution-sources">
-            {groups.filter(group => group.options.length).map(group => (
+            {visible.map(group => (
               <fieldset key={group.label} disabled={disabled || loading}>
                 <legend>{group.label}</legend>
                 <div className="distribution-options">
@@ -72,7 +104,7 @@ export function PromptDistribution({ groups, count, disabled, onDistribute }: {
               </fieldset>
             ))}
           </div>
-        ) : <p>Seçilebilir kaynak yok. Kayıtlı girdiler veya Bağlam kütüphanesi bölümünden kaynak ekleyin.</p>}
+        ) : <p>Bu türde kaynak yok. Kayıtlı girdiler bölümünden yeni bir kaynak ekleyebilirsiniz.</p>}
         {error && <p className="error-message" role="alert">{error}</p>}
         <div className="distribution-actions">
           <small>{sources.length} kaynak seçili{sources.length > count && ` · Bu dağıtımda ${count} farklı kaynak kullanılacak`}</small>
