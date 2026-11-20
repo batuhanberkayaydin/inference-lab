@@ -39,6 +39,7 @@ import { ResponseComparison } from "./ResponseComparison";
 import { ModeExplanation } from "./ModeExplanation";
 import { PerformanceChart as Chart } from "./PerformanceChart";
 import { api } from "./api";
+import { MAX_CONCURRENT_REQUESTS, REQUESTS_PER_PAGE, RequestCount, RequestPage, parseRequestCount } from "./RequestCount";
 import {
   SavedInputs,
   type SavedInput,
@@ -114,6 +115,22 @@ type Report = {
   warnings?: string[];
   fingerprint?: string;
 };
+type ReportSummary = Omit<Report, "config"> & {
+  config: Omit<Config, "prompts"> & { prompt_count: number };
+};
+
+async function fetchBenchmarkReport(path: string, method = "GET", body?: unknown): Promise<Report> {
+  const report = await api<Report & { config: Config & { prompt_indices?: number[] } }>(path + "?compact=1", method, body);
+  const { prompt_indices: indices, ...config } = report.config;
+  return { ...report, config: { ...config, prompts: indices ? indices.map(index => config.prompts[index]) : config.prompts } };
+}
+
+function packBenchmarkInputs(inputs: string[]) {
+  const lookup = new Map(Array.from(new Set(inputs), (input, index) => [input, index] as const));
+  return lookup.size === inputs.length
+    ? { prompts: inputs }
+    : { prompts: [...lookup.keys()], prompt_indices: inputs.map(input => lookup.get(input)) };
+}
 type Page = "duration" | "benchmark" | "reports" | "contexts" | "inputs" | "settings" | "guide";
 const titles: Record<Page, string> = {
   benchmark: "Model karşılaştırma",
@@ -134,7 +151,7 @@ const statusLabels: Record<string, string> = {
   failed: "Başarısız",
   interrupted: "Kesintiye uğradı",
 };
-const active = (run: Report | null) =>
+const active = (run: Pick<Report, "status"> | null) =>
   !!run && ["running", "stopping", "queued"].includes(run.status);
 const fmt = (value: number | null | undefined, digits = 2) =>
   value == null
@@ -801,8 +818,8 @@ function Results({
             </dd>
             <dt>p95 / p99</dt>
             <dd>
-              Başarılı istekler üzerinde doğrusal interpolasyon. 1–24 örneklik
-              ilk sürüm; istatistiksel genelleme için tekrarlı koşular gerekir.
+              Başarılı istekler üzerinde doğrusal interpolasyon. Değerler bu
+              koşuyu özetler, genelleme için tekrarlı koşular gerekir.
             </dd>
             <dt>Draft / kabul</dt>
             <dd>
@@ -1235,9 +1252,11 @@ function App() {
   const [promptSources, setPromptSources] = useState<Record<number, string>>(
     {},
   );
-  const [reports, setReports] = useState<Report[]>([]);
+  const [reports, setReports] = useState<ReportSummary[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<string[]>(["", "", "", ""]);
+  const [requestCount, setRequestCount] = useState("4");
+  const [promptPage, setPromptPage] = useState(0);
   const [mode, setMode] = useState("concurrent");
   const [stream, setStream] = useState(true);
   const [schedule, setSchedule] = useState("parallel");
@@ -1272,7 +1291,7 @@ function App() {
     const [m, c, r, saved, exampleList, sharedCa] = await Promise.all([
       api<Model[]>("/models"),
       api<Context[]>("/contexts"),
-      api<Report[]>("/reports"),
+      api<ReportSummary[]>("/reports?summary=1"),
       api<SavedInputSummary[]>("/inputs"),
       api<PromptExample[]>("/examples"),
       api<{configured: boolean}>("/settings/shared-ca"),
@@ -1294,7 +1313,7 @@ function App() {
       const id = current?.id || sessionStorage.getItem("lab_run");
       if (id) {
         try {
-          setRun(await api<Report>("/runs/" + id));
+          setRun(await fetchBenchmarkReport("/runs/" + id));
         } catch {
           sessionStorage.removeItem("lab_run");
         }
@@ -1310,13 +1329,13 @@ function App() {
     let timer: ReturnType<typeof setTimeout>;
     async function poll() {
       try {
-        const next = await api<Report>("/runs/" + run!.id);
+        const next = await fetchBenchmarkReport("/runs/" + run!.id);
         if (stopped) return;
         setRun(next);
         if (active(next)) timer = setTimeout(poll, 400);
         else {
           setToast("Test sonuçları raporlara kaydedildi.");
-          api<Report[]>("/reports")
+          api<ReportSummary[]>("/reports?summary=1")
             .then(setReports)
             .catch(() => {});
         }
@@ -1340,7 +1359,14 @@ function App() {
   }, [toast]);
   const chosen = models.filter((m) => selected.includes(m.id));
   const running = active(run);
-  const effectivePrompts = mode === "single" ? prompts.slice(0, 1) : prompts;
+  const inputCount = mode === "single" ? 1 : parseRequestCount(requestCount);
+  const effectivePrompts = Array.from({length: inputCount ?? 1}, (_, index) => prompts[index] ?? "");
+  const parallelCount = effectivePrompts.length * (schedule === "parallel" ? selected.length : Number(selected.length > 0));
+  const overParallelLimit = parallelCount > MAX_CONCURRENT_REQUESTS;
+  const shownPromptPage = Math.min(promptPage, Math.ceil(effectivePrompts.length / REQUESTS_PER_PAGE) - 1);
+  const promptOffset = shownPromptPage * REQUESTS_PER_PAGE;
+  const visiblePrompts = effectivePrompts.slice(promptOffset, promptOffset + REQUESTS_PER_PAGE)
+    .map((prompt, index) => ({prompt, index: promptOffset + index}));
   function navigate(next: Page) {
     window.history.replaceState(
       null,
@@ -1354,17 +1380,17 @@ function App() {
     setModelEdit(undefined);
     setContextEdit(undefined);
   }
-  function count(n: number) {
-    setPrompts((prev) => Array.from({ length: n }, (_, i) => prev[i] ?? ""));
-    setPromptSources((prev) =>
-      Object.fromEntries(
-        Object.entries(prev).filter(([key]) => Number(key) < n),
-      ),
-    );
-  }
   function setPrompt(index: number, content: string, source = "") {
-    setPrompts((prev) => prev.map((p, i) => (i === index ? content : p)));
+    setPrompts((prev) => {
+      const next = prev.slice();
+      next[index] = content;
+      return next;
+    });
     setPromptSources((prev) => ({ ...prev, [index]: source }));
+  }
+  function fillPrompts(content: string, source = "") {
+    setPrompts(prev => [...Array<string>(effectivePrompts.length).fill(content), ...prev.slice(effectivePrompts.length)]);
+    setPromptSources(prev => ({ ...prev, ...Object.fromEntries(effectivePrompts.map((_, index) => [index, source])) }));
   }
   async function refreshInputs() {
     const next = await api<SavedInputSummary[]>("/inputs");
@@ -1388,16 +1414,11 @@ function App() {
     setBusy(true);
     try {
       const record = await api<SavedInput>("/inputs/" + id);
-      if (target === "all") {
-        setPrompts((prev) =>
-          prev.map((p, i) => (mode === "single" && i > 0 ? p : record.content)),
-        );
-        setPromptSources(
-          Object.fromEntries(
-            effectivePrompts.map((_, i) => [i, "input:" + id]),
-          ),
-        );
-      } else setPrompt(target, record.content, "input:" + id);
+      if (target === "all") fillPrompts(record.content, "input:" + id);
+      else {
+        setPrompt(target, record.content, "input:" + id);
+        setPromptPage(Math.floor(target / REQUESTS_PER_PAGE));
+      }
       navigate("benchmark");
       setToast(
         `${record.name}, ${target === "all" ? "tüm girdilere" : `Girdi ${String(target + 1).padStart(2, "0")}'e`} yüklendi.`,
@@ -1434,8 +1455,7 @@ function App() {
     setBusy(true); setError("");
     try {
       const item = await loadExample(id);
-      setPrompts(prev => prev.map((value, i) => mode === "single" && i > 0 ? value : item.content));
-      setPromptSources(Object.fromEntries(effectivePrompts.map((_, i) => [i, "example:" + id])));
+      fillPrompts(item.content, "example:" + id);
       setToast(`${item.name}, tüm etkin girdilere yüklendi. Henüz istek gönderilmedi.`);
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
@@ -1468,6 +1488,7 @@ function App() {
     } finally { setTestingModel(null); }
   }
   async function start() {
+    if (inputCount === null || overParallelLimit) return;
     const outputLimit = maxTokens.trim() === '' ? 20000 : Number(maxTokens);
     const tempValue = temperature.trim() === '' ? 0.1 : Number(temperature);
     const timeoutValue = timeout.trim() === '' ? 120 : Number(timeout);
@@ -1480,9 +1501,9 @@ function App() {
     setBusy(true);
     setError("");
     try {
-      const next = await api<Report>("/runs", "POST", {
+      const next = await fetchBenchmarkReport("/runs", "POST", {
         model_ids: selected,
-        prompts: effectivePrompts,
+        ...packBenchmarkInputs(effectivePrompts),
         mode,
         demo: false,
         max_tokens: outputLimit,
@@ -1512,22 +1533,22 @@ function App() {
   async function stop() {
     if (!run) return;
     try {
-      setRun(await api<Report>(`/runs/${run.id}/stop`, "POST", {}));
+      setRun(await fetchBenchmarkReport(`/runs/${run.id}/stop`, "POST", {}));
     } catch (e) {
       setError((e as Error).message);
     }
   }
-  async function openReport(report: Report) {
+  async function openReport(report: ReportSummary) {
     setBusy(true);
     try {
-      setHistoric(await api<Report>("/runs/" + report.id));
+      setHistoric(await fetchBenchmarkReport("/runs/" + report.id));
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setBusy(false);
     }
   }
-  async function deleteReport(report: Report) {
+  async function deleteReport(report: Pick<Report, "id" | "name">) {
     if (!window.confirm(`“${report.name}” raporu silinsin mi? Bu işlem geri alınamaz.`)) return;
     setBusy(true);
     try {
@@ -1888,6 +1909,13 @@ function App() {
                         </span>
                       </div>
                       <div className="input-actions">
+                        {effectivePrompts.length > 1 && (
+                          <button type="button" className="text-button"
+                            disabled={running || busy || !effectivePrompts[0].trim()}
+                            onClick={() => fillPrompts(effectivePrompts[0], promptSources[0])}>
+                            İlk girdiyi tümüne kopyala
+                          </button>
+                        )}
                         <select aria-label="Tüm etkin girdilere örnek prompt yükle" value="" disabled={running || busy || !examples.length} onChange={e => void loadExampleIntoAll(e.target.value)}>
                           <option value="">Tüm girdilere örnek yükle</option>
                           {examples.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
@@ -1898,7 +1926,7 @@ function App() {
                           aria-label="Tüm girdileri boşalt"
                           disabled={running || busy}
                           onClick={() => {
-                            setPrompts(prompts.map(() => ""));
+                            setPrompts([]);
                             setPromptSources({});
                           }}
                         >
@@ -1915,33 +1943,28 @@ function App() {
                             : "Her girdi, seçtiğin tüm modellere aynı ayarlarla gönderilir."}
                       </p>
                       {mode !== "single" && (
-                        <div className="count-control">
-                          <span>İstek sayısı</span>
-                          {[1, 2, 4, 8, 16, 24].map((n) => (
-                            <button
-                              key={n}
-                              disabled={running || busy}
-                              className={prompts.length === n ? "active" : ""}
-                              onClick={() => count(n)}
-                            >
-                              {n}
-                            </button>
-                          ))}
-                          <select
-                            value={prompts.length}
-                            aria-label="İstek sayısını seç"
-                            disabled={running || busy}
-                            onChange={(e) => count(Number(e.target.value))}
-                          >
-                            {Array.from({ length: 24 }, (_, i) => (
-                              <option key={i + 1}>{i + 1}</option>
+                        <div className="request-controls">
+                          <div className="count-control">
+                            <span>Hızlı seçim</span>
+                            {[1, 2, 4, 8, 16, 24, 64, 128, 256].map(n => (
+                              <button type="button" key={n} disabled={running || busy}
+                                className={inputCount === n ? "active" : ""}
+                                onClick={() => setRequestCount(String(n))}>{n}</button>
                             ))}
-                          </select>
+                          </div>
+                          <RequestCount label="Model başına istek" value={requestCount}
+                            onChange={setRequestCount} disabled={running || busy} />
+                          {overParallelLimit && (
+                            <small className="request-limit" role="status">
+                              {parallelCount} eşzamanlı istek seçili. Sınır {MAX_CONCURRENT_REQUESTS}. Girdi sayısını azaltın veya modelleri sırayla çalıştırın.
+                            </small>
+                          )}
                         </div>
                       )}
                     </div>
+                    <RequestPage label="Girdi aralığı" total={effectivePrompts.length} page={shownPromptPage} onChange={setPromptPage} />
                     <div className="prompt-grid">
-                      {effectivePrompts.map((prompt, i) => (
+                      {visiblePrompts.map(({prompt, index: i}) => (
                         <div className="prompt-box" key={i}>
                           <div className="prompt-header">
                             <span>
@@ -2118,6 +2141,11 @@ function App() {
                             ? "Tek istek"
                             : "Eşzamanlı yük"}
                       </small>
+                      {mode !== "single" && (
+                        <small className={overParallelLimit ? "request-limit" : undefined}>
+                          Aynı anda en çok {parallelCount} istek{overParallelLimit ? ` · Sınır ${MAX_CONCURRENT_REQUESTS}` : ""}
+                        </small>
+                      )}
                     </span>
                   </div>
                   <button
@@ -2126,6 +2154,8 @@ function App() {
                       busy ||
                       running ||
                       !selected.length ||
+                      inputCount === null ||
+                      overParallelLimit ||
                       effectivePrompts.some((p) => !p.trim())
                     }
                     onClick={start}
@@ -2262,7 +2292,7 @@ function App() {
                                 </div>
                               </td>
                               <td>
-                                {r.config.prompts.length} istek
+                                {r.config.prompt_count} istek
                                 <small>
                                   {r.config.mode === "compare"
                                     ? "Seri + concurrent"
@@ -2509,8 +2539,7 @@ function App() {
                           <button
                             className="button small-button"
                             onClick={() => {
-                              setPrompts(prompts.map(() => c.content));
-                              setPromptSources({});
+                              fillPrompts(c.content);
                               navigate("benchmark");
                               setToast("Bağlam tüm girdilere uygulandı.");
                             }}

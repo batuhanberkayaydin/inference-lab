@@ -352,7 +352,7 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(self.store.get('reports',run['id'])['status'],'cancelled')
 
     def test_validation_and_active_run_guard(self):
-        for changes in ({'prompts': ['x']*25}, {'prompts':['']}, {'model_ids':['missing']}, {'max_tokens':0}, {'temperature':float('nan')}, {'mode':'single'}, {'model_ids':[self.model['id']]*2}):
+        for changes in ({'prompts': ['x']*257}, {'prompts':['']}, {'model_ids':['missing']}, {'max_tokens':0}, {'temperature':float('nan')}, {'mode':'single'}, {'model_ids':[self.model['id']]*2}):
             with self.assertRaises(ValueError):
                 self.engine.start(self.config | changes)
         run=self.engine.start(self.config)
@@ -360,6 +360,28 @@ class IntegrationTests(unittest.TestCase):
             self.engine.start(self.config)
         self.engine.stop(run['id'])
         await_report(self.engine,run['id'])
+
+    def test_large_benchmark_inputs_and_parallel_limit_without_dispatch(self):
+        second = self.store.save_model({'name': 'Other', 'base_url': self.base, 'model': 'other'})
+        ids = [self.model['id'], second['id']]
+        with self.assertRaisesRegex(ValueError, 'en fazla 256 istek'):
+            self.engine.start(self.config | {'model_ids': ids, 'prompts': ['x'] * 129})
+        with self.assertRaisesRegex(ValueError, 'Girdi dizini'):
+            self.engine.start(self.config | {'prompts': ['x'], 'prompt_indices': [1]})
+        prompt = bundled_examples.example('turkish-64k')['content']
+        cases = [
+            ({'prompts': [prompt, 'son'], 'prompt_indices': [0] * 202 + [1]}, [prompt] * 202 + ['son']),
+            ({'prompts': ['x'] * 256, 'model_ids': ids, 'model_schedule': 'sequential'}, ['x'] * 256),
+            ({'prompts': ['x'] * 128, 'model_ids': ids}, ['x'] * 128),
+        ]
+        for changes, expected in cases:
+            with self.subTest(count=len(expected)), patch('server.threading.Thread.start'):
+                engine = Engine(self.store)
+                run = engine.start(self.config | changes)
+                self.assertEqual(run['config']['prompts'], expected)
+                self.assertEqual(self.store.get('reports', run['id'])['config']['prompts'], expected)
+                for target in run['phases'][0]['models']:
+                    self.assertEqual(len(target['requests']), len(expected))
 
     def test_demo_runs_and_models_cannot_be_selected(self):
         with self.assertRaisesRegex(ValueError, 'Demo modu kaldırıldı'):

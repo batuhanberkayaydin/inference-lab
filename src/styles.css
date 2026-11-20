@@ -799,6 +799,7 @@ main {
 .input-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
 }
 .input-actions .text-button {
@@ -820,6 +821,7 @@ main {
 .count-control {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 3px;
   white-space: nowrap;
 }
@@ -832,7 +834,8 @@ main {
   background: #f4f6f8;
   color: #657684;
   font-size: 11px;
-  width: 25px;
+  min-width: 25px;
+  padding-inline: 5px;
   height: 25px;
   border-radius: 4px;
   font-variant-numeric: tabular-nums;
@@ -842,11 +845,40 @@ main {
   color: #263f52;
   font-weight: 750;
 }
-.count-control select {
-  font-size: 11px;
-  width: 36px;
-  padding: 4px;
-  margin-left: 4px;
+.request-controls {
+  display: grid;
+  gap: 8px;
+}
+.request-count {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px 12px;
+}
+.request-count label, .request-page {
+  font-size: 12px;
+}
+.request-count input {
+  width: 100%;
+  min-width: 65px;
+}
+.request-count select {
+  min-width: 72px;
+}
+.request-count .request-limit {
+  flex-basis: 100%;
+}
+.request-limit {
+  color: var(--accent);
+  line-height: 1.5;
+}
+.request-page {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 .prompt-grid {
   display: grid;

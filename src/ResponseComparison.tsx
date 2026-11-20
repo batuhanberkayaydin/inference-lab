@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
+import { REQUESTS_PER_PAGE, RequestPage } from "./RequestCount";
 import "./responses.css";
 
 type ResponseRow = { index: number; status: string; text: string; error: string | null; output_tokens: number | null; e2e_s: number | null; response_format?: string };
@@ -29,9 +30,15 @@ function Answer({ model, row, stream }: { model: ResponseModel; row?: ResponseRo
 }
 
 export function ResponseComparison({ phase, prompts, stream }: { phase: { models: ResponseModel[] }; prompts: string[]; stream: boolean }) {
+  const [page, setPage] = useState(0);
+  const visiblePage = Math.max(0, Math.min(page, Math.ceil(prompts.length / REQUESTS_PER_PAGE) - 1));
+  const offset = visiblePage * REQUESTS_PER_PAGE;
+  const visiblePrompts = prompts.slice(offset, offset + REQUESTS_PER_PAGE)
+    .map((prompt, index) => ({prompt, index: offset + index}));
   return <section className="response-comparison" aria-label="Girdi bazında cevap karşılaştırması">
     <div className="responses-heading"><h3>Girdiler ve model cevapları</h3><p>{stream ? "Yanıtlar geldikçe güncellenir; tamamlanan metinler açık kalır." : "Normal yanıtlar tamamlandığında gösterilir. İlk token ve akış hızı bu biçimde ölçülmez."} Faz seçimi, bu bölümdeki cevapları da değiştirir.</p></div>
-    {prompts.map((prompt, index) => <section className="response-input" key={index} aria-label={`Girdi ${index + 1} cevapları`}>
+    <RequestPage label="Cevap aralığı" total={prompts.length} page={visiblePage} onChange={setPage} />
+    {visiblePrompts.map(({prompt, index}) => <section className="response-input" key={index} aria-label={`Girdi ${index + 1} cevapları`}>
       <div className="response-input-heading"><h3>Girdi {String(index + 1).padStart(2, "0")}</h3><span>{phase.models.length} model cevabı</span></div>
       <details className="response-prompt"><summary><span>{prompt.length > 140 ? prompt.slice(0, 140) + "…" : prompt}</span><b>Girdiyi göster</b></summary><pre>{prompt}</pre></details>
       <div className="answer-grid" style={{ gridTemplateColumns: `repeat(${phase.models.length}, minmax(0, 1fr))` }}>{phase.models.map(model => <Answer key={model.id} model={model} row={model.requests.find(row => row.index === index)} stream={stream} />)}</div>

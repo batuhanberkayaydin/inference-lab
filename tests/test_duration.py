@@ -6,6 +6,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 from email.message import Message
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.request import Request, build_opener, HTTPCookieProcessor
@@ -194,8 +195,14 @@ class DurationTests(unittest.TestCase):
         self.assertEqual(restarted['requests'][0]['status'],'cancelled')
 
     def test_validation(self):
-        for change in ({'concurrency':25},{'duration_s':0},{'interval_s':0},{'payload':self.config['payload'] | {'model':'different'}}):
+        for change in ({'concurrency':257},{'duration_s':0},{'interval_s':0},{'payload':self.config['payload'] | {'model':'different'}}):
             with self.assertRaises(ValueError): duration.start(self.engine,self.config | change)
+
+    def test_typed_and_max_concurrency_are_accepted_without_dispatch(self):
+        for count in (203, 256):
+            with self.subTest(count=count), patch('duration.threading.Thread.start'):
+                run = duration.start(Engine(self.store), self.config | {'concurrency': count})
+                self.assertEqual(run['config']['concurrency'], count)
 
     def test_authenticated_routes_and_export(self):
         server=ThreadingHTTPServer(('127.0.0.1',0),handler_for(self.engine))

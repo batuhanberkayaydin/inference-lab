@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Play, Square, FileText, ArrowDownToLine, ChevronLeft, ChevronRight } from "lucide-react";
 import { loadExample, type PromptExample } from "./examples";
 import { api } from "./api";
+import { RequestCount, parseRequestCount } from "./RequestCount";
 import "./duration-tests.css";
 
 type Model = { id: string; name: string; model: string; base_url: string; demo: boolean };
@@ -42,7 +43,8 @@ function RequestItem({ row, id }: { row: Row; id: string }) {
 
 export function DurationTests({ examples, models, contexts, savedInputs, onSettings }: { examples: PromptExample[]; models: Model[]; contexts: Context[]; savedInputs: Saved[]; onSettings: () => void }) {
   const [modelId, setModelId] = useState(models.find(m => !m.demo)?.id || models[0]?.id || "");
-  const [concurrency, setConcurrency] = useState(1);
+  const [requestCount, setRequestCount] = useState("1");
+  const concurrency = parseRequestCount(requestCount);
   const [duration, setDuration] = useState(60);
   const [interval, setIntervalValue] = useState(1);
   const [timeout, setTimeoutValue] = useState(150);
@@ -112,6 +114,7 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
     finally { setBusy(false); }
   }
   async function start() {
+    if (concurrency === null) return;
     setBusy(true); setError("");
     try {
       const payload = inputMode === "prompt" ? { messages: [{ role: "user", content: prompt }], stream, max_tokens: maxTokens } : preview?.payload;
@@ -135,11 +138,11 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
   }
   return <div className="duration-page">
     <section className="duration-setup panel">
-      <div className="duration-intro"><h2>İsteği tekrar gönder, her sonucu kontrol et</h2><p>{concurrency} bağımsız döngü aynı modele istek gönderir. Her döngü kendi cevabını aldıktan sonra {interval} sn bekler. {duration} sn dolunca yeni istek başlamaz; devam edenler sonuçlanır veya {timeout} sn zaman aşımına uğrar. Eşzamanlılık hiçbir anda {concurrency} isteği aşmaz.</p></div>
+      <div className="duration-intro"><h2>İsteği tekrar gönder, her sonucu kontrol et</h2><p>Her döngü kendi cevabını aldıktan sonra {interval} sn bekler. {duration} sn dolunca yeni istek başlamaz. Devam edenler sonuçlanır veya {timeout} sn zaman aşımına uğrar.{concurrency !== null && ` Aynı modele en çok ${concurrency} eşzamanlı istek gönderilir.`}</p></div>
       {!models.length && <p>Henüz model eklenmedi. Gerçek test için Model ayarları bölümünden sağlayıcınızı ekleyin.</p>}
       <div className="duration-fields">
         <label className="duration-model">Model<select value={modelId} disabled={locked} onChange={e => { setModelId(e.target.value); }}><option value="" disabled>Model seçin</option>{models.map(m => <option key={m.id} value={m.id}>{m.name} · {m.model}{m.demo ? " · DEMO" : ""}</option>)}</select></label>
-        <label>Eşzamanlılık<select value={concurrency} disabled={locked} onChange={e => setConcurrency(Number(e.target.value))}>{Array.from({length:24}, (_, i) => <option key={i} value={i+1}>{i+1} paralel döngü</option>)}</select></label>
+        <RequestCount label="Eşzamanlı istek" value={requestCount} onChange={setRequestCount} disabled={locked} />
         <label>Test süresi (sn)<input type="number" min="1" max="3600" value={duration} disabled={locked} onChange={e => setDuration(Number(e.target.value))} /></label>
         <label>Yanıt sonrası bekleme (sn)<input type="number" min="0.1" max="600" step="0.1" value={interval} disabled={locked} onChange={e => setIntervalValue(Number(e.target.value))} /></label>
         <label>İstek zaman aşımı (sn)<input type="number" min="1" max="600" value={timeout} disabled={locked} onChange={e => setTimeoutValue(Number(e.target.value))} /></label>
@@ -158,7 +161,7 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
           {preview && <div className="duration-preview"><strong>Gövde hazır · model: {String(preview.payload.model || model?.model || "seçilmedi")}</strong>{preview.url && <p>curl adresi (bilgi): {preview.url}</p>}<p>Gönderilecek sağlayıcı: {model?.base_url || "Henüz model seçilmedi"}. JSON model kimliği, seçilen modelle eşleşmelidir. Stream isteklerinde usage istenir.</p><details><summary>Gönderilecek JSON’u incele</summary><pre>{JSON.stringify({...preview.payload, model: preview.payload.model || model?.model}, null, 2)}</pre></details></div>}
         </>}
       </div>
-      <div className="duration-launch"><button className="button primary" disabled={locked || !modelId || (inputMode === "raw" ? !preview : !prompt.trim())} onClick={start}><Play size={16}/>Süreli testi başlat</button></div>
+      <div className="duration-launch"><button className="button primary" disabled={locked || concurrency === null || !modelId || (inputMode === "raw" ? !preview : !prompt.trim())} onClick={start}><Play size={16}/>Süreli testi başlat</button></div>
       <p className="duration-limit">En fazla 1 saat ve 10.000 istek. Sonuçlar otomatik kaydedilir. HTTP başarısı, dolu cevap ve guard başlıkları ayrı kontrol edilir.</p>
     </section>
     {error && <div className="error-message" role="alert">{error}</div>}

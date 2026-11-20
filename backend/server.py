@@ -31,6 +31,7 @@ from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHand
 from urllib.error import HTTPError, URLError
 import duration
 import bundled_examples
+from limits import MAX_CONCURRENT_REQUESTS
 from request_input import parse_input
 from credentials import CredentialFiles
 
@@ -61,6 +62,39 @@ def percentile(values, q):
 def average(values):
     values = [v for v in values if v is not None]
     return sum(values) / len(values) if values else None
+
+
+def pack_benchmark_prompts(report):
+    config = report.get('config', {})
+    prompts = config.get('prompts', [])
+    catalog = dict.fromkeys(prompts)
+    if len(catalog) == len(prompts):
+        return report
+    indices = {prompt: index for index, prompt in enumerate(catalog)}
+    return report | {'config': config | {
+        'prompts': list(catalog), 'prompt_indices': [indices[prompt] for prompt in prompts],
+    }}
+
+
+def unpack_benchmark_prompts(config):
+    prompts = config.get('prompts', [])
+    if 'prompt_indices' not in config:
+        return prompts
+    indices = config['prompt_indices']
+    if (not isinstance(prompts, list) or not 1 <= len(prompts) <= MAX_CONCURRENT_REQUESTS
+            or not isinstance(indices, list) or not 1 <= len(indices) <= MAX_CONCURRENT_REQUESTS
+            or any(type(index) is not int or not 0 <= index < len(prompts) for index in indices)):
+        raise ValueError('Girdi dizini geçersiz.')
+    return [prompts[index] for index in indices]
+
+
+def read_stored_report(raw):
+    report = json.loads(raw)
+    config = report.get('config', {})
+    if 'prompt_indices' in config:
+        config['prompts'] = unpack_benchmark_prompts(config)
+        config.pop('prompt_indices')
+    return report
 
 
 def valid_url(value, allow_empty=False):
@@ -234,7 +268,7 @@ class Store:
 
     def put(self, table, item, db=None):
         assert table in ('models', 'contexts', 'inputs', 'reports', 'duration_runs', 'settings')
-        body = json.dumps(item, ensure_ascii=False, allow_nan=False)
+        body = json.dumps(pack_benchmark_prompts(item) if table == 'reports' else item, ensure_ascii=False, allow_nan=False)
         if db is not None:
             db.execute(f'INSERT OR REPLACE INTO {table} VALUES (?, ?)', (item['id'], body))
         else:
@@ -245,13 +279,15 @@ class Store:
     def list(self, table):
         assert table in ('models', 'contexts', 'inputs', 'reports', 'duration_runs')
         with self.connect() as db:
-            return [json.loads(row[0]) for row in db.execute(f'SELECT body FROM {table} ORDER BY rowid')]
+            decode = read_stored_report if table == 'reports' else json.loads
+            return [decode(row[0]) for row in db.execute(f'SELECT body FROM {table} ORDER BY rowid')]
 
     def get(self, table, ident):
         assert table in ('models', 'contexts', 'inputs', 'reports', 'duration_runs', 'settings')
         with self.connect() as db:
             row = db.execute(f'SELECT body FROM {table} WHERE id = ?', (ident,)).fetchone()
-        return json.loads(row[0]) if row else None
+        decode = read_stored_report if table == 'reports' else json.loads
+        return decode(row[0]) if row else None
 
     def delete(self, table, ident):
         assert table in ('models', 'contexts', 'inputs')
@@ -443,11 +479,11 @@ class Engine:
             return True
 
     def start(self, data):
-        prompts = data.get('prompts', [])
+        prompts = unpack_benchmark_prompts(data)
         ids = data.get('model_ids', [])
         mode = data.get('mode', 'concurrent')
-        if not isinstance(prompts, list) or not 1 <= len(prompts) <= 24 or any(not isinstance(p, str) or not p.strip() or len(p) > 1_000_000 for p in prompts):
-            raise ValueError('1–24 adet dolu girdi gerekir; her girdi en fazla 1 milyon karakter olabilir.')
+        if not isinstance(prompts, list) or not 1 <= len(prompts) <= MAX_CONCURRENT_REQUESTS or any(not isinstance(p, str) or not p.strip() or len(p) > 1_000_000 for p in prompts):
+            raise ValueError(f'1–{MAX_CONCURRENT_REQUESTS} adet dolu girdi gerekir; her girdi en fazla 1 milyon karakter olabilir.')
         if not isinstance(ids, list) or not 1 <= len(ids) <= 4 or len(set(ids)) != len(ids):
             raise ValueError('1–4 farklı model seçin.')
         if mode not in ('single', 'concurrent', 'compare') or (mode == 'single' and len(prompts) != 1):
@@ -461,8 +497,11 @@ class Engine:
             raise ValueError('Temperature 0–2 arasında olmalıdır.')
         if type(timeout) not in (int, float) or not math.isfinite(timeout) or not 1 <= timeout <= 600:
             raise ValueError('Zaman aşımı 1–600 saniye arasında olmalıdır.')
-        if data.get('model_schedule', 'parallel') not in ('sequential', 'parallel'):
+        schedule = data.get('model_schedule', 'parallel')
+        if schedule not in ('sequential', 'parallel'):
             raise ValueError('Geçerli model çalışma düzeni seçin.')
+        if schedule == 'parallel' and len(ids) * len(prompts) > MAX_CONCURRENT_REQUESTS:
+            raise ValueError(f'Aynı anda en fazla {MAX_CONCURRENT_REQUESTS} istek gönderilebilir. Girdi sayısını azaltın veya modelleri sırayla çalıştırın.')
         if type(data.get('stream', True)) is not bool:
             raise ValueError('Yanıt biçimi stream veya normal olmalıdır.')
         if type(data.get('reset_prefix_cache', False)) is not bool:
@@ -485,7 +524,7 @@ class Engine:
             ident = secrets.token_hex(8)
             clean_models = [{k: m[k] for k in ('id', 'name', 'model', 'provider', 'color', 'base_url', 'metrics_url')} for m in models]
             config = {'mode': mode, 'prompts': prompts, 'max_tokens': max_tokens, 'temperature': temperature,
-                      'timeout': timeout, 'model_schedule': data.get('model_schedule', 'parallel'), 'demo': demo, 'stream': data.get('stream', True),
+                      'timeout': timeout, 'model_schedule': schedule, 'demo': demo, 'stream': data.get('stream', True),
                       'reset_prefix_cache': data.get('reset_prefix_cache', False)}
             run = {'id': ident, 'name': str(data.get('name', '')).strip()[:120] or f'{"Demo" if demo else "Benchmark"} · {len(prompts)} istek',
                    'created_at': now(), 'finished_at': None, 'status': 'running', 'config': config, 'models': clean_models,
@@ -890,7 +929,7 @@ def markdown_report(run):
                 stats = {k:row.get(k) for k in ('input_tokens', 'output_tokens', 'ttft_s', 'e2e_s', 'stream_tps', 'tpot_s', 'finish_reason', 'usage_source')}
                 lines += ['', f'### {model["name"]} · Girdi {row["index"]+1} · {row["status"]}', '', '```json', json.dumps(stats,ensure_ascii=False,indent=2), '```', '', row.get('error') or row['text']]
         lines.append('')
-    lines += ['## Ölçüm yöntemi', '', 'Verim = başarılı çıktı tokenları / model fazının duvar süresi. TTFT ilk içerik veya reasoning parçasına kadardır. Akış hızı ve TPOT, sağlayıcı token sayısı ile içerik parçalarının zaman aralığından türetilen tahminlerdir; SSE parçaları token sayılmaz. Eksik usage değerleri boş bırakılır. p95 doğrusal interpolasyonla hesaplanır; 1–24 örnek istatistiksel genelleme sağlamaz.', '', '## Notlar', ''] + ['- ' + w for w in dict.fromkeys(run['warnings'])]
+    lines += ['## Ölçüm yöntemi', '', 'Verim = başarılı çıktı tokenları / model fazının duvar süresi. TTFT ilk içerik veya reasoning parçasına kadardır. Akış hızı ve TPOT, sağlayıcı token sayısı ile içerik parçalarının zaman aralığından türetilen tahminlerdir; SSE parçaları token sayılmaz. Eksik usage değerleri boş bırakılır. p95 doğrusal interpolasyonla hesaplanır ve yalnızca bu koşunun örneklerini özetler.', '', '## Notlar', ''] + ['- ' + w for w in dict.fromkeys(run['warnings'])]
     return '\n'.join(lines)
 
 
@@ -927,10 +966,10 @@ def handler_for(engine):
             self.end_headers()
             self.wfile.write(body)
 
-        def body(self):
+        def body(self, max_size=10_000_000):
             size = int(self.headers.get('Content-Length', '0'))
-            if not 0 < size <= 10_000_000:
-                raise ValueError('Geçerli ve 10 MB altında bir istek gönderin.')
+            if not 0 < size <= max_size:
+                raise ValueError(f'Geçerli ve en fazla {max_size // 1_000_000} MB boyutunda bir istek gönderin.')
             data = json.loads(self.rfile.read(size))
             if not isinstance(data, dict):
                 raise ValueError('JSON nesnesi gereklidir.')
@@ -995,7 +1034,12 @@ def handler_for(engine):
                         return self.reply(run) if run else self.reply({'error': 'Test bulunamadı.'}, 404)
                     if path == '/api/reports':
                         reports = sorted(engine.store.list('reports'), key=lambda r: r['created_at'], reverse=True)
-                        return self.reply([{k: r[k] for k in ('id', 'name', 'created_at', 'finished_at', 'status', 'config', 'models')} for r in reports])
+                        rows = [{k: r[k] for k in ('id', 'name', 'created_at', 'finished_at', 'status', 'config', 'models')} for r in reports]
+                        if parse_qs(urlparse(self.path).query).get('summary') == ['1']:
+                            for row in rows:
+                                config = row['config']
+                                row['config'] = {k: v for k, v in config.items() if k != 'prompts'} | {'prompt_count': len(config['prompts'])}
+                        return self.reply(rows)
                     match = re.fullmatch(r'/api/runs/([a-f0-9]{16})(?:/export)?', path)
                     if match:
                         run = engine.snapshot(match.group(1))
@@ -1010,6 +1054,8 @@ def handler_for(engine):
                                 return self.reply(run, headers=headers)
                             return self.reply(markdown_report(run) if fmt == 'md' else csv_report(run), headers=headers,
                                               content_type='text/markdown; charset=utf-8' if fmt == 'md' else 'text/csv; charset=utf-8')
+                        if parse_qs(urlparse(self.path).query).get('compact') == ['1']:
+                            run = pack_benchmark_prompts(run)
                         return self.reply(run)
                     return self.reply({'error': 'Uç nokta bulunamadı.'}, 404)
                 root = (ROOT / 'dist').resolve()
@@ -1029,7 +1075,8 @@ def handler_for(engine):
                 if not self.safe_origin():
                     return self.reply({'error': 'Bu kaynaktan istek kabul edilmiyor.'}, 403)
                 path = urlparse(self.path).path
-                data = self.body()
+                max_size = 64_000_000 if path == '/api/runs' and self.authenticated() else 10_000_000
+                data = self.body(max_size)
                 if path == '/api/login':
                     username = os.environ.get('LAB_ADMIN_USER', 'admin')
                     password = os.environ.get('LAB_ADMIN_PASSWORD', 'admin')
@@ -1070,10 +1117,16 @@ def handler_for(engine):
                 if path == '/api/duration-runs':
                     return self.reply(duration.start(engine, data), 201)
                 if path == '/api/runs':
-                    return self.reply(engine.start(data), 201)
+                    run = engine.start(data)
+                    if parse_qs(urlparse(self.path).query).get('compact') == ['1']:
+                        run = pack_benchmark_prompts(run)
+                    return self.reply(run, 201)
                 match = re.fullmatch(r'/api/(?:runs|duration-runs)/([a-f0-9]{16})/stop', path)
                 if match:
-                    return self.reply(engine.stop(match.group(1)))
+                    run = engine.stop(match.group(1))
+                    if not run.get('kind') and parse_qs(urlparse(self.path).query).get('compact') == ['1']:
+                        run = pack_benchmark_prompts(run)
+                    return self.reply(run)
                 return self.reply({'error': 'Uç nokta bulunamadı.'}, 404)
             except (ValueError, json.JSONDecodeError) as exc:
                 self.reply({'error': str(exc)}, 400)

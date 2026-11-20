@@ -76,6 +76,7 @@ export function ModeExplanation({
                   Girdi {String(i + 1).padStart(2, "0")}
                 </span>
               ))}
+              {inputs > 24 && <small>+{inputs - 24} girdi</small>}
             </div>
           </div>
         )}
