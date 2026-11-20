@@ -520,8 +520,6 @@ class Engine:
             clean = image_refs(refs)
             if clean:
                 images[index] = clean
-        if any(not prompt.strip() and str(index) not in images for index, prompt in enumerate(prompts)):
-            raise ValueError('Her girdiye metin veya görsel ekleyin.')
         self.store.media.check_inputs(images.values())
         if not isinstance(ids, list) or not 1 <= len(ids) <= 4 or len(set(ids)) != len(ids):
             raise ValueError('1–4 farklı model seçin.')
@@ -555,10 +553,15 @@ class Engine:
             raise ValueError('Demo modu kaldırıldı. Gerçek API için bir model seçin.')
         if not demo and any(m['demo'] or not m['base_url'] for m in models):
             raise ValueError('Gerçek ölçüm için sağlayıcı URL’si olan modeller seçin veya ayarlardan ekleyin.')
-        if any(model_input_format(model) == 'ocr' for model in models) and (
-            len(images) != len(prompts) or any(len(refs) != 1 for refs in images.values())
-        ):
-            raise ValueError('LightOnOCR seçiliyken her isteğe tam bir görsel veya bir PDF sayfası ekleyin.')
+        if any(model_input_format(model) == 'ocr' for model in models):
+            issues = [(index + 1, len(images.get(str(index), []))) for index in range(len(prompts))
+                      if len(images.get(str(index), [])) != 1]
+            if issues:
+                summary = ', '.join(f'Girdi {index} ({count} görsel)' for index, count in issues[:3])
+                remaining = f' ve {len(issues) - 3} girdi daha' if len(issues) > 3 else ''
+                raise ValueError(f'LightOnOCR her istek için tam bir görsel bekler. {summary}{remaining}.')
+        if any(not prompt.strip() and str(index) not in images for index, prompt in enumerate(prompts)):
+            raise ValueError('Her girdiye metin veya görsel ekleyin.')
         with self.lock:
             if any(r['status'] in ('running', 'stopping', 'queued') for r in self.runs.values()):
                 raise ValueError('Bir test zaten çalışıyor. Önce tamamlanmasını bekleyin veya durdurun.')

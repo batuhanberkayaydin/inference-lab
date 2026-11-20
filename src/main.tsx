@@ -38,7 +38,7 @@ import { DurationTests } from "./DurationTests";
 import { ResponseComparison } from "./ResponseComparison";
 import { ModeExplanation } from "./ModeExplanation";
 import { PromptDistribution, type PromptSourceGroup } from "./PromptDistribution";
-import { VisualInput, requiresSingleImage, type MediaImage, type ModelInputFormat, type PdfPageImage } from "./VisualInput";
+import { VisualInput, requiresSingleImage, type MediaImage, type ModelInputFormat } from "./VisualInput";
 import { PerformanceChart as Chart } from "./PerformanceChart";
 import { api } from "./api";
 import { MAX_CONCURRENT_REQUESTS, REQUESTS_PER_PAGE, RequestCount, RequestPage, parseRequestCount } from "./RequestCount";
@@ -70,6 +70,14 @@ type Model = {
   input_format?: ModelInputFormat;
 };
 type Context = { id: string; name: string; category: string; content: string };
+type PromptAssignment = { content: string; source: string; images?: MediaImage[] };
+
+function shiftInactiveSlots<T>(slots: Record<number, T>, previousCount: number, nextCount: number) {
+  return Object.fromEntries(Object.entries(slots).flatMap(([key, value]) => {
+    const index = Number(key);
+    return index >= previousCount ? [[index - previousCount + nextCount, value]] : [];
+  }));
+}
 type Row = {
   index: number;
   status: string;
@@ -1271,6 +1279,7 @@ function App() {
   const [prompts, setPrompts] = useState<string[]>(["", "", "", ""]);
   const [promptImages, setPromptImages] = useState<Record<number, MediaImage[]>>({});
   const [requestCount, setRequestCount] = useState("4");
+  const [requestCountEdited, setRequestCountEdited] = useState(false);
   const [promptPage, setPromptPage] = useState(0);
   const [mode, setMode] = useState("concurrent");
   const [stream, setStream] = useState(true);
@@ -1380,9 +1389,18 @@ function App() {
     .filter(([index, images]) => Number(index) < effectivePrompts.length && images.length));
   const defaultMaxTokens = Object.keys(effectiveImages).length ? 4096 : 20000;
   const hasOcrModel = chosen.some(requiresSingleImage);
-  const invalidOcrInputs = hasOcrModel &&
-    effectivePrompts.some((_, index) => effectiveImages[index]?.length !== 1);
-  const parallelCount = effectivePrompts.length * (schedule === "parallel" ? selected.length : Number(selected.length > 0));
+  const ocrIssues = hasOcrModel ? effectivePrompts.flatMap((prompt, index) => {
+    const images = effectiveImages[index]?.length ?? 0;
+    return images === 1 ? [] : [{ index, images, blank: !images && !prompt.trim() }];
+  }) : [];
+  const invalidOcrInputs = ocrIssues.length > 0;
+  const missingOcrImages = ocrIssues.filter(issue => issue.images === 0).length;
+  const multiImageOcrSlots = ocrIssues.length - missingOcrImages;
+  const blankOcrSlots = ocrIssues.filter(issue => issue.blank).length;
+  const repairedOcrCount = effectivePrompts.reduce((total, prompt, index) =>
+    total + (effectiveImages[index]?.length || Number(!!prompt.trim())), 0);
+  const modelFactor = schedule === "parallel" ? Math.max(1, selected.length) : 1;
+  const parallelCount = selected.length ? effectivePrompts.length * modelFactor : 0;
   const overParallelLimit = parallelCount > MAX_CONCURRENT_REQUESTS;
   const shownPromptPage = Math.min(promptPage, Math.ceil(effectivePrompts.length / REQUESTS_PER_PAGE) - 1);
   const promptOffset = shownPromptPage * REQUESTS_PER_PAGE;
@@ -1424,39 +1442,69 @@ function App() {
     setPromptSources((prev) => ({ ...prev, [index]: source }));
     if (images) setPromptImages(prev => ({ ...prev, [index]: images }));
   }
-  function replaceActivePrompts(assignments: { content: string; source: string; images?: MediaImage[] }[]) {
-    setPrompts(prev => [...assignments.map(item => item.content), ...prev.slice(assignments.length)]);
-    setPromptSources(prev => ({ ...prev, ...Object.fromEntries(assignments.map((item, index) => [index, item.source])) }));
-    setPromptImages(prev => ({ ...prev, ...Object.fromEntries(assignments.map((item, index) => [index, item.images ?? []])) }));
+  function replaceActivePrompts(assignments: PromptAssignment[], previousCount = assignments.length) {
+    setPrompts(prev => [...assignments.map(item => item.content), ...prev.slice(previousCount)]);
+    setPromptSources(prev => ({
+      ...shiftInactiveSlots(prev, previousCount, assignments.length),
+      ...Object.fromEntries(assignments.map((item, index) => [index, item.source])),
+    }));
+    setPromptImages(prev => ({
+      ...shiftInactiveSlots(prev, previousCount, assignments.length),
+      ...Object.fromEntries(assignments.map((item, index) => [index, item.images ?? []])),
+    }));
   }
   function fillPrompts(content: string, source = "", images: MediaImage[] = []) {
     replaceActivePrompts(effectivePrompts.map(() => ({content, source, images})));
   }
-  function planPdfSplit(index: number, pageCount: number) {
-    const modelFactor = schedule === "parallel" ? Math.max(1, selected.length) : 1;
+  function editRequestCount(value: string) {
+    setRequestCountEdited(true);
+    setRequestCount(value);
+  }
+  function setPreparedCount(count: number) {
+    if (mode !== "single" || count > 1) setRequestCount(String(count));
+    if (mode === "single" && count > 1) setMode("concurrent");
+  }
+  function prepareOcrInputs() {
+    if (!repairedOcrCount || repairedOcrCount * modelFactor > MAX_CONCURRENT_REQUESTS) return;
+    const assignments = effectivePrompts.flatMap((content, index): PromptAssignment[] => {
+      const images = effectiveImages[index] ?? [];
+      const source = promptSources[index] ?? "";
+      if (images.length > 1) return images.map(image => ({content, source: "", images: [image]}));
+      return images.length || content.trim() ? [{content, source, images}] : [];
+    });
+    replaceActivePrompts(assignments, effectivePrompts.length);
+    setPreparedCount(assignments.length);
+    setPromptPage(0);
+    setToast(`OCR için ${assignments.length} istek kutusu hazırlandı.`);
+  }
+  function goToPrompt(index: number) {
+    setPromptPage(Math.floor(index / REQUESTS_PER_PAGE));
+    requestAnimationFrame(() => document.getElementById(`benchmark-input-${index}`)?.scrollIntoView({block: "center"}));
+  }
+  function planVisualSplit(index: number, imageCount: number) {
     const maxSlots = Math.floor(MAX_CONCURRENT_REQUESTS / modelFactor);
     const slots: number[] = [];
-    for (let slot = index; slot < maxSlots && slots.length < pageCount; slot++) {
+    for (let slot = index; slot < maxSlots && slots.length < imageCount; slot++) {
       if (!promptImages[slot]?.length && (slot === index || !prompts[slot]?.trim())) slots.push(slot);
     }
-    if (slots.length !== pageCount)
-      throw new Error("PDF sayfaları için yeterli boş istek kutusu yok. Daha erken bir kutu veya modeller için sırayla çalışma seçin.");
-    const count = Math.max(effectivePrompts.length, slots[slots.length - 1] + 1);
+    if (slots.length !== imageCount)
+      throw new Error("Görseller için yeterli boş istek kutusu yok. Daha erken bir kutu veya modeller için sırayla çalışma seçin.");
+    const occupied = effectivePrompts.reduce((last, prompt, slot) =>
+      prompt.trim() || effectiveImages[slot]?.length ? slot + 1 : last, 0);
+    const retainedCount = hasOcrModel && !requestCountEdited ? occupied : effectivePrompts.length;
+    const count = Math.max(retainedCount, slots[slots.length - 1] + 1);
     const text = prompts[index] ?? "";
-    return (pages: PdfPageImage[]) => {
+    return (images: MediaImage[], format: "pdf" | "images") => {
       setPrompts(prev => {
         const draft = prev.slice();
         for (const slot of slots) draft[slot] = text;
         return draft;
       });
-      setPromptImages(prev => ({ ...prev, ...Object.fromEntries(pages.map(({image}, i) => [slots[i], [image]])) }));
+      setPromptImages(prev => ({ ...prev, ...Object.fromEntries(images.map((image, i) => [slots[i], [image]])) }));
       setPromptSources(prev => ({ ...prev, ...Object.fromEntries(slots.map(slot => [slot, ""])) }));
-      if (count > effectivePrompts.length) {
-        setRequestCount(String(count));
-        if (mode === "single") setMode("concurrent");
-      }
+      if (count !== effectivePrompts.length) setPreparedCount(count);
       setPromptPage(Math.floor(slots[0] / REQUESTS_PER_PAGE));
-      setToast(`${pages.length} PDF sayfası ayrı istek kutularına eklendi.`);
+      setToast(`${images.length} ${format === "pdf" ? "PDF sayfası" : "görsel"} ayrı istek kutularına eklendi.`);
     };
   }
   async function distributePrompts(assignments: string[]) {
@@ -2043,11 +2091,11 @@ function App() {
                             {[1, 2, 4, 8, 16, 24, 64, 128, 256, 512, MAX_CONCURRENT_REQUESTS].map(n => (
                               <button type="button" key={n} disabled={running || busy}
                                 className={inputCount === n ? "active" : ""}
-                                onClick={() => setRequestCount(String(n))}>{n}</button>
+                                onClick={() => editRequestCount(String(n))}>{n}</button>
                             ))}
                           </div>
                           <RequestCount label="Model başına istek" value={requestCount}
-                            onChange={setRequestCount} disabled={running || busy} />
+                            onChange={editRequestCount} disabled={running || busy} />
                           {overParallelLimit && (
                             <small className="request-limit" role="status">
                               {parallelCount} eşzamanlı istek seçili. Sınır {MAX_CONCURRENT_REQUESTS}. Girdi sayısını azaltın veya modelleri sırayla çalıştırın.
@@ -2065,10 +2113,35 @@ function App() {
                         onDistribute={distributePrompts}
                       />
                     )}
+                    {invalidOcrInputs && (
+                      <div className="ocr-input-notice">
+                        <div role="status">
+                          <b>LightOnOCR · Her kutuya bir görsel</b>
+                          <p>{[
+                            missingOcrImages ? `${missingOcrImages} kutuda görsel yok` : "",
+                            multiImageOcrSlots ? `${multiImageOcrSlots} kutuda birden fazla görsel var` : "",
+                          ].filter(Boolean).join(" · ")}.</p>
+                          {(blankOcrSlots > 0 || multiImageOcrSlots > 0) && repairedOcrCount * modelFactor > MAX_CONCURRENT_REQUESTS && (
+                            <p>Düzenleme toplam {MAX_CONCURRENT_REQUESTS} eşzamanlı istek sınırını aşar. Model sayısını azaltın veya modelleri sırayla çalıştırın.</p>
+                          )}
+                        </div>
+                        <div className="ocr-input-actions">
+                          <button className="button small-button" type="button" onClick={() => goToPrompt(ocrIssues[0].index)}>
+                            Girdi {ocrIssues[0].index + 1} kutusuna git
+                          </button>
+                          {!!repairedOcrCount && (blankOcrSlots > 0 || multiImageOcrSlots > 0) && (
+                            <button className="button small-button" type="button" onClick={prepareOcrInputs}
+                              disabled={running || busy || inputCount === null || repairedOcrCount * modelFactor > MAX_CONCURRENT_REQUESTS}>
+                              {multiImageOcrSlots ? (blankOcrSlots ? "Boşları kaldır ve görselleri ayır" : "Görselleri ayrı kutulara ayır") : "Boş kutuları kaldır"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <RequestPage label="Girdi aralığı" total={effectivePrompts.length} page={shownPromptPage} onChange={setPromptPage} />
                     <div className="prompt-grid">
                       {visiblePrompts.map(({prompt, index: i}) => (
-                        <div className="prompt-box" key={i}>
+                        <div className="prompt-box" id={`benchmark-input-${i}`} key={i}>
                           <div className="prompt-header">
                             <span>
                               <span className="prompt-number">
@@ -2103,11 +2176,14 @@ function App() {
                           />
                           <VisualInput label={`Girdi ${i + 1} için görsel veya PDF sayfası ekle`}
                             images={promptImages[i] ?? []} disabled={running || busy} onBusyChange={setBusy}
-                            singleImage={hasOcrModel} planPdfSplit={pageCount => planPdfSplit(i, pageCount)}
+                            singleImage={hasOcrModel} planVisualSplit={count => planVisualSplit(i, count)}
                             onChange={images => {
                               setPromptImages(prev => ({ ...prev, [i]: images }));
                               setPromptSources(prev => ({ ...prev, [i]: "" }));
                             }} />
+                          {hasOcrModel && promptImages[i]?.length !== 1 && (
+                            <small className="ocr-slot-issue request-limit">{promptImages[i]?.length ? `${promptImages[i].length} görsel var. LightOnOCR bu kutuda bir görsel bekliyor.` : "Bu kutuda görsel yok."}</small>
+                          )}
                           <div className="prompt-footer">
                             <span>
                               {prompt.length.toLocaleString("tr-TR")} karakter
@@ -2224,7 +2300,7 @@ function App() {
                           Aynı anda en çok {parallelCount} istek{overParallelLimit ? ` · Sınır ${MAX_CONCURRENT_REQUESTS}` : ""}
                         </small>
                       )}
-                      {invalidOcrInputs && <small className="request-limit" role="status">LightOnOCR için her istek kutusunda tam bir görsel veya bir PDF sayfası bulunmalı.</small>}
+                      {invalidOcrInputs && <small className="request-limit">LightOnOCR için {ocrIssues.length} girdi düzenlenmeli.</small>}
                     </span>
                   </div>
                   <button

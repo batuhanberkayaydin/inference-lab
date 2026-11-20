@@ -169,7 +169,9 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
           <p>32K / 64K örnekleri yalnızca seçilince yüklenir; etiketler gerçek tokenizer sayımı değildir.</p><label>Her istekte gönderilecek metin<textarea placeholder="Metin yazın veya yukarıdan bir örnek seçin." value={prompt} disabled={locked} onChange={e => setPrompt(e.target.value)} rows={5} /></label>
           <VisualInput images={images} onChange={setImages} disabled={locked} onBusyChange={setMediaBusy}
             singleImage={!!model && requiresSingleImage(model)} />
-          {invalidOcrInput && <p className="request-limit" role="status">LightOnOCR için tam bir görsel veya bir PDF sayfası ekleyin.</p>}
+          {invalidOcrInput && <p className="request-limit" role="status">{images.length
+            ? `${images.length} görsel ekli. LightOnOCR süreli testinde bir görsel bırakın.`
+            : "LightOnOCR süreli testi için bir görsel veya bir PDF sayfası ekleyin."}</p>}
           <div className="duration-generation"><label>Çıktı limiti (token)<input type="number" min="1" max="32768" value={maxTokens} disabled={locked} onChange={e => setMaxTokens(Number(e.target.value))}/></label><label>Yanıt biçimi<select value={stream ? "stream" : "normal"} disabled={locked} onChange={e => setStream(e.target.value === "stream")}><option value="stream">Stream</option><option value="normal">Normal JSON</option></select></label></div>
         </> : <>
           <label>Chat/completions JSON gövdesi veya curl<textarea className="duration-json" placeholder="JSON gövdesini veya curl komutunu buraya yapıştırın." rows={13} value={raw} disabled={locked} onChange={e => { setRaw(e.target.value); setPreview(null); }} spellCheck={false}/></label>

@@ -103,6 +103,8 @@ PDF yüklediğinizde tüm sayfalar tarayıcıda PNG’ye çevrilip sırayla ekle
 
 Model kimliği LightOnOCR olarak tanınır. Özel bir model kimliğiyle yayınlıyorsanız yönetici ayarlarında **LightOnOCR** profilini seçin. **Vision** ve **LightOnOCR** profillerinde bağlantı testi küçük bir örnek görsel gönderir. Yüklenen görseller yerel veritabanında saklanır. Raporlar, kayıt arşivden silinse de görselleri aynı kurulumdan gösterebilir.
 
+LightOnOCR seçiliyken birden fazla görsel dosyasını aynı anda yüklediğinizde görseller ayrı istek kutularına yerleşir. Daha önce tek kutuya eklenmiş birden fazla görsel için **Görselleri ayrı kutulara ayır**, kullanılmayan kutular için **Boş kutuları kaldır** seçeneğini kullanabilirsiniz. Metni bulunan kutular korunur.
+
 Kayıtlar SQLite `inputs` tablosunda saklanır; uygulama tekrar açıldığında korunur. Kütüphane listesi yalnızca küçük özetler yükler; uzun metin seçim/düzenleme sırasında alınır. Eski bağlamlar, model ayarları ve raporlar korunur.
 
 ## 32K ve 64K örnek promptlar

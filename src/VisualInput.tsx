@@ -69,14 +69,14 @@ export function MediaPreviews({ images, onRemove }: { images: MediaImage[]; onRe
   );
 }
 
-export function VisualInput({ images, onChange, disabled, onBusyChange, label, onSavePdfPages, planPdfSplit, singleImage = false }: {
+export function VisualInput({ images, onChange, disabled, onBusyChange, label, onSavePdfPages, planVisualSplit, singleImage = false }: {
   images: MediaImage[];
   onChange: (images: MediaImage[]) => void;
   disabled: boolean;
   onBusyChange?: (busy: boolean) => void;
   label?: string;
   onSavePdfPages?: (filename: string, pages: PdfPageImage[]) => Promise<void>;
-  planPdfSplit?: (pageCount: number) => (pages: PdfPageImage[]) => void;
+  planVisualSplit?: (imageCount: number) => (images: MediaImage[], format: "pdf" | "images") => void;
   singleImage?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -100,7 +100,7 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
   const locked = disabled || working;
   const maxImages = singleImage ? 1 : MAX_IMAGES;
   const full = images.length >= maxImages;
-  const defaultPdfMode = singleImage ? (planPdfSplit ? "split" : "pick") : "attach";
+  const defaultPdfMode = singleImage ? (planVisualSplit ? "split" : "pick") : "attach";
   const pdfMode = pdfModeOverride === "attach" && singleImage ? defaultPdfMode : pdfModeOverride ?? defaultPdfMode;
   const canChoosePdf = pdfMode === "split" || (!!onSavePdfPages && pdfMode === "pick");
   async function prepare(action: () => Promise<void>) {
@@ -146,12 +146,12 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
         setPdf(null);
         try {
           const numbers = pdfPageNumbers("", document.pages);
-          const applySplit = pdfMode === "split" ? planPdfSplit?.(numbers.length) : undefined;
+          const applySplit = pdfMode === "split" ? planVisualSplit?.(numbers.length) : undefined;
           if (!applySplit && images.length + numbers.length > maxImages)
             throw new Error(`Bu girdiye toplam en fazla ${maxImages} görsel eklenebilir. Tek sayfa seçebilir veya ayrı kutular kullanabilirsiniz.`);
           const pages = await renderPages(document, numbers);
           if (!pages) return;
-          if (applySplit) applySplit(pages);
+          if (applySplit) applySplit(pages.map(item => item.image), "pdf");
           else {
             onChange([...images, ...pages.map(item => item.image)]);
             setNotice(`${pages.length} PDF sayfası görsel olarak eklendi.`);
@@ -160,10 +160,14 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
           await document.close();
         }
       } else {
-        if (images.length + files.length > maxImages) throw new Error(`Bir girdiye en fazla ${maxImages} görsel eklenebilir.`);
+        const applySplit = singleImage ? planVisualSplit?.(files.length) : undefined;
+        if (!applySplit && images.length + files.length > maxImages) throw new Error(`Bir girdiye en fazla ${maxImages} görsel eklenebilir.`);
         const uploaded: MediaImage[] = [];
         for (const file of files) uploaded.push(await uploadImage(file));
-        if (mounted.current) onChange([...images, ...uploaded]);
+        if (mounted.current) {
+          if (applySplit) applySplit(uploaded, "images");
+          else onChange([...images, ...uploaded]);
+        }
       }
     });
   }
@@ -173,12 +177,15 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
       const value = url.trim();
       const parsed = new URL(value);
       if (!["http:", "https:"].includes(parsed.protocol) || parsed.username || parsed.password || parsed.href.length > 2048)
-        throw new Error();
+        throw new TypeError();
       const name = parsed.pathname.split("/").filter(Boolean).at(-1) || parsed.hostname;
-      onChange([...images, { url: parsed.href, name }]);
+      const image = { url: parsed.href, name };
+      const applySplit = singleImage ? planVisualSplit?.(1) : undefined;
+      if (applySplit) applySplit([image], "images");
+      else onChange([...images, image]);
       setUrl("");
-    } catch {
-      setError("Kullanıcı bilgisi içermeyen geçerli bir HTTP(S) görsel adresi girin.");
+    } catch (err) {
+      setError(err instanceof TypeError ? "Kullanıcı bilgisi içermeyen geçerli bir HTTP(S) görsel adresi girin." : (err as Error).message);
     }
   }
   async function addPage() {
@@ -186,8 +193,12 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
     await prepare(async () => {
       const number = Number(page);
       if (!Number.isInteger(number) || number < 1 || number > pdf.pages) throw new Error(`1–${pdf.pages} arasında bir PDF sayfası seçin.`);
+      const applySplit = singleImage ? planVisualSplit?.(1) : undefined;
       const uploaded = await uploadImage(await pdf.render(number, edge));
-      if (mounted.current) onChange([...images, uploaded]);
+      if (mounted.current) {
+        if (applySplit) applySplit([uploaded], "pdf");
+        else onChange([...images, uploaded]);
+      }
     });
   }
   async function savePdfPages() {
@@ -210,7 +221,7 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
           <p>LightOnOCR için her isteğe tek görsel ekleyin. Düz OCR’da metin alanlarını boş bırakabilirsiniz.</p>
           <MediaPreviews images={images} onRemove={locked ? undefined : index => onChange(images.filter((_, i) => i !== index))} />
           <div className="visual-input-actions">
-            {(!singleImage || planPdfSplit) && (
+            {(!singleImage || planVisualSplit) && (
               <label>PDF ekleme biçimi
                 <select value={pdfMode} disabled={locked} onChange={e => {
                   setPdfModeOverride(e.target.value as PdfMode);
@@ -219,7 +230,7 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
                   setError("");
                 }}>
                   {!singleImage && <option value="attach">Tüm sayfaları bu girdiye ekle</option>}
-                  {planPdfSplit && <option value="split">Her sayfayı ayrı istek kutusuna ekle</option>}
+                  {planVisualSplit && <option value="split">Her sayfayı ayrı istek kutusuna ekle</option>}
                   <option value="pick">{onSavePdfPages ? "Sayfa veya aralık seç" : "Tek sayfa seç"}</option>
                 </select>
               </label>

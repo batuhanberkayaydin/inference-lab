@@ -64,3 +64,19 @@
 .media-previews img { flex: none; object-fit: contain; border-radius: 4px; }
 .media-previews a { color: var(--ink); text-decoration: underline; }
 .media-previews small { color: var(--muted); }
+.ocr-input-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 13px;
+}
+.ocr-input-notice p { margin: 4px 0 0; color: var(--muted); }
+.ocr-input-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ocr-slot-issue { display: block; padding: 0 12px 10px; }
