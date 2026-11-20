@@ -37,7 +37,7 @@ import { loadExample, type PromptExample } from "./examples";
 import { DurationTests } from "./DurationTests";
 import { ResponseComparison } from "./ResponseComparison";
 import { ModeExplanation } from "./ModeExplanation";
-import { PromptDistribution, type PromptSourceGroup } from "./PromptDistribution";
+import { distributePromptSources, PromptDistribution, type PromptSourceGroup } from "./PromptDistribution";
 import { VisualInput, requiresSingleImage, type MediaImage, type ModelInputFormat } from "./VisualInput";
 import { PerformanceChart as Chart } from "./PerformanceChart";
 import { api } from "./api";
@@ -1481,11 +1481,12 @@ function App() {
     setPromptPage(Math.floor(index / REQUESTS_PER_PAGE));
     requestAnimationFrame(() => document.getElementById(`benchmark-input-${index}`)?.scrollIntoView({block: "center"}));
   }
-  function planVisualSplit(index: number, imageCount: number) {
+  function planVisualSplit(index: number, imageCount: number, saved?: {content: string; source: string}) {
     const maxSlots = Math.floor(MAX_CONCURRENT_REQUESTS / modelFactor);
     const slots: number[] = [];
     for (let slot = index; slot < maxSlots && slots.length < imageCount; slot++) {
-      if (!promptImages[slot]?.length && (slot === index || !prompts[slot]?.trim())) slots.push(slot);
+      if (slot === index && saved) slots.push(slot);
+      else if (!promptImages[slot]?.length && (slot === index || !prompts[slot]?.trim())) slots.push(slot);
     }
     if (slots.length !== imageCount)
       throw new Error("Görseller için yeterli boş istek kutusu yok. Daha erken bir kutu veya modeller için sırayla çalışma seçin.");
@@ -1493,7 +1494,8 @@ function App() {
       prompt.trim() || effectiveImages[slot]?.length ? slot + 1 : last, 0);
     const retainedCount = hasOcrModel && !requestCountEdited ? occupied : effectivePrompts.length;
     const count = Math.max(retainedCount, slots[slots.length - 1] + 1);
-    const text = prompts[index] ?? "";
+    const text = saved?.content ?? prompts[index] ?? "";
+    const source = saved?.source ?? "";
     return (images: MediaImage[], format: "pdf" | "images") => {
       setPrompts(prev => {
         const draft = prev.slice();
@@ -1501,17 +1503,22 @@ function App() {
         return draft;
       });
       setPromptImages(prev => ({ ...prev, ...Object.fromEntries(images.map((image, i) => [slots[i], [image]])) }));
-      setPromptSources(prev => ({ ...prev, ...Object.fromEntries(slots.map(slot => [slot, ""])) }));
+      setPromptSources(prev => ({ ...prev, ...Object.fromEntries(slots.map(slot => [slot, source])) }));
       if (count !== effectivePrompts.length) setPreparedCount(count);
       setPromptPage(Math.floor(slots[0] / REQUESTS_PER_PAGE));
       setToast(`${images.length} ${format === "pdf" ? "PDF sayfası" : "görsel"} ayrı istek kutularına eklendi.`);
     };
   }
-  async function distributePrompts(assignments: string[]) {
-    if (busy || running || inputCount === null || assignments.length !== inputCount) return;
+  function checkOcrDistributionCount(count: number) {
+    if (count * modelFactor > MAX_CONCURRENT_REQUESTS)
+      throw new Error(`Model başına ${count} girdiyle toplam ${MAX_CONCURRENT_REQUESTS} eşzamanlı istek sınırı aşılır. Daha az görsel seçin veya modelleri sırayla çalıştırın.`);
+  }
+  async function distributePrompts(sources: string[]) {
+    if (busy || running || inputCount === null || !sources.length) return;
     setBusy(true);
     setError("");
     try {
+      const assignments = hasOcrModel ? sources : distributePromptSources(sources, inputCount);
       const uniqueSources = [...new Set(assignments)];
       const resolved = await Promise.all(uniqueSources.map(async source => {
         const [kind, id] = source.split(":", 2);
@@ -1524,6 +1531,19 @@ function App() {
           throw new Error("Seçilen kaynaklardan biri boş veya artık bulunamıyor. Kaynakları kontrol edin.");
         return [source, {content: item.content ?? "", source, images: item.images}] as const;
       }));
+      if (hasOcrModel) {
+        if (resolved.some(([, item]) => !item.images?.length))
+          throw new Error("LightOnOCR için görsel içeren kaynaklar seçin.");
+        const pages = resolved.flatMap(([, item]) =>
+          (item.images ?? []).map(image => ({ ...item, images: [image] })));
+        const count = Math.max(inputCount, pages.length);
+        checkOcrDistributionCount(count);
+        replaceActivePrompts(distributePromptSources(pages, count), effectivePrompts.length);
+        setPreparedCount(count);
+        setPromptPage(0);
+        setToast(`${pages.length} görsel ${count} girdi kutusuna rastgele dağıtıldı.`);
+        return;
+      }
       const bySource = new Map(resolved);
       replaceActivePrompts(assignments.map(source => bySource.get(source)!));
       setPromptPage(0);
@@ -1554,9 +1574,27 @@ function App() {
     setBusy(true);
     try {
       const record = await api<SavedInput>("/inputs/" + id);
-      if (target === "all") fillPrompts(record.content, "input:" + id, record.images ?? []);
+      const source = "input:" + id;
+      const images = record.images ?? [];
+      if (hasOcrModel && images.length > 1) {
+        if (target === "all") {
+          const count = Math.max(effectivePrompts.length, images.length);
+          checkOcrDistributionCount(count);
+          const assignments = Array.from({length: count}, (_, index) =>
+            ({content: record.content, source, images: [images[index % images.length]]}));
+          replaceActivePrompts(assignments, effectivePrompts.length);
+          setPreparedCount(count);
+          setPromptPage(0);
+          setToast(`${images.length} görsel ${count} ayrı istek kutusuna eklendi.`);
+        } else {
+          planVisualSplit(target, images.length, {content: record.content, source})(images, "images");
+        }
+        navigate("benchmark");
+        return;
+      }
+      if (target === "all") fillPrompts(record.content, source, images);
       else {
-        setPrompt(target, record.content, "input:" + id, record.images ?? []);
+        setPrompt(target, record.content, source, images);
         setPromptPage(Math.floor(target / REQUESTS_PER_PAGE));
       }
       navigate("benchmark");

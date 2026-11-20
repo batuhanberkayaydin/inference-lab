@@ -27,6 +27,7 @@
 - 1–4 model seçimi; 1–1024 girdi; listeden ve sayı yazarak seçim, ayrı bağlam seçimi ve metin düzenleme.
 - 203 etkin girdiye bir kayıtlı girdi, bir bağlam ve bir örneği rastgele dağıtın. Kaynakların 67–68 kez kullanıldığını, son sayfaya kadar tüm kutuların dolduğunu ve dağıtımın benchmark başlatmadığını kontrol edin. Bir kaynak yüklenemezse mevcut metinler korunmalıdır.
 - İki sayfalı PDF’yi ayrı görsel kayıtlar olarak kaydedin. Rastgele dağıtımda Görsel kaynakları ve Tümünü seç ile iki sayfayı etkin kutulara dağıtın. LightOnOCR isteklerinin her birinde tek `image_url` bulunur. Boş metinli OCR’a ek prefix gönderilmez.
+- On sayfalık bir PDF’yi tek arşiv kaydı olarak saklayın. LightOnOCR ve dört eşzamanlı istek seçiliyken kaydı Görsel kaynakları üzerinden rastgele dağıtın. İstek sayısı ona çıkmalı ve on sayfanın her biri ayrı kutuda görünmeli. Aynı kaydı ilk kutunun arşiv menüsünden seçtiğinizde sayfalar sırayla yerleşmeli.
 - 10 sayfalı bir PDF yükleyin. Genel Vision girdisinde 10 görsel birden eklenir. LightOnOCR benchmark’ında sayfalar ayrı istek kutularına yerleşir, mevcut dolu kutular korunur ve istek sayısı gerektiğinde artar.
 - LightOnOCR benchmark’ında varsayılan dört kutuya bir görsel yükleyin. Yalnız ilk kutu doluysa istek sayısı bire iner. Bir kutuya çok görselli kayıt yükleyin, uyarıdaki işlemle görselleri ayırın ve yalnız boş kutuların kaldırıldığını doğrulayın.
 - Vision girişinde bir dosya, bir URL ve metin kullanın. Girdi sırası ve içeriği istekte korunur. Görseli arşivden kaldırmak eski raporu değiştirmez. `file:` adresleri reddedilir.

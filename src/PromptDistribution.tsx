@@ -16,7 +16,7 @@ function shuffle<T>(items: T[]) {
   return result;
 }
 
-function distributePromptSources(sources: string[], count: number) {
+export function distributePromptSources<T>(sources: T[], count: number) {
   const order = shuffle(sources);
   return shuffle(Array.from({ length: count }, (_, index) => order[index % order.length]));
 }
@@ -32,19 +32,22 @@ export function PromptDistribution({ groups, count, disabled, prefersOcr, onDist
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [kindOverride, setKind] = useState<string | null>(null);
-  const kind = kindOverride ?? (prefersOcr ? "ocr" : "all");
+  const kind = prefersOcr ? "visual" : kindOverride ?? "all";
   const visible = groups.map(group => ({
     ...group,
     options: group.options.filter(option => {
       const images = option.imageCount ?? 0;
-      if (kind === "ocr") return images === 1;
       if (kind === "visual") return images > 0;
       if (kind === "text") return images === 0;
       return true;
     }),
   })).filter(group => group.options.length);
-  const available = visible.flatMap(group => group.options.map(option => option.key));
-  const sources = available.filter(key => selected.includes(key));
+  const options = visible.flatMap(group => group.options);
+  const available = options.map(option => option.key);
+  const selectedOptions = options.filter(option => selected.includes(option.key));
+  const sources = selectedOptions.map(option => option.key);
+  const imageCount = selectedOptions.reduce((sum, option) => sum + (option.imageCount ?? 0), 0);
+  const targetCount = prefersOcr ? Math.max(count, imageCount) : count;
   const allSelected = !!available.length && sources.length === available.length;
 
   function toggle(key: string) {
@@ -57,7 +60,7 @@ export function PromptDistribution({ groups, count, disabled, prefersOcr, onDist
     setLoading(true);
     setError("");
     try {
-      await onDistribute(distributePromptSources(sources, count));
+      await onDistribute(sources);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -70,6 +73,7 @@ export function PromptDistribution({ groups, count, disabled, prefersOcr, onDist
       <summary><Shuffle size={16} aria-hidden="true" /> Girdileri rastgele dağıt <ChevronDown size={15} aria-hidden="true" /></summary>
       <div className="distribution-body">
         <p>Bir veya daha fazla kaynak seçin. Dağıtım {count} etkin kutunun içeriğini değiştirir.</p>
+        {prefersOcr && <p>LightOnOCR için seçilen kayıtlardaki tüm görseller ayrı istek kutularına dağıtılır. {targetCount > count && `İstek sayısı ${targetCount} olacak.`}</p>}
         <div className="distribution-filter">
           <label>Kaynak türü
             <select value={kind} disabled={disabled || loading} onChange={e => {
@@ -77,10 +81,9 @@ export function PromptDistribution({ groups, count, disabled, prefersOcr, onDist
               setSelected([]);
               setError("");
             }}>
-              <option value="all">Tüm kaynaklar</option>
-              <option value="text">Metin kaynakları</option>
+              {!prefersOcr && <option value="all">Tüm kaynaklar</option>}
+              {!prefersOcr && <option value="text">Metin kaynakları</option>}
               <option value="visual">Görsel kaynakları</option>
-              <option value="ocr">Tek görselli kaynaklar (OCR)</option>
             </select>
           </label>
           <button type="button" className="button small-button" disabled={disabled || loading || !available.length} onClick={() => {
@@ -107,9 +110,9 @@ export function PromptDistribution({ groups, count, disabled, prefersOcr, onDist
         ) : <p>Bu türde kaynak yok. Kayıtlı girdiler bölümünden yeni bir kaynak ekleyebilirsiniz.</p>}
         {error && <p className="error-message" role="alert">{error}</p>}
         <div className="distribution-actions">
-          <small>{sources.length} kaynak seçili{sources.length > count && ` · Bu dağıtımda ${count} farklı kaynak kullanılacak`}</small>
+          <small>{sources.length} kaynak seçili{prefersOcr ? ` · ${imageCount} görsel` : sources.length > count && ` · Bu dağıtımda ${count} farklı kaynak kullanılacak`}</small>
           <button type="button" className="button" disabled={disabled || loading || !sources.length} onClick={distribute}>
-            <Shuffle size={15} aria-hidden="true" /> {loading ? "Kaynaklar yükleniyor…" : `Rastgele doldur · ${count} girdi`}
+            <Shuffle size={15} aria-hidden="true" /> {loading ? "Kaynaklar yükleniyor…" : `Rastgele doldur · ${targetCount} girdi`}
           </button>
         </div>
       </div>
