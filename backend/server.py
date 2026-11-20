@@ -526,9 +526,10 @@ class Engine:
             config = {'mode': mode, 'prompts': prompts, 'max_tokens': max_tokens, 'temperature': temperature,
                       'timeout': timeout, 'model_schedule': schedule, 'demo': demo, 'stream': data.get('stream', True),
                       'reset_prefix_cache': data.get('reset_prefix_cache', False)}
+            fingerprint_payload = pack_benchmark_prompts({'config': config, 'models': clean_models})
             run = {'id': ident, 'name': str(data.get('name', '')).strip()[:120] or f'{"Demo" if demo else "Benchmark"} · {len(prompts)} istek',
                    'created_at': now(), 'finished_at': None, 'status': 'running', 'config': config, 'models': clean_models,
-                   'fingerprint': hashlib.sha256(json.dumps({'config': config, 'models': clean_models}, sort_keys=True).encode()).hexdigest(),
+                   'fingerprint': hashlib.sha256(json.dumps(fingerprint_payload, sort_keys=True).encode()).hexdigest(),
                    'warnings': ['Demo: sentetik veri; performans sonucu olarak kullanmayın.'] if demo else [], 'phases': []}
             for phase in (['serial', 'concurrent'] if mode == 'compare' else ['serial' if mode == 'single' else 'concurrent']):
                 run['phases'].append({'name': phase, 'models': [dict(m, status='queued', summary=None, history=[],
@@ -548,15 +549,29 @@ class Engine:
                 raise ValueError('Çalışan test bulunamadı.')
             run['status'] = 'stopping'
             self.events[ident].set()
-            active = list(self.responses.get(ident, []))
+            active = list(self.responses.get(ident, {}))
         # Shut down sockets before closing buffered HTTPResponse objects (close may block on readline).
         for response in active:
-            try:
-                import socket
-                response.fp.raw._sock.shutdown(socket.SHUT_RDWR)
-            except (OSError, AttributeError):
-                pass
+            self.shutdown_response(response)
         return self.snapshot(ident)
+
+    def start_response_monitor(self, ident, done):
+        def watch():
+            while not done.wait(.05):
+                expired = []
+                now = time.perf_counter()
+                with self.lock:
+                    for response, (deadline, fired) in self.responses.get(ident, {}).items():
+                        if deadline <= now and not fired.is_set():
+                            fired.set()
+                            expired.append(response)
+                for response in expired:
+                    self.shutdown_response(response)
+
+        # One monitor per run; request workers still send independently.
+        monitor = threading.Thread(target=watch, daemon=True)
+        monitor.start()
+        return monitor
 
     def metrics(self, model):
         if not model.get('metrics_url'):
@@ -600,7 +615,10 @@ class Engine:
 
     def execute(self, run, models):
         cancel = self.events[run['id']]
+        monitor_done = threading.Event()
+        monitor = None
         try:
+            monitor = self.start_response_monitor(run['id'], monitor_done)
             for phase in run['phases']:
                 if cancel.is_set():
                     break
@@ -649,7 +667,11 @@ class Engine:
                 run['status'] = 'failed'
                 run['warnings'].append('Test yürütücüsü hata verdi; kısmi sonuçlar korundu.')
         finally:
+            monitor_done.set()
+            if monitor is not None:
+                monitor.join()
             with self.lock:
+                self.responses.pop(run['id'], None)
                 run['finished_at'] = now()
                 self.persist(run)
 
@@ -665,11 +687,13 @@ class Engine:
         sampler = threading.Thread(target=self.sample, args=(target, started, done), daemon=True)
         sampler.start()
         workers = len(target['requests']) if phase['name'] == 'concurrent' else 1
-        with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-            list(pool.map(lambda row: self.request_one(run, target, model, row), target['requests']))
-        wall = time.perf_counter() - started
-        done.set()
-        sampler.join(timeout=1)
+        try:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+                list(pool.map(lambda row: self.request_one(run, target, model, row), target['requests']))
+            wall = time.perf_counter() - started
+        finally:
+            done.set()
+            sampler.join(timeout=1)
         after, after_warning = ({}, None) if run['config']['demo'] or cancel.is_set() else self.metrics(model)
         spec = speculative_delta(before, after)
         if not run['config']['demo'] and model.get('metrics_url'):
@@ -751,20 +775,13 @@ class Engine:
                 if model['api_key']:
                     headers['Authorization'] = 'Bearer ' + model['api_key']
                 opener = provider_opener(model)
-                response = opener.open(Request(endpoint(model['base_url']), data=json.dumps(payload).encode(), headers=headers), timeout=config['timeout'])
+                request_body = json.dumps(payload, ensure_ascii=False).encode()
+                response = opener.open(Request(endpoint(model['base_url']), data=request_body, headers=headers), timeout=config['timeout'])
                 stage = 'receiving_response'
                 with self.lock:
                     row['http_status'] = response.status
                     row['guard'] = guard_headers(response.headers)
-                    self.responses.setdefault(run['id'], []).append(response)
-                # Absolute deadline also interrupts stalled streams, not just continuously arriving chunks.
-                remaining = config['timeout'] - (time.perf_counter() - started)
-                def expire_response():
-                    deadline_fired.set()
-                    self.shutdown_response(response)
-                timer = threading.Timer(max(.001, remaining), expire_response)
-                timer.daemon = True
-                timer.start()
+                    self.responses.setdefault(run['id'], {})[response] = (started + config['timeout'], deadline_fired)
                 try:
                     if cancel.is_set():
                         raise Cancelled()
@@ -829,7 +846,8 @@ class Engine:
                         if not done or finish is None or not times:
                             raise ValueError('Eksik SSE akışı: DONE, bitiş nedeni veya içerik yok.')
                 finally:
-                    timer.cancel()
+                    with self.lock:
+                        self.responses[run['id']].pop(response, None)
             ended = time.perf_counter()
             def token_count(name):
                 value = usage.get(name) if usage else None
@@ -893,16 +911,12 @@ class Engine:
                     'timeout_s': run['config']['timeout'], 'content_chunks': len(times),
                     'partial_content': bool(row.get('text')), 'partial_reasoning': bool(row.get('reasoning'))}, ensure_ascii=False))
         finally:
-            if response:
-                with self.lock:
-                    if response in self.responses.get(run['id'], []):
-                        self.responses[run['id']].remove(response)
+            if response is not None:
                 response.close()
 
     @staticmethod
     def shutdown_response(response):
         try:
-            import socket
             response.fp.raw._sock.shutdown(socket.SHUT_RDWR)
         except (OSError, AttributeError):
             pass

@@ -77,6 +77,14 @@ class Fixture(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({'choices': [{'message': {'content': 'Normal cevap'}, 'finish_reason': 'stop'}], 'usage': {'prompt_tokens': 21, 'completion_tokens': 10}}).encode())
                 return
             self.emit({'choices': [{'delta': {'role': 'assistant'}, 'finish_reason': None}]})
+            if body['model'] == 'trickle':
+                # Bytes keep arriving, but the reader cannot finish reading the SSE line.
+                self.wfile.write(b'data: ')
+                for _ in range(17):
+                    self.wfile.write(b' ')
+                    self.wfile.flush()
+                    time.sleep(.1)
+                return
             if body['model'] == 'stall':
                 time.sleep(1.4)
             else:
@@ -334,12 +342,14 @@ class IntegrationTests(unittest.TestCase):
         self.assertIsNone(run['phases'][0]['models'][0]['summary']['throughput'])
 
     def test_timeout_interrupts_stalled_response(self):
-        m = self.store.save_model(self.model | {'model':'stall'})
-        with self.assertLogs('inference_lab.requests', level='WARNING') as logs:
-            run = self.run_config(model_ids=[m['id']], prompts=['one'], timeout=1)
-        self.assertEqual(run['status'],'partial')
-        self.assertLess(run['phases'][0]['models'][0]['requests'][0]['e2e_s'],1.3)
-        self.assertEqual(json.loads(logs.records[0].getMessage())['category'], 'timeout')
+        for model in ('stall', 'trickle'):
+            with self.subTest(model=model):
+                m = self.store.save_model(self.model | {'model': model})
+                with self.assertLogs('inference_lab.requests', level='WARNING') as logs:
+                    run = self.run_config(model_ids=[m['id']], prompts=['one'], timeout=1)
+                self.assertEqual(run['status'], 'partial')
+                self.assertLess(run['phases'][0]['models'][0]['requests'][0]['e2e_s'], 1.4)
+                self.assertEqual(json.loads(logs.records[0].getMessage())['category'], 'timeout')
 
     def test_cancel_retains_partial_output_and_report(self):
         live = self.store.save_model(self.model | {'model':'live'})
@@ -352,7 +362,7 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(self.store.get('reports',run['id'])['status'],'cancelled')
 
     def test_validation_and_active_run_guard(self):
-        for changes in ({'prompts': ['x']*257}, {'prompts':['']}, {'model_ids':['missing']}, {'max_tokens':0}, {'temperature':float('nan')}, {'mode':'single'}, {'model_ids':[self.model['id']]*2}):
+        for changes in ({'prompts': ['x']*1025}, {'prompts':['']}, {'model_ids':['missing']}, {'max_tokens':0}, {'temperature':float('nan')}, {'mode':'single'}, {'model_ids':[self.model['id']]*2}):
             with self.assertRaises(ValueError):
                 self.engine.start(self.config | changes)
         run=self.engine.start(self.config)
@@ -364,15 +374,15 @@ class IntegrationTests(unittest.TestCase):
     def test_large_benchmark_inputs_and_parallel_limit_without_dispatch(self):
         second = self.store.save_model({'name': 'Other', 'base_url': self.base, 'model': 'other'})
         ids = [self.model['id'], second['id']]
-        with self.assertRaisesRegex(ValueError, 'en fazla 256 istek'):
-            self.engine.start(self.config | {'model_ids': ids, 'prompts': ['x'] * 129})
+        with self.assertRaisesRegex(ValueError, 'en fazla 1024 istek'):
+            self.engine.start(self.config | {'model_ids': ids, 'prompts': ['x'] * 513})
         with self.assertRaisesRegex(ValueError, 'Girdi dizini'):
             self.engine.start(self.config | {'prompts': ['x'], 'prompt_indices': [1]})
         prompt = bundled_examples.example('turkish-64k')['content']
         cases = [
-            ({'prompts': [prompt, 'son'], 'prompt_indices': [0] * 202 + [1]}, [prompt] * 202 + ['son']),
-            ({'prompts': ['x'] * 256, 'model_ids': ids, 'model_schedule': 'sequential'}, ['x'] * 256),
-            ({'prompts': ['x'] * 128, 'model_ids': ids}, ['x'] * 128),
+            ({'prompts': [prompt, 'son'], 'prompt_indices': [0] * 1023 + [1]}, [prompt] * 1023 + ['son']),
+            ({'prompts': ['x'] * 1024, 'model_ids': ids, 'model_schedule': 'sequential'}, ['x'] * 1024),
+            ({'prompts': ['x'] * 512, 'model_ids': ids}, ['x'] * 512),
         ]
         for changes, expected in cases:
             with self.subTest(count=len(expected)), patch('server.threading.Thread.start'):

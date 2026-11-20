@@ -130,13 +130,14 @@ def execute(engine, run, model):
                 row['finished_at'] = stamp()
                 row['end_offset_s'] = time.perf_counter() - started
                 row['tokens_per_s'] = row['output_tokens'] / row['e2e_s'] if row['status'] == 'completed' and row['output_tokens'] is not None and row['e2e_s'] else None
-                run['summary'] = summary(run)
             remaining = deadline - time.perf_counter()
             if remaining <= 0 or cancel.wait(min(run['config']['interval_s'], remaining)):
                 break
     checker = threading.Thread(target=checkpoint, daemon=True)
-    checker.start()
+    monitor = None
     try:
+        monitor = engine.start_response_monitor(run['id'], done)
+        checker.start()
         with concurrent.futures.ThreadPoolExecutor(max_workers=run['config']['concurrency']) as pool:
             list(pool.map(lane, range(1, run['config']['concurrency'] + 1)))
         with engine.lock:
@@ -147,8 +148,12 @@ def execute(engine, run, model):
             run['warnings'].append('Test yürütücüsü hata verdi; alınan sonuçlar korundu.')
     finally:
         done.set()
-        checker.join()
+        if checker.ident is not None:
+            checker.join()
+        if monitor is not None:
+            monitor.join()
         with engine.lock:
+            engine.responses.pop(run['id'], None)
             run['status'] = final_status
             run['elapsed_s'] = time.perf_counter() - started
             run['finished_at'] = stamp()

@@ -1,4 +1,4 @@
-export const MAX_CONCURRENT_REQUESTS = 256;
+export const MAX_CONCURRENT_REQUESTS = 1024;
 export const REQUESTS_PER_PAGE = 24;
 
 export function parseRequestCount(value: string) {

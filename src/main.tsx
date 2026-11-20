@@ -1986,7 +1986,7 @@ function App() {
                         <div className="request-controls">
                           <div className="count-control">
                             <span>Hızlı seçim</span>
-                            {[1, 2, 4, 8, 16, 24, 64, 128, 256].map(n => (
+                            {[1, 2, 4, 8, 16, 24, 64, 128, 256, 512, MAX_CONCURRENT_REQUESTS].map(n => (
                               <button type="button" key={n} disabled={running || busy}
                                 className={inputCount === n ? "active" : ""}
                                 onClick={() => setRequestCount(String(n))}>{n}</button>

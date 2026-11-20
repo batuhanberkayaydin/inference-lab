@@ -12,10 +12,10 @@
 | Gerçek SSE fixture | Rol parçası TTFT sayılmaz; iki parça 10 token kullanımını korur |
 | Seri vs. concurrent | İki faz birebir aynı payload; concurrent faz paralel çalışır |
 | Eksik DONE | Başarısız istek ve kısmi rapor |
-| Sessiz/uzun bekleyen stream | Mutlak timeout akışı keser |
+| Sessiz veya bitmemiş SSE satırı | Koşu başına ortak zaman aşımı izleyicisi akışı zamanında keser |
 | Durdurma | Kısmi çıktı ve durduruldu raporu saklanır |
-| Limitler / çift model / aktif koşu | 8 girdi, 4 model ve tek aktif koşu sınırları |
-| 4 model × 8 istek | 32 başarılı ölçüm |
+| Limitler / çift model / aktif koşu | 1024 eşzamanlı istek, 4 model ve tek aktif koşu sınırları |
+| 4 model × 24 istek | 96 başarılı yerel fixture ölçümü |
 | Giriş / kötü şifre / kötü Origin | 401/403; yetkisiz veri erişimi yok |
 | Markdown / CSV / JSON | Doğru koşu dışa aktarılır; API anahtarı yok |
 | Anahtar düzenleme / yeniden açma | Özel dosya referansı korunur, boş giriş anahtarı silmez |
@@ -24,7 +24,7 @@
 ## Manuel arayüz kontrolü
 
 - Admin/admin ile giriş; hatalı şifre mesajı.
-- 1–4 model seçimi; 1–256 girdi; listeden ve sayı yazarak seçim, ayrı bağlam seçimi ve metin düzenleme.
+- 1–4 model seçimi; 1–1024 girdi; listeden ve sayı yazarak seçim, ayrı bağlam seçimi ve metin düzenleme.
 - 203 etkin girdiye bir kayıtlı girdi, bir bağlam ve bir örneği rastgele dağıtın. Kaynakların 67–68 kez kullanıldığını, son sayfaya kadar tüm kutuların dolduğunu ve dağıtımın benchmark başlatmadığını kontrol edin. Bir kaynak yüklenemezse mevcut metinler korunmalıdır.
 - Tek istek, eşzamanlı, seri vs. eşzamanlı modları.
 - Yeni demo istekleri reddedilir; geçmiş demo raporları sentetik olarak işaretli kalır.
@@ -74,12 +74,12 @@ Gerçek sağlayıcı sözleşme testleri, farklı SSE/protokol adaptörleri, tok
 
 ## Süreli test
 - JSON/curl heredoc ve inline data yalnızca veri olarak okunur; response örneği ve authorization başlığı içeri aktarılmaz, dosya/shell komutu çalıştırılmaz.
-- Her bağımsız döngü kendi yanıtından sonra bekler; yavaş istek diğer döngüyü engellemez. En fazla 16 aktif istek, süre bitiminde yeni gönderim yok; aktif istek sonuçlanır.
+- Her bağımsız döngü kendi yanıtından sonra bekler; yavaş istek diğer döngüyü engellemez. En fazla 1024 aktif istek, süre bitiminde yeni gönderim yok; aktif istek sonuçlanır.
 - HTTP 200, guard pass, attempts=1 veya >1, başlık/usage eksikliği ayrı korunur. Eksik usage hız üretmez; reasoning-only cevap başarısızdır.
 - JSON normal cevap, kesik SSE, HTTP 500, durdurma, süreç yeniden başlatma, sayfalama, kimlik doğrulama ve JSON dışa aktarımı yerel fixture ile doğrulanır.
 
 ## İstek sayısı, temiz kurulum ve paketli örnekler
-- 203 girdi ve iki model × 128 girdi geçerlidir. Modeller aynı anda çalışırken iki model × 129 girdi reddedilir. Tek model veya sırayla çalışma için 256 girdi geçerlidir. Benchmark ve süreli testte 257 reddedilir. Tekrarlanan uzun girdiler sırası korunarak rapordan okunur.
+- Tek model veya sırayla çalışma için 1024 girdi, iki model paralelken 512 girdi geçerlidir. İki model paralelken 513 girdi reddedilir. Benchmark ve süreli testte 1025 reddedilir. Tekrarlanan uzun girdiler sırası korunarak rapordan okunur.
 - Taze DB’de tüm kullanıcı tabloları boş; yeniden başlatma boş model/bağlam tablosunu doldurmaz. Mevcut kayıt ve anahtarlar korunur.
 - 32K/64K listesi içerik taşımamalı; detay UTF-8 dosyasının ve SHA-256 değerinin aynısı olmalı. Örnek yüklemek arşiv kaydı veya koşu yaratmamalı.
 - 16 adet 64K örnek gerçek HTTP uygulama uç noktasından kabul edilir. Örnekten kayıt oluşturmak yalnızca açık kaydetme eylemiyle gerçekleşir.
