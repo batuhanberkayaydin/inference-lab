@@ -10,7 +10,8 @@ from functools import lru_cache
 from urllib.parse import urlsplit
 
 MAX_IMAGE_BYTES = 5_000_000
-MAX_IMAGES = 8
+MAX_IMAGES = 100
+MAX_INPUT_MEDIA_BYTES = 40_000_000
 DATA_IMAGE = re.compile(r'data:(image/(?:png|jpeg|webp|gif|bmp|tiff));base64,')
 MEDIA_ID = re.compile(r'[a-f0-9]{64}')
 
@@ -116,11 +117,21 @@ class MediaAssets:
             return db.execute('SELECT mime, data FROM media_assets WHERE id = ?', (ident,)).fetchone()
 
     def check(self, refs):
-        ids = {ref['id'] for ref in refs if 'id' in ref}
+        self.check_inputs([refs])
+
+    def check_inputs(self, inputs):
+        groups = [tuple(ref['id'] for ref in refs if 'id' in ref) for refs in inputs]
+        ids = {ident for group in groups for ident in group}
         if ids:
             with self.connect() as db:
-                if any(not db.execute('SELECT 1 FROM media_assets WHERE id = ?', (ident,)).fetchone() for ident in ids):
-                    raise ValueError('Görsellerden biri bulunamadı. Dosyayı yeniden ekleyin.')
+                sizes = {}
+                for ident in ids:
+                    row = db.execute('SELECT length(data) FROM media_assets WHERE id = ?', (ident,)).fetchone()
+                    if not row:
+                        raise ValueError('Görsellerden biri bulunamadı. Dosyayı yeniden ekleyin.')
+                    sizes[ident] = row[0]
+            if any(sum(sizes[ident] for ident in group) > MAX_INPUT_MEDIA_BYTES for group in groups):
+                raise ValueError('Bir istekte yüklenen görsellerin toplamı en fazla 40 MB olabilir.')
 
     def _read_url(self, ident):
         stored = self.get(ident)

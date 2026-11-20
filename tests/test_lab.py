@@ -274,6 +274,14 @@ class IntegrationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'HTTP'):
             self.store.save_input({'name': 'Bad URL', 'images': [{'url': 'file:///app/config'}]})
 
+    def test_vision_can_send_ten_pdf_page_images_together(self):
+        source = self.store.media.add({'name': 'Sayfa.png', 'data_url': probe_image_url()})
+        pages = [source | {'name': f'Sayfa {index + 1}.png'} for index in range(10)]
+        run = self.run_config(prompts=[''], prompt_images={'0': pages}, stream=False)
+        self.assertEqual(run['status'], 'completed')
+        self.assertEqual(len(Fixture.bodies[-1]['messages'][0]['content']), 10)
+        self.assertEqual(run['config']['prompt_images']['0'], pages)
+
     def test_visual_archive_batch_rolls_back_if_one_page_is_invalid(self):
         source = self.store.media.add({'name': 'Sayfa.png', 'data_url': probe_image_url()})
         first = {'name': 'Belge · Sayfa 1', 'images': [source]}

@@ -522,7 +522,7 @@ class Engine:
                 images[index] = clean
         if any(not prompt.strip() and str(index) not in images for index, prompt in enumerate(prompts)):
             raise ValueError('Her girdiye metin veya görsel ekleyin.')
-        self.store.media.check(ref for refs in images.values() for ref in refs)
+        self.store.media.check_inputs(images.values())
         if not isinstance(ids, list) or not 1 <= len(ids) <= 4 or len(set(ids)) != len(ids):
             raise ValueError('1–4 farklı model seçin.')
         if mode not in ('single', 'concurrent', 'compare') or (mode == 'single' and len(prompts) != 1):

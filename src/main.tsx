@@ -38,7 +38,7 @@ import { DurationTests } from "./DurationTests";
 import { ResponseComparison } from "./ResponseComparison";
 import { ModeExplanation } from "./ModeExplanation";
 import { PromptDistribution, type PromptSourceGroup } from "./PromptDistribution";
-import { VisualInput, requiresSingleImage, type MediaImage, type ModelInputFormat } from "./VisualInput";
+import { VisualInput, requiresSingleImage, type MediaImage, type ModelInputFormat, type PdfPageImage } from "./VisualInput";
 import { PerformanceChart as Chart } from "./PerformanceChart";
 import { api } from "./api";
 import { MAX_CONCURRENT_REQUESTS, REQUESTS_PER_PAGE, RequestCount, RequestPage, parseRequestCount } from "./RequestCount";
@@ -1432,6 +1432,33 @@ function App() {
   function fillPrompts(content: string, source = "", images: MediaImage[] = []) {
     replaceActivePrompts(effectivePrompts.map(() => ({content, source, images})));
   }
+  function planPdfSplit(index: number, pageCount: number) {
+    const modelFactor = schedule === "parallel" ? Math.max(1, selected.length) : 1;
+    const maxSlots = Math.floor(MAX_CONCURRENT_REQUESTS / modelFactor);
+    const slots: number[] = [];
+    for (let slot = index; slot < maxSlots && slots.length < pageCount; slot++) {
+      if (!promptImages[slot]?.length && (slot === index || !prompts[slot]?.trim())) slots.push(slot);
+    }
+    if (slots.length !== pageCount)
+      throw new Error("PDF sayfaları için yeterli boş istek kutusu yok. Daha erken bir kutu veya modeller için sırayla çalışma seçin.");
+    const count = Math.max(effectivePrompts.length, slots[slots.length - 1] + 1);
+    const text = prompts[index] ?? "";
+    return (pages: PdfPageImage[]) => {
+      setPrompts(prev => {
+        const draft = prev.slice();
+        for (const slot of slots) draft[slot] = text;
+        return draft;
+      });
+      setPromptImages(prev => ({ ...prev, ...Object.fromEntries(pages.map(({image}, i) => [slots[i], [image]])) }));
+      setPromptSources(prev => ({ ...prev, ...Object.fromEntries(slots.map(slot => [slot, ""])) }));
+      if (count > effectivePrompts.length) {
+        setRequestCount(String(count));
+        if (mode === "single") setMode("concurrent");
+      }
+      setPromptPage(Math.floor(slots[0] / REQUESTS_PER_PAGE));
+      setToast(`${pages.length} PDF sayfası ayrı istek kutularına eklendi.`);
+    };
+  }
   async function distributePrompts(assignments: string[]) {
     if (busy || running || inputCount === null || assignments.length !== inputCount) return;
     setBusy(true);
@@ -1902,7 +1929,7 @@ function App() {
                         }
                         onClick={() => toggleModel(m.id)}
                         disabled={
-                          running ||
+                          running || busy ||
                           (!selected.includes(m.id) && selected.length >= 4)
                         }
                         aria-pressed={selected.includes(m.id)}
@@ -2076,6 +2103,7 @@ function App() {
                           />
                           <VisualInput label={`Girdi ${i + 1} için görsel veya PDF sayfası ekle`}
                             images={promptImages[i] ?? []} disabled={running || busy} onBusyChange={setBusy}
+                            singleImage={hasOcrModel} planPdfSplit={pageCount => planPdfSplit(i, pageCount)}
                             onChange={images => {
                               setPromptImages(prev => ({ ...prev, [i]: images }));
                               setPromptSources(prev => ({ ...prev, [i]: "" }));

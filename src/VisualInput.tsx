@@ -11,14 +11,15 @@ export const requiresSingleImage = (model: { model: string; input_format?: Model
   ((model.input_format ?? "auto") === "auto" && model.model.toLowerCase().replace(/[^a-z0-9]/g, "").includes("lightonocr"));
 type Pdf = Awaited<ReturnType<typeof openPdf>>;
 export type PdfPageImage = { page: number; image: MediaImage };
-const MAX_IMAGES = 8;
+type PdfMode = "attach" | "split" | "pick";
+const MAX_IMAGES = 100;
+const MAX_PDF_PAGES = 100;
 const fileTypes: Record<string, string> = {
   png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp",
   gif: "image/gif", bmp: "image/bmp", tif: "image/tiff", tiff: "image/tiff",
 };
 
 function pdfPageNumbers(value: string, pageCount: number) {
-  const limit = 100;
   const pages = new Set<number>();
   for (const interval of (value.trim() || `1-${pageCount}`).split(",")) {
     const match = /^\s*(\d+)(?:\s*-\s*(\d+))?\s*$/.exec(interval);
@@ -27,7 +28,7 @@ function pdfPageNumbers(value: string, pageCount: number) {
     if (start < 1 || end < start || end > pageCount) throw new Error(`1–${pageCount} arasında geçerli sayfa numaraları girin.`);
     for (let page = start; page <= end; page++) {
       pages.add(page);
-      if (pages.size > limit) throw new Error("Bir defada en fazla 100 sayfa kaydedilebilir. Daha kısa bir aralık seçin.");
+      if (pages.size > MAX_PDF_PAGES) throw new Error(`Bir defada en fazla ${MAX_PDF_PAGES} sayfa eklenebilir. Daha kısa bir aralık seçin.`);
     }
   }
   return [...pages].sort((a, b) => a - b);
@@ -68,13 +69,15 @@ export function MediaPreviews({ images, onRemove }: { images: MediaImage[]; onRe
   );
 }
 
-export function VisualInput({ images, onChange, disabled, onBusyChange, label, onSavePdfPages }: {
+export function VisualInput({ images, onChange, disabled, onBusyChange, label, onSavePdfPages, planPdfSplit, singleImage = false }: {
   images: MediaImage[];
   onChange: (images: MediaImage[]) => void;
   disabled: boolean;
   onBusyChange?: (busy: boolean) => void;
   label?: string;
   onSavePdfPages?: (filename: string, pages: PdfPageImage[]) => Promise<void>;
+  planPdfSplit?: (pageCount: number) => (pages: PdfPageImage[]) => void;
+  singleImage?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
@@ -85,6 +88,8 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
   const [edge, setEdge] = useState(1540);
   const [pageRange, setPageRange] = useState("");
   const [progress, setProgress] = useState("");
+  const [notice, setNotice] = useState("");
+  const [pdfModeOverride, setPdfModeOverride] = useState<PdfMode | null>(null);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -93,8 +98,14 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
   useEffect(() => () => { if (pdf) void pdf.close().catch(() => {}); }, [pdf]);
 
   const locked = disabled || working;
+  const maxImages = singleImage ? 1 : MAX_IMAGES;
+  const full = images.length >= maxImages;
+  const defaultPdfMode = singleImage ? (planPdfSplit ? "split" : "pick") : "attach";
+  const pdfMode = pdfModeOverride === "attach" && singleImage ? defaultPdfMode : pdfModeOverride ?? defaultPdfMode;
+  const canChoosePdf = pdfMode === "split" || (!!onSavePdfPages && pdfMode === "pick");
   async function prepare(action: () => Promise<void>) {
     setError("");
+    setNotice("");
     setWorking(true);
     onBusyChange?.(true);
     try { await action(); }
@@ -104,6 +115,15 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
       setProgress("");
       onBusyChange?.(false);
     }
+  }
+  async function renderPages(document: Pdf, numbers: number[]) {
+    const result: PdfPageImage[] = [];
+    for (const number of numbers) {
+      if (!mounted.current) return null;
+      setProgress(`Sayfa ${result.length + 1} / ${numbers.length} hazırlanıyor…`);
+      result.push({ page: number, image: await uploadImage(await document.render(number, edge)) });
+    }
+    return mounted.current ? result : null;
   }
   async function chooseFiles(event: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.currentTarget.files ?? []);
@@ -117,11 +137,30 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
           await document.close();
           return;
         }
-        setPage("1");
-        setPageRange("");
-        setPdf(document);
+        if (pdfMode === "pick") {
+          setPage("1");
+          setPageRange("");
+          setPdf(document);
+          return;
+        }
+        setPdf(null);
+        try {
+          const numbers = pdfPageNumbers("", document.pages);
+          const applySplit = pdfMode === "split" ? planPdfSplit?.(numbers.length) : undefined;
+          if (!applySplit && images.length + numbers.length > maxImages)
+            throw new Error(`Bu girdiye toplam en fazla ${maxImages} görsel eklenebilir. Tek sayfa seçebilir veya ayrı kutular kullanabilirsiniz.`);
+          const pages = await renderPages(document, numbers);
+          if (!pages) return;
+          if (applySplit) applySplit(pages);
+          else {
+            onChange([...images, ...pages.map(item => item.image)]);
+            setNotice(`${pages.length} PDF sayfası görsel olarak eklendi.`);
+          }
+        } finally {
+          await document.close();
+        }
       } else {
-        if (images.length + files.length > MAX_IMAGES) throw new Error("Bir girdiye en fazla 8 görsel eklenebilir.");
+        if (images.length + files.length > maxImages) throw new Error(`Bir girdiye en fazla ${maxImages} görsel eklenebilir.`);
         const uploaded: MediaImage[] = [];
         for (const file of files) uploaded.push(await uploadImage(file));
         if (mounted.current) onChange([...images, ...uploaded]);
@@ -155,13 +194,8 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
     if (!pdf || !onSavePdfPages) return;
     await prepare(async () => {
       const numbers = pdfPageNumbers(pageRange, pdf.pages);
-      const result: PdfPageImage[] = [];
-      for (const number of numbers) {
-        if (!mounted.current) return;
-        setProgress(`Sayfa ${result.length + 1} / ${numbers.length} hazırlanıyor…`);
-        result.push({ page: number, image: await uploadImage(await pdf.render(number, edge)) });
-      }
-      if (mounted.current) await onSavePdfPages(pdf.name, result);
+      const result = await renderPages(pdf, numbers);
+      if (result) await onSavePdfPages(pdf.name, result);
     });
   }
   return (
@@ -175,18 +209,34 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
         <div className="visual-input-body">
           <p>LightOnOCR için her isteğe tek görsel ekleyin. Düz OCR’da metin alanlarını boş bırakabilirsiniz.</p>
           <MediaPreviews images={images} onRemove={locked ? undefined : index => onChange(images.filter((_, i) => i !== index))} />
+          <div className="visual-input-actions">
+            {(!singleImage || planPdfSplit) && (
+              <label>PDF ekleme biçimi
+                <select value={pdfMode} disabled={locked} onChange={e => {
+                  setPdfModeOverride(e.target.value as PdfMode);
+                  setPdf(null);
+                  setNotice("");
+                  setError("");
+                }}>
+                  {!singleImage && <option value="attach">Tüm sayfaları bu girdiye ekle</option>}
+                  {planPdfSplit && <option value="split">Her sayfayı ayrı istek kutusuna ekle</option>}
+                  <option value="pick">{onSavePdfPages ? "Sayfa veya aralık seç" : "Tek sayfa seç"}</option>
+                </select>
+              </label>
+            )}
+            <label>PDF uzun kenarı<select value={edge} disabled={locked} onChange={e => setEdge(Number(e.target.value))}><option value={1540}>1540 px</option><option value={2048}>2048 px</option></select></label>
+          </div>
           <label>
             Görsel veya PDF yükle
             <input type="file" aria-label="Görsel veya PDF yükle" accept=".png,.jpg,.jpeg,.webp,.gif,.bmp,.tif,.tiff,.pdf" multiple
-              disabled={locked || images.length >= MAX_IMAGES} onChange={e => void chooseFiles(e)} />
+              disabled={locked || (full && !canChoosePdf)} onChange={e => void chooseFiles(e)} />
           </label>
           {pdf && (
             <div className="visual-pdf">
               <b>{pdf.name} · {pdf.pages} sayfa</b>
               <div className="visual-input-actions">
                 <label>PDF sayfası<input type="text" inputMode="numeric" value={page} disabled={locked} onChange={e => setPage(e.target.value)} /></label>
-                <label>Uzun kenar<select value={edge} disabled={locked} onChange={e => setEdge(Number(e.target.value))}><option value={1540}>1540 px</option><option value={2048}>2048 px</option></select></label>
-                <button className="button small-button" type="button" disabled={locked || images.length >= MAX_IMAGES} onClick={() => void addPage()}>Sayfayı ekle</button>
+                <button className="button small-button" type="button" disabled={locked || full} onClick={() => void addPage()}>Sayfayı ekle</button>
               </div>
               {onSavePdfPages && (
                 <div className="visual-input-actions">
@@ -202,12 +252,13 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
           <div className="visual-input-actions">
             <label className="visual-url">Görsel URL’si
               <input type="text" inputMode="url" value={url} disabled={locked} placeholder="https://…"
-                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (!locked && url.trim() && images.length < MAX_IMAGES) addUrl(); } }}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); if (!locked && url.trim() && !full) addUrl(); } }}
                 onChange={e => setUrl(e.target.value)} />
             </label>
-            <button className="button small-button" type="button" disabled={locked || !url.trim() || images.length >= MAX_IMAGES} onClick={addUrl}>URL ekle</button>
+            <button className="button small-button" type="button" disabled={locked || !url.trim() || full} onClick={addUrl}>URL ekle</button>
           </div>
           {working && <small role="status">{progress || "Dosya hazırlanıyor…"}</small>}
+          {notice && <small role="status">{notice}</small>}
           {error && <p className="error-message" role="alert">{error}</p>}
         </div>
       )}

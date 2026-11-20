@@ -34,6 +34,8 @@
 .visual-input-body > p:not(.error-message) { color: var(--muted); }
 .visual-input-body input[type="file"] { min-width: 0; width: 100%; }
 .visual-input-actions { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+.visual-input-actions label { min-width: 0; max-width: 100%; }
+.visual-input-actions select { max-width: 100%; }
 .visual-pdf input[inputmode="numeric"] { width: 88px; }
 .visual-url { flex: 1 1 160px; min-width: 0; }
 .visual-pdf { display: grid; gap: 8px; }

@@ -167,7 +167,8 @@ export function DurationTests({ examples, models, contexts, savedInputs, onSetti
         {inputMode === "prompt" ? <>
           <label>Hazır girdi<select defaultValue="" disabled={locked} onChange={e => useSaved(e.target.value)}><option value="">Girdi, bağlam veya örnek seç</option><optgroup label="Örnek promptlar · hedef uzunluk">{examples.map(item => <option key={item.id} value={`example:${item.id}`}>{item.name}</option>)}</optgroup>{savedInputs.map(s => <option value={s.id} key={s.id}>{s.name}</option>)}{contexts.map(c => <option value={`context:${c.id}`} key={c.id}>{c.name}</option>)}</select></label>
           <p>32K / 64K örnekleri yalnızca seçilince yüklenir; etiketler gerçek tokenizer sayımı değildir.</p><label>Her istekte gönderilecek metin<textarea placeholder="Metin yazın veya yukarıdan bir örnek seçin." value={prompt} disabled={locked} onChange={e => setPrompt(e.target.value)} rows={5} /></label>
-          <VisualInput images={images} onChange={setImages} disabled={locked} onBusyChange={setMediaBusy} />
+          <VisualInput images={images} onChange={setImages} disabled={locked} onBusyChange={setMediaBusy}
+            singleImage={!!model && requiresSingleImage(model)} />
           {invalidOcrInput && <p className="request-limit" role="status">LightOnOCR için tam bir görsel veya bir PDF sayfası ekleyin.</p>}
           <div className="duration-generation"><label>Çıktı limiti (token)<input type="number" min="1" max="32768" value={maxTokens} disabled={locked} onChange={e => setMaxTokens(Number(e.target.value))}/></label><label>Yanıt biçimi<select value={stream ? "stream" : "normal"} disabled={locked} onChange={e => setStream(e.target.value === "stream")}><option value="stream">Stream</option><option value="normal">Normal JSON</option></select></label></div>
         </> : <>
