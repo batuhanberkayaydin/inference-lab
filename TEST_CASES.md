@@ -25,6 +25,7 @@
 
 - Admin/admin ile giriş; hatalı şifre mesajı.
 - 1–4 model seçimi; 1–256 girdi; listeden ve sayı yazarak seçim, ayrı bağlam seçimi ve metin düzenleme.
+- 203 etkin girdiye bir kayıtlı girdi, bir bağlam ve bir örneği rastgele dağıtın. Kaynakların 67–68 kez kullanıldığını, son sayfaya kadar tüm kutuların dolduğunu ve dağıtımın benchmark başlatmadığını kontrol edin. Bir kaynak yüklenemezse mevcut metinler korunmalıdır.
 - Tek istek, eşzamanlı, seri vs. eşzamanlı modları.
 - Yeni demo istekleri reddedilir; geçmiş demo raporları sentetik olarak işaretli kalır.
 - Tüm metriğin görünmesi, referans model farkları ve istek çıktıları.

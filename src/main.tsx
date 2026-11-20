@@ -37,6 +37,7 @@ import { loadExample, type PromptExample } from "./examples";
 import { DurationTests } from "./DurationTests";
 import { ResponseComparison } from "./ResponseComparison";
 import { ModeExplanation } from "./ModeExplanation";
+import { PromptDistribution, type PromptSourceGroup } from "./PromptDistribution";
 import { PerformanceChart as Chart } from "./PerformanceChart";
 import { api } from "./api";
 import { MAX_CONCURRENT_REQUESTS, REQUESTS_PER_PAGE, RequestCount, RequestPage, parseRequestCount } from "./RequestCount";
@@ -1367,6 +1368,18 @@ function App() {
   const promptOffset = shownPromptPage * REQUESTS_PER_PAGE;
   const visiblePrompts = effectivePrompts.slice(promptOffset, promptOffset + REQUESTS_PER_PAGE)
     .map((prompt, index) => ({prompt, index: promptOffset + index}));
+  const promptSourceGroups: PromptSourceGroup[] = [
+    { label: "Kayıtlı girdiler", options: savedInputs.map(item => ({
+      key: "input:" + item.id, label: `${item.name} · ${lengthLabel(item.target_tokens)}`,
+    })) },
+    { label: "Kayıtlı bağlamlar", options: contexts.map(item => ({
+      key: "context:" + item.id, label: item.name,
+    })) },
+    { label: "Hazır örnekler", options: examples.map(item => ({
+      key: "example:" + item.id, label: item.name,
+    })) },
+  ];
+  const promptSourceKeys = new Set(promptSourceGroups.flatMap(group => group.options.map(option => option.key)));
   function navigate(next: Page) {
     window.history.replaceState(
       null,
@@ -1388,9 +1401,36 @@ function App() {
     });
     setPromptSources((prev) => ({ ...prev, [index]: source }));
   }
+  function replaceActivePrompts(assignments: { content: string; source: string }[]) {
+    setPrompts(prev => [...assignments.map(item => item.content), ...prev.slice(assignments.length)]);
+    setPromptSources(prev => ({ ...prev, ...Object.fromEntries(assignments.map((item, index) => [index, item.source])) }));
+  }
   function fillPrompts(content: string, source = "") {
-    setPrompts(prev => [...Array<string>(effectivePrompts.length).fill(content), ...prev.slice(effectivePrompts.length)]);
-    setPromptSources(prev => ({ ...prev, ...Object.fromEntries(effectivePrompts.map((_, index) => [index, source])) }));
+    replaceActivePrompts(effectivePrompts.map(() => ({content, source})));
+  }
+  async function distributePrompts(assignments: string[]) {
+    if (busy || running || inputCount === null || assignments.length !== inputCount) return;
+    setBusy(true);
+    setError("");
+    try {
+      const uniqueSources = [...new Set(assignments)];
+      const resolved = await Promise.all(uniqueSources.map(async source => {
+        const [kind, id] = source.split(":", 2);
+        const content = kind === "input"
+          ? (await api<SavedInput>("/inputs/" + encodeURIComponent(id))).content
+          : kind === "example"
+            ? (await loadExample(id)).content
+            : contexts.find(item => item.id === id)?.content;
+        if (!content?.trim()) throw new Error("Seçilen kaynaklardan biri boş veya artık bulunamıyor. Kaynakları kontrol edin.");
+        return [source, {content, source}] as const;
+      }));
+      const bySource = new Map(resolved);
+      replaceActivePrompts(assignments.map(source => bySource.get(source)!));
+      setPromptPage(0);
+      setToast(`${uniqueSources.length} kaynak ${assignments.length} girdiye rastgele dağıtıldı.`);
+    } finally {
+      setBusy(false);
+    }
   }
   async function refreshInputs() {
     const next = await api<SavedInputSummary[]>("/inputs");
@@ -1447,7 +1487,7 @@ function App() {
       const context = contexts.find(
         (c) => c.id === source.replace("context:", ""),
       );
-      if (context) setPrompt(index, context.content);
+      if (context) setPrompt(index, context.content, source);
     }
   }
   async function loadExampleIntoAll(id: string) {
@@ -1962,6 +2002,14 @@ function App() {
                         </div>
                       )}
                     </div>
+                    {mode !== "single" && (
+                      <PromptDistribution
+                        groups={promptSourceGroups}
+                        count={effectivePrompts.length}
+                        disabled={running || busy || inputCount === null}
+                        onDistribute={distributePrompts}
+                      />
+                    )}
                     <RequestPage label="Girdi aralığı" total={effectivePrompts.length} page={shownPromptPage} onChange={setPromptPage} />
                     <div className="prompt-grid">
                       {visiblePrompts.map(({prompt, index: i}) => (
@@ -1976,21 +2024,7 @@ function App() {
                             <select
                               aria-label={`Girdi ${i + 1} için kayıtlı girdi veya bağlam`}
                               disabled={running || busy}
-                              value={
-                                promptSources[i] &&
-                                savedInputs.some(
-                                  (s) => "input:" + s.id === promptSources[i],
-                                )
-                                  ? promptSources[i]
-                                  : promptSources[i]?.startsWith("example:")
-                                    ? promptSources[i]
-                                  : contexts.find((c) => c.content === prompt)
-                                    ? "context:" +
-                                      contexts.find(
-                                        (c) => c.content === prompt,
-                                      )!.id
-                                    : ""
-                              }
+                              value={promptSourceKeys.has(promptSources[i]) ? promptSources[i] : ""}
                               onChange={(e) => {
                                 void choosePrompt(e.target.value, i);
                               }}
@@ -1998,29 +2032,11 @@ function App() {
                               <option value="">
                                 Girdi / bağlam / örnek seç
                               </option>
-                              {savedInputs.length > 0 && (
-                                <optgroup label="Kayıtlı girdiler">
-                                  {savedInputs.map((item) => (
-                                    <option
-                                      key={item.id}
-                                      value={"input:" + item.id}
-                                    >
-                                      {item.name} ·{" "}
-                                      {lengthLabel(item.target_tokens)}
-                                    </option>
-                                  ))}
+                              {promptSourceGroups.filter(group => group.options.length).map(group => (
+                                <optgroup key={group.label} label={group.label}>
+                                  {group.options.map(option => <option key={option.key} value={option.key}>{option.label}</option>)}
                                 </optgroup>
-                              )}
-                              <optgroup label="Örnek promptlar · hedef uzunluk">
-                                {examples.map(item => <option key={item.id} value={"example:" + item.id}>{item.name}</option>)}
-                              </optgroup>
-                              <optgroup label="Kayıtlı bağlamlar">
-                                {contexts.map((c) => (
-                                  <option key={c.id} value={"context:" + c.id}>
-                                    {c.name}
-                                  </option>
-                                ))}
-                              </optgroup>
+                              ))}
                             </select>
                           </div>
                           <textarea
@@ -2539,7 +2555,7 @@ function App() {
                           <button
                             className="button small-button"
                             onClick={() => {
-                              fillPrompts(c.content);
+                              fillPrompts(c.content, "context:" + c.id);
                               navigate("benchmark");
                               setToast("Bağlam tüm girdilere uygulandı.");
                             }}

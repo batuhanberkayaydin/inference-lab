@@ -83,6 +83,8 @@ Vite arayüzü [http://127.0.0.1:5173](http://127.0.0.1:5173) üzerinden API ça
 
 Örnek: 2 model ve 4 girdi seçildiğinde **Eşzamanlı yük** her modelde 4 isteği birlikte gönderir (toplam 8 API isteği). **Sırayla → aynı anda** aynı 4 girdiyi önce tek tek, ardından birlikte gönderir (model başına 8, toplam 16 API isteği). Sonuçlarda iki faz ayrı seçilir. Model çalışma düzeni bu fazlardan bağımsızdır: “Modeller sırayla” ayarında ilk model kendi testini bitirir, sonra diğer model başlar. Paylaşılan GPU’da model testlerini paralel başlatmak ek kaynak rekabeti yaratabilir.
 
+**İstek girdileri → Girdileri rastgele dağıt** bölümünden kayıtlı girdileri, bağlamları ve hazır örnekleri birlikte seçebilirsiniz. **Rastgele doldur** etkin kutuların içeriğini değiştirir ve kaynakları dengeli olarak karıştırır. Yeterli kutu varsa her seçili kaynak en az bir kez kullanılır. Hazırlanan sıra tüm modeller ve fazlar için aynıdır. Kutuları düzenleyip benchmark’ı ayrıca başlatabilirsiniz.
+
 Eski demo modelleri ve değiştirilmemiş eski örnek bağlamlar listelerden gizlenir. Kullanıcı tarafından değiştirilmiş bağlamlar gösterilir; eski demo raporları sentetik olarak etiketlenmiş halde korunur. Gerçek API modu OpenAI uyumlu `/v1/chat/completions`, SSE, `stream_options.include_usage` destekleyen uç noktalar içindir. Native Anthropic/Gemini API gibi farklı protokoller için sonradan sağlayıcı adaptörü eklenmelidir.
 
 ## Kayıtlı girdiler
