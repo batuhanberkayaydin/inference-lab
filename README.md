@@ -63,6 +63,8 @@ Giriş: **admin / admin**. Yeni kurulumda model, bağlam, kayıtlı girdi ve rap
 
 Desteklenen API protokolü OpenAI uyumlu Chat Completions'tır; vLLM ve aynı protokolü uygulayan sağlayıcılar bu seçenekle kullanılır. Modeli kaydettikten sonra **Bağlantıyı test et**, kayıtlı URL, model kimliği ve anahtarla en fazla bir çıktı tokenı isteyen gerçek bir istek gönderir. Sağlayıcı bu istek için ücret veya kota uygulayabilir. Kontrol bağlantı ve normal JSON yanıtını doğrular; streaming, usage, context sınırı ve performans için benchmark gerekir. API anahtarı veya sağlayıcı hata gövdesi sonuçta gösterilmez.
 
+Kurum içi bir CA ile imzalanan veya kendinden imzalı HTTPS sağlayıcılar için **Yönetici ayarları → Model ekle / Düzenle → HTTPS CA sertifikası** alanına PEM biçimindeki sertifikayı veya zinciri yükleyin (en fazla 64 KB). Uygulama bu modelin HTTPS bağlantılarında sistem sertifikalarına ek olarak yüklediğiniz sertifikayı kullanır. Sertifika ve sunucu adı doğrulaması devam eder. Dosya seçmeden düzenlemek mevcut sertifikayı korur. Yeni dosya yüklemek sertifikayı değiştirir. Kaldırmak için formdaki ilgili kutuyu işaretleyip kaydedin.
+
 Geliştirme sırasında iki terminal:
 
 ```bash

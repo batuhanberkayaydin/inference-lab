@@ -2,6 +2,9 @@
 import json
 import io
 from pathlib import Path
+import shutil
+import ssl
+import subprocess
 import sys
 import tempfile
 import threading
@@ -459,6 +462,48 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(result['http_status'], 401)
         self.assertNotIn('test-only-secret', json.dumps(result))
         self.assertEqual(self.store.list('reports'), [])
+
+    @unittest.skipUnless(shutil.which('openssl'), 'TLS fixture requires the openssl CLI')
+    def test_model_ca_certificate_verifies_provider_and_preserves_hostname_check(self):
+        cert_path = Path(self.temp.name, 'fixture.pem')
+        key_path = Path(self.temp.name, 'fixture.key')
+        subprocess.run([
+            'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
+            '-subj', '/CN=TLS Fixture', '-addext', 'subjectAltName=IP:127.0.0.1',
+            '-addext', 'basicConstraints=critical,CA:TRUE', '-keyout', str(key_path), '-out', str(cert_path),
+        ], check=True, capture_output=True)
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(cert_path, key_path)
+        provider = FixtureServer(('127.0.0.1', 0), Fixture)
+        provider.socket = context.wrap_socket(provider.socket, server_side=True)
+        threading.Thread(target=provider.serve_forever, daemon=True).start()
+        try:
+            settings = self.model | {'base_url': f'https://127.0.0.1:{provider.server_port}'}
+            ident = self.model['id']
+            self.store.save_model(settings)
+            self.assertIn('TLS sertifikası doğrulanamadı', self.engine.test_model(ident)['message'])
+
+            certificate = cert_path.read_text()
+            with self.assertRaisesRegex(ValueError, 'Özel anahtar'):
+                self.store.save_model(settings | {'ca_certificate': certificate + key_path.read_text()})
+            saved = self.store.save_model(settings | {'ca_certificate': certificate})
+            self.assertTrue(saved['has_ca_certificate'])
+            self.assertNotIn('ca_certificate', saved)
+            self.assertTrue(self.engine.test_model(ident)['ok'])
+
+            run = self.run_config()
+            self.assertEqual(run['status'], 'completed')
+            self.assertNotIn('BEGIN CERTIFICATE', json.dumps(run))
+
+            edited = self.store.save_model(settings | {'base_url': f'https://localhost:{provider.server_port}'})
+            self.assertTrue(edited['has_ca_certificate'])
+            self.assertIn('TLS sertifikası doğrulanamadı', self.engine.test_model(ident)['message'])
+            cleared = self.store.save_model(settings | {'clear_ca_certificate': True})
+            self.assertFalse(cleared['has_ca_certificate'])
+            self.assertFalse(self.engine.test_model(ident)['ok'])
+        finally:
+            provider.shutdown()
+            provider.server_close()
 
     def test_keys_survive_restart_and_blank_edit_keeps_them(self):
         reference=self.store.get('models',self.model['id'])['api_key']

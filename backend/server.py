@@ -27,7 +27,7 @@ from datetime import datetime, timezone
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
-from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler
+from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler, HTTPSHandler
 from urllib.error import HTTPError, URLError
 import duration
 import bundled_examples
@@ -77,6 +77,22 @@ def endpoint(base, suffix='chat/completions'):
     if base.endswith('/' + suffix):
         return base
     return base + ('/' if base.endswith('/v1') else '/v1/') + suffix
+
+
+def provider_tls_context(certificate):
+    context = ssl.create_default_context()
+    try:
+        context.load_verify_locations(cadata=certificate)
+    except (ssl.SSLError, ValueError) as exc:
+        raise ValueError('TLS sertifikası okunamadı. Geçerli bir PEM sertifikası yükleyin.') from exc
+    return context
+
+
+def provider_opener(model, *handlers):
+    context = model.get('tls_context')
+    if context is not None:
+        handlers = (*handlers, HTTPSHandler(context=context))
+    return build_opener(ProxyHandler({}), *handlers)
 
 
 def reset_endpoint(base):
@@ -270,9 +286,10 @@ class Store:
         return self.put('inputs', item)
 
     def public_models(self):
-        return [{k: v for k, v in m.items() if k != 'api_key'} | {
+        return [{k: v for k, v in m.items() if k not in ('api_key', 'ca_certificate')} | {
             'has_key': bool(m['api_key']),
             'key_requires_reentry': bool(m['api_key']) and not self.credentials.is_reference(m['api_key']),
+            'has_ca_certificate': bool(m.get('ca_certificate')),
         } for m in self.list('models') if not m.get('demo')]
 
     def public_contexts(self):
@@ -293,6 +310,18 @@ class Store:
                  'provider': 'OpenAI uyumlu', 'model': data['model'].strip()[:300],
                  'base_url': valid_url(data.get('base_url', '')), 'metrics_url': valid_url(data.get('metrics_url', ''), True),
                  'api_key': old.get('api_key', ''), 'demo': False, 'color': old.get('color', COLORS[len(self.list('models')) % 4]) }
+        certificate = data.get('ca_certificate', '')
+        clear_certificate = data.get('clear_ca_certificate', False)
+        if not isinstance(certificate, str) or len(certificate) > 65536 or type(clear_certificate) is not bool:
+            raise ValueError('TLS sertifikası en fazla 64 KB boyutunda PEM metni olmalıdır.')
+        certificate = certificate.strip().replace('\r\n', '\n')
+        if certificate:
+            if clear_certificate:
+                raise ValueError('Kayıtlı sertifikayı kaldırmayı veya yeni bir sertifika yüklemeyi seçin.')
+            if not re.fullmatch(r'(?:-----BEGIN CERTIFICATE-----\n(?:[A-Za-z0-9+/=]+\n)+-----END CERTIFICATE-----\n*)+', certificate):
+                raise ValueError('Yalnızca PEM sertifika blokları yükleyin. Özel anahtar yüklemeyin.')
+            provider_tls_context(certificate)
+        item['ca_certificate'] = '' if clear_certificate else certificate or old.get('ca_certificate', '')
         new_reference = None
         if data.get('clear_key'):
             item['api_key'] = ''
@@ -324,9 +353,10 @@ class Engine:
         self.sessions = {}
 
     def runtime_model(self, model, demo):
-        # Only this private runtime copy holds the key. Reports use explicit public fields.
-        # Capture it once so clearing/editing a model cannot break an in-flight test.
-        return dict(model, api_key='' if demo else self.store.credentials.read(model.get('api_key', '')))
+        # Capture private connection settings so edits cannot change an in-flight test.
+        certificate = model.get('ca_certificate')
+        return dict(model, api_key='' if demo else self.store.credentials.read(model.get('api_key', '')),
+                    tls_context=provider_tls_context(certificate) if certificate and not demo else None)
 
     def test_model(self, ident):
         model = self.store.get('models', ident)
@@ -343,7 +373,7 @@ class Engine:
                 return None
         started = time.perf_counter()
         try:
-            opener = build_opener(ProxyHandler({}), NoRedirect())
+            opener = provider_opener(model, NoRedirect())
             with opener.open(Request(endpoint(model['base_url']), data=json.dumps(body).encode(), headers=headers), timeout=15) as response:
                 status = response.status
                 payload = json.loads(response.read(2_000_001))
@@ -360,6 +390,11 @@ class Engine:
             return {'ok': False, 'message': f'HTTP {code}: {detail}', 'http_status': code}
         except (ValueError, TypeError, UnicodeError):
             return {'ok': False, 'message': 'Sağlayıcı geçerli bir JSON sohbet yanıtı döndürmedi.', 'http_status': None}
+        except (URLError, ssl.SSLError) as error:
+            reason = error.reason if isinstance(error, URLError) else error
+            if isinstance(reason, ssl.SSLCertVerificationError):
+                return {'ok': False, 'message': 'TLS sertifikası doğrulanamadı. CA zincirini, sertifikanın geçerliliğini ve API URL’sindeki sunucu adını kontrol edin.', 'http_status': None}
+            return {'ok': False, 'message': 'Sağlayıcıya bağlanılamadı. URL ve ağ erişimini kontrol edin.', 'http_status': None}
         except Exception:
             return {'ok': False, 'message': 'Sağlayıcıya bağlanılamadı veya istek zaman aşımına uğradı. URL ve ağ erişimini kontrol edin.', 'http_status': None}
 
@@ -469,7 +504,7 @@ class Engine:
             headers = {}
             if model['api_key']:
                 headers['Authorization'] = 'Bearer ' + model['api_key']
-            opener = build_opener(ProxyHandler({}))
+            opener = provider_opener(model)
             with opener.open(Request(model['metrics_url'], headers=headers), timeout=5) as response:
                 values = parse_prometheus(response.read(4_000_000).decode(), model['model'])
             return values, None if values else 'Metrics yanıtında desteklenen speculative sayaçları bulunamadı.'
@@ -485,7 +520,7 @@ class Engine:
             headers['Authorization'] = 'Bearer ' + model['api_key']
         status, reason, success = None, 'connection_error', False
         try:
-            opener = build_opener(ProxyHandler({}), NoRedirect())
+            opener = provider_opener(model, NoRedirect())
             with opener.open(Request(reset_endpoint(model['base_url']), data=b'', headers=headers, method='POST'), timeout=5) as response:
                 status = response.status
                 data = json.loads(response.read(4097))
@@ -654,7 +689,7 @@ class Engine:
                 headers = {'Content-Type': 'application/json', 'Accept': 'text/event-stream' if payload['stream'] else 'application/json'}
                 if model['api_key']:
                     headers['Authorization'] = 'Bearer ' + model['api_key']
-                opener = build_opener(ProxyHandler({}))
+                opener = provider_opener(model)
                 response = opener.open(Request(endpoint(model['base_url']), data=json.dumps(payload).encode(), headers=headers), timeout=config['timeout'])
                 stage = 'receiving_response'
                 with self.lock:

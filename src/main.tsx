@@ -62,6 +62,7 @@ type Model = {
   demo: boolean;
   has_key?: boolean;
   key_requires_reentry?: boolean;
+  has_ca_certificate?: boolean;
 };
 type Context = { id: string; name: string; category: string; content: string };
 type Row = {
@@ -848,16 +849,26 @@ function ModelForm({
     api_key: "",
     metrics_url: model?.metrics_url || "",
     clear_key: false,
+    clear_ca_certificate: false,
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const update = (key: string, value: string | boolean) =>
     setForm({ ...form, [key]: value });
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const file = new FormData(e.currentTarget).get("ca_certificate");
+    setError("");
     setBusy(true);
     try {
-      await api("/models", "POST", form);
+      let certificate = "";
+      if (file instanceof File && file.name && !form.clear_ca_certificate) {
+        if (!file.size || file.size > 65536) {
+          throw new Error("Boş olmayan ve en fazla 64 KB boyutunda bir PEM dosyası seçin.");
+        }
+        certificate = await file.text();
+      }
+      await api("/models", "POST", { ...form, ca_certificate: certificate });
       onSave();
     } catch (e) {
       setError((e as Error).message);
@@ -914,7 +925,7 @@ function ModelForm({
               type="url"
               value={form.base_url}
               onChange={(e) => update("base_url", e.target.value)}
-              placeholder="http://127.0.0.1:8000/v1"
+              placeholder="https://model.example.com/v1"
               required
             />
             <small>
@@ -950,6 +961,33 @@ function ModelForm({
                 onChange={(e) => update("clear_key", e.target.checked)}
               />{" "}
               Kayıtlı API anahtarını kaldır
+            </label>
+          )}
+          <label className="full">
+            HTTPS CA sertifikası <span className="optional">isteğe bağlı</span>
+            <input
+              name="ca_certificate"
+              type="file"
+              accept=".pem,.crt,.cer"
+              disabled={busy || form.clear_ca_certificate}
+              aria-describedby="model-ca-help"
+            />
+            <small id="model-ca-help">
+              Kurum içi veya kendinden imzalı TLS sertifikaları için PEM biçiminde sertifika veya sertifika zinciri yükleyin. Özel anahtar gerekmez.
+              {model?.has_ca_certificate
+                ? " Kayıtlı sertifikayı korumak için yeni dosya seçmeyin."
+                : " Sistem tarafından güvenilen sertifikalar için boş bırakın."}
+            </small>
+          </label>
+          {model?.has_ca_certificate && (
+            <label className="checkbox-label full">
+              <input
+                type="checkbox"
+                checked={form.clear_ca_certificate}
+                disabled={busy}
+                onChange={(e) => update("clear_ca_certificate", e.target.checked)}
+              />{" "}
+              Kayıtlı CA sertifikasını kaldır
             </label>
           )}
           <label className="full">
@@ -2259,6 +2297,7 @@ function App() {
                                   ? "Metrics yapılandırıldı"
                                   : "Metrics URL yok"}
                               </small>
+                              {m.has_ca_certificate && <small>Özel CA sertifikası kayıtlı</small>}
                             </td>
                             <td>
                               <span className="key-status">
