@@ -69,6 +69,9 @@ class Fixture(BaseHTTPRequestHandler):
                     type(self).barrier.set()
         self.send_response(200)
         self.send_header('Content-Type', 'application/json' if not body.get('stream', True) or body['model'] == 'json-response' else 'text/event-stream')
+        if body['model'] == 'guard-fixture':
+            self.send_header('X-VLLM-Empty-Guard', 'pass')
+            self.send_header('X-VLLM-Empty-Guard-Attempts', '2')
         self.end_headers()
         try:
             if body['model'] == 'barrier':
@@ -188,6 +191,23 @@ class IntegrationTests(unittest.TestCase):
         run = self.engine.start(self.config | changes)
         return await_report(self.engine, run['id'])
 
+    def test_benchmark_saves_guard_evidence_only_for_opted_in_models(self):
+        disabled = self.store.save_model(self.model | {'model': 'guard-fixture'})
+        enabled = self.store.save_model({
+            'name': 'Guard model', 'model': 'guard-fixture', 'base_url': self.base,
+            'empty_guard_enabled': True,
+        })
+        result = self.run_config(prompts=['Hello'], model_ids=[enabled['id'], disabled['id']])
+        self.store.save_model(enabled | {'empty_guard_enabled': False})
+        saved = self.store.get('reports', result['id'])
+        self.assertEqual([model['empty_guard_enabled'] for model in saved['models']], [True, False])
+        enabled_model, disabled_model = saved['phases'][0]['models']
+        self.assertTrue(enabled_model['empty_guard_enabled'])
+        self.assertEqual(enabled_model['requests'][0]['guard']['result'], 'pass')
+        self.assertEqual(enabled_model['requests'][0]['guard']['attempts'], 2)
+        self.assertNotIn('guard', disabled_model['requests'][0])
+        self.assertEqual(disabled_model['requests'][0]['status'], 'completed')
+
     def test_reset_success_precedes_requests_and_each_compare_phase(self):
         ids = [self.store.save_model({'name': f'Model {i}', 'model': f'fixture-{i}', 'base_url': self.base, 'api_key': 'test-only-secret'})['id'] for i in range(2)]
         with self.assertLogs('inference_lab.requests', level='WARNING') as logs:
@@ -262,7 +282,8 @@ class IntegrationTests(unittest.TestCase):
     def test_vision_preserves_multiple_images_and_exact_text(self):
         source = self.store.media.add({'name': 'local.png', 'data_url': probe_image_url()})
         remote = {'name': 'remote.png', 'url': 'https://example.com/image.png'}
-        run = self.run_config(prompts=['grounding'], prompt_images={'0': [source, remote]}, stream=False)
+        run = self.run_config(prompts=['grounding'], prompt_images={'0': [source, remote]},
+                              stream=False, prompt_uuid_parts=[1, 2, 3, 4])
         self.assertEqual(run['status'], 'completed')
         body = Fixture.bodies[-1]
         self.assertEqual(body['messages'][0]['content'], [
@@ -370,6 +391,7 @@ class IntegrationTests(unittest.TestCase):
 
     def test_serial_and_concurrent_use_unique_prefixes_and_same_inputs(self):
         run = self.run_config(mode='compare', prompts=[str(i) for i in range(16)])
+        self.assertEqual(run['config']['prompt_uuid_parts'], [1])
         self.assertEqual([p['name'] for p in run['phases']], ['serial', 'concurrent'])
         self.assertGreaterEqual(Fixture.peak, 2)
         bodies = Fixture.bodies
@@ -387,6 +409,39 @@ class IntegrationTests(unittest.TestCase):
         parallel = sorted(json.dumps(b,sort_keys=True) for b in bodies[16:])
         self.assertEqual(serial,parallel)
         self.assertGreater(run['phases'][0]['models'][0]['summary']['wall_s'],run['phases'][1]['models'][0]['summary']['wall_s'])
+
+    def test_selected_uuid_parts_are_inserted_in_long_text_and_saved(self):
+        prompt = (Path(__file__).resolve().parents[1] / 'examples' / 'turkce_sorular_32k.txt').read_text(encoding='utf-8')
+        for invalid_parts in ([2], [1, 1], [1, 5], [True], '1,2'):
+            with self.subTest(invalid_parts=invalid_parts), self.assertRaisesRegex(ValueError, 'UUID'):
+                self.engine.start(self.config | {'prompt_uuid_parts': invalid_parts})
+        result = self.run_config(prompts=[prompt], mode='compare', prompt_uuid_parts=[4, 2, 1, 3])
+        expected_payloads = []
+        all_ids = []
+        for phase in result['phases']:
+            row = phase['models'][0]['requests'][0]
+            insertions = row['prompt_uuid_insertions']
+            self.assertEqual([entry['part'] for entry in insertions], [1, 2, 3, 4])
+            self.assertEqual(insertions[0]['id'], row['prompt_prefix_id'])
+            chunks = [row['prompt_prefix_id'], '\n']
+            previous = 0
+            for entry in insertions[1:]:
+                offset = entry['offset']
+                self.assertGreater(offset, previous)
+                self.assertLessEqual(abs(offset - len(prompt) * (entry['part'] - 1) // 4), 32)
+                self.assertTrue(prompt[offset].isspace())
+                chunks.extend((prompt[previous:offset], '\n', entry['id'], '\n'))
+                previous = offset
+            expected_payloads.append(''.join(chunks) + prompt[previous:])
+            all_ids.extend(entry['id'] for entry in insertions)
+        self.assertEqual(len(set(all_ids)), 8)
+        for ident in all_ids:
+            self.assertRegex(ident, r'^[0-9a-f]{12}$')
+        self.assertEqual([body['messages'][0]['content'] for body in Fixture.bodies], expected_payloads)
+        saved = self.store.get('reports', result['id'])
+        self.assertEqual(saved['config']['prompt_uuid_parts'], [1, 2, 3, 4])
+        self.assertEqual(saved['config']['prompts'], [prompt])
+        self.assertEqual(saved['phases'][0]['models'][0]['requests'][0]['prompt_uuid_insertions'][0]['offset'], 0)
 
     def test_missing_usage_keeps_latency_but_not_token_speed(self):
         m = self.store.save_model(self.model | {'model': 'no-usage'})

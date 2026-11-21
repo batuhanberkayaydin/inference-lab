@@ -17,21 +17,24 @@ def stamp():
 
 def summary(run):
     rows = run['requests']
-    terminal = [r for r in rows if r['status'] in ('completed', 'failed', 'cancelled')]
-    guards = [r.get('guard', {}) for r in terminal]
     success = sum(r['status'] == 'completed' for r in rows)
-    return {'total': len(rows), 'completed': success,
-            'failed': sum(r['status'] == 'failed' for r in rows),
-            'cancelled': sum(r['status'] == 'cancelled' for r in rows),
-            'active': sum(r['status'] == 'running' for r in rows),
-            'guard_pass': sum(g.get('result') == 'pass' for g in guards),
-            'guard_other': sum(g.get('result') is not None and g.get('result') != 'pass' for g in guards),
-            'guard_missing': sum(g.get('result') is None for g in guards),
-            'retried': sum(g.get('attempts') is not None and g['attempts'] > 1 for g in guards),
-            'attempts_unknown': sum(g.get('attempts') is None for g in guards),
-            'empty': sum(r.get('empty_answer', False) for r in rows),
-            'all_success': bool(rows) and success == len(rows) and run['status'] == 'completed',
-            'all_guard_pass': bool(terminal) and len(terminal) == len(rows) and all(g.get('result') == 'pass' for g in guards)}
+    result = {'total': len(rows), 'completed': success,
+              'failed': sum(r['status'] == 'failed' for r in rows),
+              'cancelled': sum(r['status'] == 'cancelled' for r in rows),
+              'active': sum(r['status'] == 'running' for r in rows),
+              'empty': sum(r.get('empty_answer', False) for r in rows),
+              'all_success': bool(rows) and success == len(rows) and run['status'] == 'completed'}
+    # Historical runs monitored guard headers before the model option existed.
+    if run['config'].get('empty_guard_enabled', True):
+        guards = [r.get('guard', {}) for r in rows if r['status'] in ('completed', 'failed', 'cancelled')]
+        result.update(
+            guard_pass=sum(g.get('result') == 'pass' for g in guards),
+            guard_other=sum(g.get('result') is not None and g.get('result') != 'pass' for g in guards),
+            guard_missing=sum(g.get('result') is None for g in guards),
+            retried=sum(g.get('attempts') is not None and g['attempts'] > 1 for g in guards),
+            attempts_unknown=sum(g.get('attempts') is None for g in guards),
+            all_guard_pass=bool(guards) and len(guards) == len(rows) and all(g.get('result') == 'pass' for g in guards))
+    return result
 
 
 def start(engine, data):
@@ -78,7 +81,8 @@ def start(engine, data):
     config = {'concurrency': lanes, 'duration_s': duration, 'interval_s': interval, 'timeout': timeout,
               'request_payload': payload, 'prompts': ['\n'.join(texts)],
               'max_tokens': payload.get('max_tokens', payload.get('max_completion_tokens', 1024)),
-              'stream': payload['stream'], 'demo': demo}
+              'stream': payload['stream'], 'demo': demo,
+              'empty_guard_enabled': model.get('empty_guard_enabled', False)}
     if refs:
         config['prompt_images'] = {'0': refs}
     with engine.lock:

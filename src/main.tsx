@@ -15,6 +15,7 @@ import {
   Clock3,
   Database,
   FileText,
+  Fingerprint,
   FlaskConical,
   Gauge,
   Layers3,
@@ -34,8 +35,7 @@ import {
 } from "lucide-react";
 import "./styles.css";
 import { loadExample, type PromptExample } from "./examples";
-import { DurationTests } from "./DurationTests";
-import { ResponseComparison } from "./ResponseComparison";
+import { BenchmarkGuard, ResponseComparison, showsBenchmarkGuard, type GuardInfo } from "./ResponseComparison";
 import { ModeExplanation } from "./ModeExplanation";
 import { distributePromptSources, PromptDistribution, type PromptSourceGroup } from "./PromptDistribution";
 import { VisualInput, requiresSingleImage, type MediaImage, type ModelInputFormat } from "./VisualInput";
@@ -52,6 +52,7 @@ import {
 import "./saved-inputs.css";
 import "./dark.css";
 import "./dark-accent.css";
+import "./workbench.css";
 import { MetricGuide } from "./MetricGuide";
 
 type Model = {
@@ -68,6 +69,7 @@ type Model = {
   has_ca_certificate?: boolean;
   use_shared_ca?: boolean;
   input_format?: ModelInputFormat;
+  empty_guard_enabled?: boolean;
 };
 type Context = { id: string; name: string; category: string; content: string };
 type PromptAssignment = { content: string; source: string; images?: MediaImage[] };
@@ -91,6 +93,7 @@ type Row = {
   chunk_gap_p95_s: number | null;
   error: string | null;
   content_chunks: number;
+  guard?: GuardInfo;
 };
 type Summary = Record<string, number | null>;
 type Target = Model & {
@@ -108,6 +111,7 @@ type Config = {
   mode: string;
   prompts: string[];
   prompt_images?: Record<number, MediaImage[]>;
+  prompt_uuid_parts?: number[];
   max_tokens: number;
   temperature: number;
   timeout: number;
@@ -130,6 +134,7 @@ type Report = {
 type ReportSummary = Omit<Report, "config"> & {
   config: Omit<Config, "prompts" | "prompt_images"> & { prompt_count: number };
 };
+const promptUuidPositions = ["Başlangıç", "Yaklaşık %25", "Yaklaşık %50", "Yaklaşık %75"];
 
 async function fetchBenchmarkReport(path: string, method = "GET", body?: unknown): Promise<Report> {
   const report = await api<Report & { config: Config & { prompt_indices?: number[] } }>(path + "?compact=1", method, body);
@@ -143,10 +148,9 @@ function packBenchmarkInputs(inputs: string[]) {
     ? { prompts: inputs }
     : { prompts: [...lookup.keys()], prompt_indices: inputs.map(input => lookup.get(input)) };
 }
-type Page = "duration" | "benchmark" | "reports" | "contexts" | "inputs" | "settings" | "guide";
+type Page = "benchmark" | "reports" | "contexts" | "inputs" | "settings" | "guide";
 const titles: Record<Page, string> = {
   benchmark: "Model karşılaştırma",
-  duration: "Süreli test",
   reports: "Kayıtlı raporlar",
   contexts: "Bağlam kütüphanesi",
   inputs: "Kayıtlı girdiler",
@@ -365,6 +369,14 @@ function MetricHelp({metric, label}: {metric: string; label: string}) {
 }
 
 function RequestMatrix({ phase }: { phase: Phase }) {
+  const metrics = [
+    ["input_tokens", "Giriş tok"],
+    ["ttft_s", "İlk token sn"],
+    ["stream_tps", "Akış tok/sn¹"],
+    ["e2e_s", "E2E sn"],
+    ["output_tokens", "Çıktı tok"],
+  ] as const;
+  const models = phase.models.map(model => ({model, showGuard: showsBenchmarkGuard(model)}));
   return (
     <div className="request-matrix">
       <h3>Girdi bazında karşılaştırma</h3>
@@ -373,8 +385,8 @@ function RequestMatrix({ phase }: { phase: Phase }) {
           <thead>
             <tr>
               <th rowSpan={2}>Girdi</th>
-              {phase.models.map((m) => (
-                <th colSpan={5} key={m.id}>
+              {models.map(({model: m, showGuard}) => (
+                <th scope="colgroup" colSpan={metrics.length + Number(showGuard)} key={m.id}>
                   <div>
                     <i style={{ background: m.color }} />
                     {m.name}
@@ -383,15 +395,12 @@ function RequestMatrix({ phase }: { phase: Phase }) {
               ))}
             </tr>
             <tr>
-              {phase.models.flatMap((m) =>
-                [
-                  "Giriş tok",
-                  "İlk token sn",
-                  "Akış tok/sn¹",
-                  "E2E sn",
-                  "Çıktı tok",
-                ].map((label) => <th key={m.id + label}>{label}</th>),
-              )}
+              {models.map(({model: m, showGuard}) => (
+                <React.Fragment key={m.id}>
+                  {metrics.map(([key, label]) => <th scope="col" key={key}>{label}</th>)}
+                  {showGuard && <th scope="col">Empty Guard</th>}
+                </React.Fragment>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -400,24 +409,19 @@ function RequestMatrix({ phase }: { phase: Phase }) {
                 <td>
                   <b>#{String(i + 1).padStart(2, "0")}</b>
                 </td>
-                {phase.models.flatMap((m) => {
+                {models.map(({model: m, showGuard}) => {
                   const row = m.requests[i];
                   return (
-                    [
-                      "input_tokens",
-                      "ttft_s",
-                      "stream_tps",
-                      "e2e_s",
-                      "output_tokens",
-                    ] as const
-                  ).map((key) => (
-                    <td
-                      key={m.id + key}
-                      title={row.error || statusLabels[row.status]}
-                    >
-                      {fmt(row[key], key.includes("tokens") ? 0 : 2)}
-                    </td>
-                  ));
+                    <React.Fragment key={m.id}>
+                      {metrics.map(([key]) => (
+                        <td key={key} className={!showGuard && key === "output_tokens" ? "model-request-end" : undefined}
+                          title={row?.error || (row && statusLabels[row.status])}>
+                          {fmt(row?.[key], key.includes("tokens") ? 0 : 2)}
+                        </td>
+                      ))}
+                      {showGuard && <td className="model-request-end"><BenchmarkGuard row={row} /></td>}
+                    </React.Fragment>
+                  );
                 })}
               </tr>
             ))}
@@ -595,7 +599,7 @@ function Results({
         </div>
       )}
       <div className="result-toolbar">
-        <div className="tabs">
+        <div className="tabs" role="group" aria-label="Sonuç görünümü">
           {[
             ["summary", "Genel bakış"],
             ["answers", "Cevaplar"],
@@ -603,7 +607,9 @@ function Results({
             ["method", "Ölçüm bilgileri"],
           ].map(([id, label]) => (
             <button
+              type="button"
               className={tab === id ? "active" : ""}
+              aria-pressed={tab === id}
               key={id}
               onClick={() => setTab(id)}
             >
@@ -612,11 +618,13 @@ function Results({
           ))}
         </div>
         {phases.length > 1 && (
-          <div className="segmented compact">
+          <div className="segmented compact result-phases" role="group" aria-label="Ölçüm fazı">
             {phases.map((p, i) => (
               <button
+                type="button"
                 key={p.name}
                 className={phaseIndex === i ? "active" : ""}
+                aria-pressed={phaseIndex === i}
                 onClick={() => setPhaseIndex(i)}
               >
                 {p.name === "serial"
@@ -645,7 +653,7 @@ function Results({
                 <span> / {total}</span>
               </strong>
               <p>istek sonuçlandı</p>
-              <div className="progress-track">
+              <div className="progress-track" role="progressbar" aria-label="Sonuçlanan istekler" aria-valuenow={complete} aria-valuemax={total || 1}>
                 <div
                   style={{
                     transform: `scaleX(${total ? complete / total : 0})`,
@@ -686,7 +694,8 @@ function Results({
               </div>
             </div>
           </div>
-          <section className="model-metric-overview" aria-label="Model performans özeti">
+          <section className="model-metric-overview" aria-labelledby="model-summary-title">
+            <h3 id="model-summary-title">Model özetleri</h3>
             {phase.models.map((model) => (
               <div className="model-metric-summary" key={model.id} style={{"--summary-color": model.color} as React.CSSProperties}>
                 <div className="model-metric-title"><span><i style={{background: model.color}} />{model.name}</span><small>{model.summary ? `${model.summary.completed} / ${model.summary.total} başarılı` : statusLabels[model.status]}</small></div>
@@ -704,7 +713,7 @@ function Results({
             ))}
           </section>
           <div className="table-heading">
-            <h3>Metrik karşılaştırması</h3>
+            <h3 id="benchmark-metrics-title">Metrik karşılaştırması</h3>
             {phase.models.length > 1 && <label className="inline-label">
               Referans model
               <select
@@ -719,7 +728,7 @@ function Results({
               </select>
             </label>}
           </div>
-          <div className="table-scroll">
+          <div className="table-scroll metrics-scroll" role="region" aria-labelledby="benchmark-metrics-title" tabIndex={0}>
             <table className="metrics-table">
               <thead>
                 <tr>
@@ -839,6 +848,12 @@ function Results({
               sayaç farkları. Sunucu trafiği ve yayın gecikmesi sonucu
               etkileyebilir.
             </dd>
+            {run.config.prompt_uuid_parts && run.config.prompts.some((_, index) => !run.config.prompt_images?.[index]?.length) && (
+              <>
+                <dt>Metin UUID konumları</dt>
+                <dd>{run.config.prompt_uuid_parts.map(part => `${part}/4`).join(", ")}</dd>
+              </>
+            )}
             <dt>Koşu kimliği</dt>
             <dd>
               <code>{run.id}</code>
@@ -951,6 +966,7 @@ function ModelForm({
     name: model?.name || "",
     provider: "OpenAI uyumlu",
     input_format: model?.input_format ?? "auto",
+    empty_guard_enabled: model?.empty_guard_enabled ?? false,
     model: model?.model || "",
     base_url: model?.base_url || "",
     api_key: "",
@@ -1041,6 +1057,19 @@ function ModelForm({
               Temel URL'yi veya tam /v1/chat/completions adresini girebilirsiniz.
             </small>
           </label>
+          <div className="full">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={form.empty_guard_enabled}
+                disabled={busy}
+                onChange={e => update("empty_guard_enabled", e.target.checked)}
+                aria-describedby="model-empty-guard-help"
+              />
+              Bu sağlayıcı Empty Guard ile yeniden deneme yapıyor
+            </label>
+            <small id="model-empty-guard-help">Açıldığında sağlayıcının bildirdiği guard sonucu ve deneme sayısı kaydedilir.</small>
+          </div>
           <label className="full">
             API anahtarı
             <input
@@ -1257,11 +1286,7 @@ function App() {
   const [session, setSession] = useState<boolean | null>(null);
   const [page, setPage] = useState<Page>(() => {
     const value = window.location.hash.slice(1);
-    return ["benchmark", "duration", "reports", "contexts", "inputs", "settings", "guide"].includes(
-      value,
-    )
-      ? (value as Page)
-      : "benchmark";
+    return Object.hasOwn(titles, value) ? value as Page : "benchmark";
   });
   const [models, setModels] = useState<Model[]>([]);
   const [sharedCaConfigured, setSharedCaConfigured] = useState(false);
@@ -1278,6 +1303,7 @@ function App() {
   const [selected, setSelected] = useState<string[]>([]);
   const [prompts, setPrompts] = useState<string[]>(["", "", "", ""]);
   const [promptImages, setPromptImages] = useState<Record<number, MediaImage[]>>({});
+  const [promptUuidParts, setPromptUuidParts] = useState<number[]>([1]);
   const [requestCount, setRequestCount] = useState("4");
   const [requestCountEdited, setRequestCountEdited] = useState(false);
   const [promptPage, setPromptPage] = useState(0);
@@ -1388,6 +1414,12 @@ function App() {
   const effectiveImages = Object.fromEntries(Object.entries(promptImages)
     .filter(([index, images]) => Number(index) < effectivePrompts.length && images.length));
   const defaultMaxTokens = Object.keys(effectiveImages).length ? 4096 : 20000;
+  const outputLimit = maxTokens.trim() === "" ? defaultMaxTokens : Number(maxTokens);
+  const temperatureValue = temperature.trim() === "" ? 0.1 : Number(temperature);
+  const timeoutValue = timeout.trim() === "" ? 120 : Number(timeout);
+  const validOutputLimit = Number.isInteger(outputLimit) && outputLimit >= 1 && outputLimit <= 32768;
+  const validTemperature = Number.isFinite(temperatureValue) && temperatureValue >= 0 && temperatureValue <= 2;
+  const validTimeout = Number.isFinite(timeoutValue) && timeoutValue >= 1 && timeoutValue <= 600;
   const hasOcrModel = chosen.some(requiresSingleImage);
   const ocrIssues = hasOcrModel ? effectivePrompts.flatMap((prompt, index) => {
     const images = effectiveImages[index]?.length ?? 0;
@@ -1402,6 +1434,18 @@ function App() {
   const modelFactor = schedule === "parallel" ? Math.max(1, selected.length) : 1;
   const parallelCount = selected.length ? effectivePrompts.length * modelFactor : 0;
   const overParallelLimit = parallelCount > MAX_CONCURRENT_REQUESTS;
+  const filledCount = effectivePrompts.filter((prompt, index) => prompt.trim() || effectiveImages[index]?.length).length;
+  const readyCount = hasOcrModel ? effectivePrompts.length - ocrIssues.length : filledCount;
+  const totalRequests = parallelCount ? selected.length * effectivePrompts.length * (mode === "compare" ? 2 : 1) : 0;
+  const launchBlocker = !chosen.length ? "Başlamak için en az bir model seç."
+    : inputCount === null ? "Model başına 1–1.024 arasında bir istek sayısı gir."
+    : overParallelLimit ? "Eşzamanlı istek sınırı aşıldı. Girdi sayısını azalt veya modelleri sırayla çalıştır."
+    : invalidOcrInputs ? `LightOnOCR için ${ocrIssues.length} kutuda tam bir görsel olmalı.`
+    : filledCount < effectivePrompts.length ? `${effectivePrompts.length - filledCount} boş girdiyi doldur.`
+    : !validOutputLimit ? "Çıktı limiti 1–32.768 arasında bir tam sayı olmalı."
+    : !validTemperature ? "Temperature 0–2 arasında olmalı."
+    : !validTimeout ? "Zaman aşımı 1–600 saniye arasında olmalı."
+    : "";
   const shownPromptPage = Math.min(promptPage, Math.ceil(effectivePrompts.length / REQUESTS_PER_PAGE) - 1);
   const promptOffset = shownPromptPage * REQUESTS_PER_PAGE;
   const visiblePrompts = effectivePrompts.slice(promptOffset, promptOffset + REQUESTS_PER_PAGE)
@@ -1432,6 +1476,12 @@ function App() {
     setError("");
     setModelEdit(undefined);
     setContextEdit(undefined);
+    if (next !== page) {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: "instant" });
+        document.getElementById("workspace-page-title")?.focus({ preventScroll: true });
+      });
+    }
   }
   function setPrompt(index: number, content: string, source = "", images?: MediaImage[]) {
     setPrompts((prev) => {
@@ -1479,7 +1529,11 @@ function App() {
   }
   function goToPrompt(index: number) {
     setPromptPage(Math.floor(index / REQUESTS_PER_PAGE));
-    requestAnimationFrame(() => document.getElementById(`benchmark-input-${index}`)?.scrollIntoView({block: "center"}));
+    requestAnimationFrame(() => {
+      const box = document.getElementById(`benchmark-input-${index}`);
+      box?.focus({ preventScroll: true });
+      box?.scrollIntoView({ block: "center" });
+    });
   }
   function planVisualSplit(index: number, imageCount: number, saved?: {content: string; source: string}) {
     const maxSlots = Math.floor(MAX_CONCURRENT_REQUESTS / modelFactor);
@@ -1666,16 +1720,7 @@ function App() {
     } finally { setTestingModel(null); }
   }
   async function start() {
-    if (inputCount === null || overParallelLimit || invalidOcrInputs) return;
-    const outputLimit = maxTokens.trim() === '' ? defaultMaxTokens : Number(maxTokens);
-    const tempValue = temperature.trim() === '' ? 0.1 : Number(temperature);
-    const timeoutValue = timeout.trim() === '' ? 120 : Number(timeout);
-    if (!Number.isInteger(outputLimit) || outputLimit < 1 || outputLimit > 32768 ||
-        !Number.isFinite(tempValue) || tempValue < 0 || tempValue > 2 ||
-        !Number.isFinite(timeoutValue) || timeoutValue < 1 || timeoutValue > 600) {
-      setError('Çıktı limiti 1–32768, temperature 0–2 ve zaman aşımı 1–600 arasında olmalıdır.');
-      return;
-    }
+    if (launchBlocker || busy || running) return;
     setBusy(true);
     setError("");
     try {
@@ -1683,10 +1728,11 @@ function App() {
         model_ids: selected,
         ...packBenchmarkInputs(effectivePrompts),
         prompt_images: effectiveImages,
+        prompt_uuid_parts: promptUuidParts,
         mode,
         demo: false,
         max_tokens: outputLimit,
-        temperature: tempValue,
+        temperature: temperatureValue,
         timeout: timeoutValue,
         reset_prefix_cache: false,
         model_schedule: schedule,
@@ -1800,11 +1846,10 @@ function App() {
           <span className="workspace-badge">DEV</span>
         </div>
         <div className="nav-label">ÇALIŞMA ALANI</div>
-        <nav>
+        <nav aria-label="Çalışma alanı">
           {(
             [
               ["benchmark", Gauge, "Benchmark"],
-              ["duration", Clock3, "Süreli test"],
               ["reports", FileText, "Raporlar"],
               ["inputs", FileText, "Kayıtlı girdiler"],
               ["contexts", Database, "Bağlam kütüphanesi"],
@@ -1813,6 +1858,7 @@ function App() {
             <button
               className={page === id ? "active" : ""}
               aria-label={label}
+              aria-current={page === id ? "page" : undefined}
               key={id}
               onClick={() => navigate(id)}
             >
@@ -1832,10 +1878,11 @@ function App() {
           ))}
         </nav>
         <div className="nav-label settings-label">YÖNETİM</div>
-        <nav>
+        <nav aria-label="Yönetim">
           <button
             className={page === "settings" ? "active" : ""}
             aria-label="Yönetici ayarları"
+            aria-current={page === "settings" ? "page" : undefined}
             onClick={() => navigate("settings")}
           >
             <Settings2 size={18} />
@@ -1906,28 +1953,22 @@ function App() {
         <main>
           <div className="page-heading">
             <div>
-              <h1>{historic ? "Rapor detayları" : titles[page]}</h1>
+              <h1 id="workspace-page-title" tabIndex={-1}>{historic ? "Rapor detayları" : titles[page]}</h1>
               <p>
                 {page === "benchmark"
                   ? "Modellerini aynı girdilerle karşılaştır. Tek istekte ve yük altında farkı ölç."
-                  : page === "duration"
-                    ? "Tek modele süre boyunca aralıklı istek gönder; her cevabı ve empty-guard sonucunu kontrol et."
                   : page === "reports"
                     ? "Her koşu kaydedilir. Önceki ölçümlere dön, sonuçları birlikte değerlendir."
                     : page === "contexts"
-                      ? "Tekrar kullanabileceğin girdileri hazırla. Testlerini aynı bağlamla tekrarla."
+                      ? "Referans metinlerini sakla ve farklı sorularla yeniden kullan."
                       : page === "inputs"
-                        ? "Uzun bağlam ve sorularını kaydet. Her testte aynı girdiyi yeniden seç."
+                        ? "Metin, soru ve görselleri bir girdi olarak sakla ve Benchmark’ta tekrar kullan."
                         : page === "guide"
                           ? "Metriklerin nasıl hesaplandığını, örneklerini ve ölçüm sınırlarını incele."
                           : "Model sağlayıcılarını bağla ve karşılaştırmaya hazır hale getir."}
               </p>
             </div>
-            {page === "benchmark" ? (
-              <span className="heading-tag">
-                <FlaskConical size={15} /> Benchmark studio
-              </span>
-            ) : page === "settings" && modelEdit === undefined ? (
+            {page === "settings" && modelEdit === undefined ? (
               <button
                 className="button primary"
                 onClick={() => setModelEdit(null)}
@@ -1957,53 +1998,45 @@ function App() {
           )}
           {page === "benchmark" && (
             <>
-              <section className="setup-panel">
+              <section className="setup-panel" aria-label="Benchmark hazırlığı">
                 <div className="setup-top">
-                  <div className="segmented mode-tabs">
-                    {[
-                      ["single", "Tek istek", Zap],
-                      ["concurrent", "Eşzamanlı yük", Layers3],
-                      ["compare", "Sırayla → aynı anda", Activity],
-                    ].map(([id, label, Icon]) => {
-                      const I = Icon as typeof Zap;
-                      return (
+                  <h2 id="benchmark-mode">Test türü</h2>
+                  <div className="segmented mode-tabs" role="group" aria-labelledby="benchmark-mode">
+                    {([
+                      ["single", "Tek istek", "Her modele bir girdi", Zap],
+                      ["concurrent", "Eşzamanlı yük", "Girdileri birlikte gönder", Layers3],
+                      ["compare", "Seri ve eşzamanlı", "Aynı girdileri iki fazda ölç", Activity],
+                    ] as const).map(([id, label, description, Icon]) => (
                         <button
                           disabled={running || busy}
                           className={mode === id ? "active" : ""}
                           aria-pressed={mode === id}
-                          key={id as string}
-                          onClick={() => setMode(id as string)}
+                          key={id}
+                          onClick={() => setMode(id)}
                         >
-                          <I size={16} />
-                          {label as string}
+                          <Icon size={18} aria-hidden="true" />
+                          <span><b>{label}</b><small>{description}</small></span>
                         </button>
-                      );
-                    })}
+                    ))}
                   </div>
+                  <ModeExplanation mode={mode} count={effectivePrompts.length} schedule={schedule} />
                 </div>
-                <ModeExplanation
-                  mode={mode}
-                  count={effectivePrompts.length}
-                  models={selected.length}
-                  schedule={schedule}
-                />
                 <div className="setup-content">
                   <div className="block-heading">
                     <div className="block-title">
-                      <span className="step-index">1</span>
-                      <h2>Karşılaştırılacak modeller</h2>
+                      <h2>Modeller</h2>
                       <span className="muted">
                         {selected.length} / 4 seçildi
                       </span>
                     </div>
-                    <button
+                    {!!models.length && <button
                       className="text-button"
                       disabled={running || busy}
                       onClick={() => navigate("settings")}
                     >
                       Modelleri yönet
                       <ArrowUpRight size={15} />
-                    </button>
+                    </button>}
                   </div>
                   <div className="model-grid">
                     {models.map((m) => (
@@ -2037,9 +2070,8 @@ function App() {
                         <div className="model-choice-bottom">
                           <span>
                             <i className="dot" />
-                            OpenAI uyumlu
+                            {requiresSingleImage(m) ? "LightOnOCR · 1 görsel / istek" : m.input_format === "vision" ? "Vision" : "OpenAI uyumlu"}
                           </span>
-                          <small>{m.demo ? "DEMO" : "API"}</small>
                         </div>
                       </button>
                     ))}
@@ -2056,11 +2088,9 @@ function App() {
                       </div>
                     )}
                   </div>
-                  <div className="model-notice">
-                    <ShieldCheck size={14} />
-                    İstekler seçili sağlayıcılara gönderilir.
+                  {!!models.length && <div className="model-notice">
                     <label>
-                      Modeller
+                      Modellerin çalışma sırası
                       <select
                         value={schedule}
                         disabled={running || busy}
@@ -2070,35 +2100,28 @@ function App() {
                         <option value="parallel">Aynı anda çalışsın</option>
                       </select>
                     </label>
-                  </div>
+                    <small>{schedule === "parallel" ? "Seçilen modeller her fazda birlikte başlar." : "Her model önceki modelin fazı bittiğinde başlar."}</small>
+                  </div>}
                   <div className="input-section">
-                    <p className="muted">32K / 64K örnekleri isteğe bağlıdır; gerçek token sayısı seçilen modelin tokenizer’ına bağlıdır.</p>
                     <div className="block-heading">
                       <div className="block-title">
-                        <span className="step-index">2</span>
                         <h2>İstek girdileri</h2>
                         <span className="muted">
-                          {effectivePrompts.length}{" "}
-                          {mode === "compare"
-                            ? "ortak"
-                            : mode === "concurrent"
-                              ? "eşzamanlı"
-                              : ""}{" "}
-                          istek
+                          {readyCount.toLocaleString("tr-TR")} / {effectivePrompts.length.toLocaleString("tr-TR")} hazır
                         </span>
                       </div>
                       <div className="input-actions">
                         {effectivePrompts.length > 1 && (
                           <button type="button" className="text-button"
-                            disabled={running || busy || (!effectivePrompts[0].trim() && !promptImages[0]?.length)}
+                            disabled={running || busy || (hasOcrModel ? promptImages[0]?.length !== 1 : !effectivePrompts[0].trim() && !promptImages[0]?.length)}
                             onClick={() => fillPrompts(effectivePrompts[0], promptSources[0], promptImages[0])}>
                             İlk girdiyi tümüne kopyala
                           </button>
                         )}
-                        <select aria-label="Tüm etkin girdilere örnek prompt yükle" value="" disabled={running || busy || !examples.length} onChange={e => void loadExampleIntoAll(e.target.value)}>
+                        {!hasOcrModel && <select aria-label="Tüm etkin girdilere örnek prompt yükle" title="32K / 64K etiketleri hedef uzunluktur. Gerçek token sayısı modelin tokenizer’ına bağlıdır." value="" disabled={running || busy || !examples.length} onChange={e => void loadExampleIntoAll(e.target.value)}>
                           <option value="">Tüm girdilere örnek yükle</option>
                           {examples.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-                        </select>
+                        </select>}
                         <button
                           className="icon-button"
                           title="Girdileri boşalt"
@@ -2108,27 +2131,21 @@ function App() {
                             setPrompts([]);
                             setPromptSources({});
                             setPromptImages({});
+                            setToast("");
                           }}
                         >
                           <Trash2 size={15} />
                         </button>
                       </div>
                     </div>
-                    <div className="input-config">
-                      <p>
-                        {mode === "compare"
-                          ? "Aynı girdiler önce seri (C1), ardından eşzamanlı çalıştırılır."
-                          : mode === "single"
-                            ? "Bir girdi, seçtiğin tüm modellerde ölçülür."
-                            : "Her girdi, seçtiğin tüm modellere aynı ayarlarla gönderilir."}
-                      </p>
-                      {mode !== "single" && (
+                    {mode !== "single" && <div className="input-config">
                         <div className="request-controls">
                           <div className="count-control">
                             <span>Hızlı seçim</span>
                             {[1, 2, 4, 8, 16, 24, 64, 128, 256, 512, MAX_CONCURRENT_REQUESTS].map(n => (
                               <button type="button" key={n} disabled={running || busy}
                                 className={inputCount === n ? "active" : ""}
+                                aria-pressed={inputCount === n}
                                 onClick={() => editRequestCount(String(n))}>{n}</button>
                             ))}
                           </div>
@@ -2136,18 +2153,49 @@ function App() {
                             onChange={editRequestCount} disabled={running || busy} />
                           {overParallelLimit && (
                             <small className="request-limit" role="status">
-                              {parallelCount} eşzamanlı istek seçili. Sınır {MAX_CONCURRENT_REQUESTS}. Girdi sayısını azaltın veya modelleri sırayla çalıştırın.
+                              {parallelCount.toLocaleString("tr-TR")} eşzamanlı istek seçili. Sınır 1.024. Girdi sayısını azalt veya modelleri sırayla çalıştır.
                             </small>
                           )}
                         </div>
-                      )}
-                    </div>
-                    {mode !== "single" && (
+                    </div>}
+                    {!hasOcrModel && (
+                      <details className="uuid-settings">
+                        <summary>
+                          <Fingerprint size={16} aria-hidden="true" />
+                          UUID konumları
+                          <small>{promptUuidParts.map(part => `${part}/4`).join(", ")}</small>
+                          <ChevronDown size={15} aria-hidden="true" />
+                        </summary>
+                        <fieldset disabled={running || busy} aria-describedby="uuid-position-help">
+                          <legend>Metin isteğindeki ekleme noktaları</legend>
+                          <p id="uuid-position-help">Her metin isteğinde seçili noktalara yeni birer UUID eklenir. Konumlar metnin karakter uzunluğuna göre belirlenir. Görselli girdiler kendi içeriğiyle gönderilir.</p>
+                          <div className="uuid-positions">
+                            {promptUuidPositions.map((label, index) => {
+                              const part = index + 1;
+                              return (
+                                <label key={part}>
+                                  <input type="checkbox" checked={promptUuidParts.includes(part)} disabled={part === 1}
+                                    onChange={e => {
+                                      const checked = e.target.checked;
+                                      setPromptUuidParts(parts => checked
+                                        ? [...parts, part].sort((a, b) => a - b)
+                                        : parts.filter(value => value !== part));
+                                    }} />
+                                  <span><b>{part}/4</b><small>{label}</small></span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </fieldset>
+                      </details>
+                    )}
+                    {(mode !== "single" || hasOcrModel) && (
                       <PromptDistribution
                         groups={promptSourceGroups}
                         count={effectivePrompts.length}
                         disabled={running || busy || inputCount === null}
                         prefersOcr={hasOcrModel}
+                        maxCount={Math.floor(MAX_CONCURRENT_REQUESTS / modelFactor)}
                         onDistribute={distributePrompts}
                       />
                     )}
@@ -2179,7 +2227,7 @@ function App() {
                     <RequestPage label="Girdi aralığı" total={effectivePrompts.length} page={shownPromptPage} onChange={setPromptPage} />
                     <div className="prompt-grid">
                       {visiblePrompts.map(({prompt, index: i}) => (
-                        <div className="prompt-box" id={`benchmark-input-${i}`} key={i}>
+                        <div className="prompt-box" id={`benchmark-input-${i}`} key={i} tabIndex={-1} aria-label={`Girdi ${i + 1}`}>
                           <div className="prompt-header">
                             <span>
                               <span className="prompt-number">
@@ -2210,11 +2258,11 @@ function App() {
                             value={prompt}
                             readOnly={running || busy}
                             onChange={(e) => setPrompt(i, e.target.value)}
-                            placeholder="Metin yaz veya kayıtlı girdi / örnek seç…"
+                            placeholder={hasOcrModel ? "İsteğe bağlı görev metni" : "Metin yaz veya kayıtlı bir girdi seç…"}
                           />
                           <VisualInput label={`Girdi ${i + 1} için görsel veya PDF sayfası ekle`}
                             images={promptImages[i] ?? []} disabled={running || busy} onBusyChange={setBusy}
-                            singleImage={hasOcrModel} planVisualSplit={count => planVisualSplit(i, count)}
+                            singleImage={hasOcrModel} showPreview planVisualSplit={count => planVisualSplit(i, count)}
                             onChange={images => {
                               setPromptImages(prev => ({ ...prev, [i]: images }));
                               setPromptSources(prev => ({ ...prev, [i]: "" }));
@@ -2247,7 +2295,9 @@ function App() {
                       ))}
                     </div>
                   </div>
-                  <div className="generation-settings">
+                  <details className="generation-panel">
+                    <summary><Settings2 size={16} aria-hidden="true" /> Üretim ayarları <ChevronDown size={15} aria-hidden="true" /></summary>
+                    <div className="generation-settings">
                     <label>
                       Çıktı limiti
                       <span>
@@ -2256,6 +2306,7 @@ function App() {
                           min="1"
                           max="32768"
                           value={maxTokens}
+                          aria-invalid={!validOutputLimit}
                           disabled={running || busy}
                           placeholder={String(defaultMaxTokens)}
                           onChange={(e) => setMaxTokens(e.target.value)}
@@ -2271,6 +2322,7 @@ function App() {
                         min="0"
                         max="2"
                         value={temperature}
+                        aria-invalid={!validTemperature}
                         disabled={running || busy}
                         placeholder="0.1"
                         onChange={(e) => setTemperature(e.target.value)}
@@ -2284,6 +2336,7 @@ function App() {
                           min="1"
                           max="600"
                           value={timeout}
+                          aria-invalid={!validTimeout}
                           disabled={running || busy}
                           placeholder="120"
                           onChange={(e) => setTimeoutValue(e.target.value)}
@@ -2307,51 +2360,27 @@ function App() {
                         placeholder="Örn. 16K · 4 concurrent"
                       />
                     </label>
-                  </div>
-                  <p className="generation-defaults">Boş bırakılan alanlarda {defaultMaxTokens.toLocaleString("tr-TR")} çıktı tokenı, temperature 0,1 ve 120 sn kullanılır. Ayarlar seçilen tüm modellere aynı uygulanır.</p>
-                  <div className="cache-reset-option">
-                    <label><input type="checkbox" checked={false} disabled readOnly /> <span>Başlamadan önce modellerin prefix cache’ini sıfırla</span></label>
-                    <p>Bu seçenek şimdilik kullanılamıyor. vLLM'de cache sıfırlama uç noktası için geliştirme modu gerekir; bu mod yalnızca erişimi kısıtlı test ortamlarında kullanılmalıdır.</p>
-                    <p>Metin isteklerine prefix cache eşleşmesini azaltmak için farklı bir kimlik eklenir. Görsel istekleri hazırladığınız içerikle gönderilir.</p>
-                  </div>
+                    </div>
+                    <p className="generation-defaults">Varsayılanlar {defaultMaxTokens.toLocaleString("tr-TR")} token, temperature 0,1 ve 120 sn. Seçtiğin ayarlar tüm modellere uygulanır.</p>
+                    <p className="cache-note">Prefix cache sıfırlama vLLM geliştirme modu gerektirir.</p>
+                  </details>
                 </div>
                 <div className="launch-bar">
-                  <div>
-                    <span className="launch-icon">
-                      <Activity size={19} />
-                    </span>
-                    <span>
-                      <b>
-                        {selected.length} model × {effectivePrompts.length}{" "}
-                        girdi{mode === "compare" ? " × 2 faz" : ""}
-                      </b>
-                      <small>
-                        Gerçek API ölçümü ·{" "}
-                        {mode === "compare"
-                          ? "Seri + eşzamanlı"
-                          : mode === "single"
-                            ? "Tek istek"
-                            : "Eşzamanlı yük"}
-                      </small>
-                      {mode !== "single" && (
-                        <small className={overParallelLimit ? "request-limit" : undefined}>
-                          Aynı anda en çok {parallelCount} istek{overParallelLimit ? ` · Sınır ${MAX_CONCURRENT_REQUESTS}` : ""}
-                        </small>
-                      )}
-                      {invalidOcrInputs && <small className="request-limit">LightOnOCR için {ocrIssues.length} girdi düzenlenmeli.</small>}
-                    </span>
+                  <div className="launch-plan">
+                    <dl className="launch-counts">
+                      <div><dt>Model başına girdi</dt><dd>{inputCount?.toLocaleString("tr-TR") ?? "—"}</dd></div>
+                      <div><dt>Toplam API isteği</dt><dd>{inputCount === null ? "—" : totalRequests.toLocaleString("tr-TR")}</dd></div>
+                      <div><dt>En çok eşzamanlı</dt><dd className={overParallelLimit ? "request-limit" : undefined}>{inputCount === null ? "—" : parallelCount.toLocaleString("tr-TR")}</dd></div>
+                    </dl>
+                    <p className="launch-config">
+                      {validOutputLimit ? outputLimit.toLocaleString("tr-TR") : "—"} token · Temperature {validTemperature ? temperatureValue.toLocaleString("tr-TR") : "—"} · {validTimeout ? timeoutValue.toLocaleString("tr-TR") : "—"} sn zaman aşımı · {stream ? "Stream" : "Normal yanıt"}
+                    </p>
+                    {launchBlocker && <p id="launch-blocker" className="launch-blocker" role="status">{launchBlocker}</p>}
                   </div>
                   <button
                     className="button primary launch-button"
-                    disabled={
-                      busy ||
-                      running ||
-                      !selected.length ||
-                      inputCount === null ||
-                      overParallelLimit ||
-                      invalidOcrInputs ||
-                      effectivePrompts.some((p, index) => !p.trim() && !effectiveImages[index]?.length)
-                    }
+                    aria-describedby={launchBlocker ? "launch-blocker" : undefined}
+                    disabled={busy || running || !!launchBlocker}
                     onClick={start}
                   >
                     {busy || running ? (
@@ -2365,35 +2394,7 @@ function App() {
                 </div>
               </section>
               <div ref={resultsRef}>
-                {run ? (
-                  <Results key={run.id} run={run} onStop={stop} />
-                ) : (
-                  <section className="results initial-results">
-                    <div className="section-heading">
-                      <div>
-                        <h2>{models.length ? "İlk karşılaştırmanı hazırla" : "İlk testin için model ekle"}</h2>
-                        <p>
-                          İlk token süresi, akış hızı ve toplam verimi tek yerde
-                          izle.
-                        </p>
-                      </div>
-                      <span className="ready-state">
-                        <span className="dot" />
-                        {models.length ? "Girdilerini hazırla" : "Model bekleniyor"}
-                      </span>
-                    </div>
-                    <Chart models={chosen} />
-                    <div className="initial-foot">
-                      <span>
-                        <CheckCircle2 size={14} />
-                        Raporlar otomatik kaydedilir
-                      </span>
-                      <span>
-                        TTFT · p95 · E2E · tok/sn · Draft · Kabul oranı
-                      </span>
-                    </div>
-                  </section>
-                )}
+                {run && <Results key={run.id} run={run} onStop={stop} />}
               </div>
             </>
           )}
@@ -2665,7 +2666,6 @@ function App() {
                 </div>
               </>
             ))}
-          {page === "duration" && <DurationTests examples={examples} models={models} contexts={contexts} savedInputs={savedInputs} onSettings={() => navigate("settings")} />}
           {page === "inputs" && (
             <SavedInputs
               examples={examples}
@@ -2676,6 +2676,7 @@ function App() {
               onRefresh={refreshInputs}
               onApply={applySavedInput}
               slots={effectivePrompts.length}
+              prefersOcr={hasOcrModel}
               running={running}
               onMessage={setToast}
             />

@@ -163,6 +163,33 @@ def guard_headers(headers):
             'policy': headers.get('x-vllm-empty-guard-policy')}
 
 
+def insert_prompt_uuids(text, parts):
+    first_id = uuid.uuid4().hex[:12]
+    insertions = [{'part': 1, 'offset': 0, 'id': first_id}]
+    chunks = [first_id, '\n']
+    previous = 0
+    radius = min(32, len(text) // 16)
+    for part in parts[1:]:
+        target = len(text) * (part - 1) // 4
+        if target <= previous:
+            continue
+        # Prefer a nearby break without splitting a word or a CRLF sequence.
+        candidates = range(max(previous + 1, target - radius), min(len(text) - 1, target + radius) + 1)
+        breaks = (offset for offset in candidates
+                  if text[offset].isspace() and text[offset - 1:offset + 1] != '\r\n')
+        offset = min(breaks, key=lambda pos: abs(pos - target), default=target)
+        if text[offset - 1:offset + 1] == '\r\n':
+            offset += 1
+        if offset >= len(text):
+            continue
+        ident = uuid.uuid4().hex[:12]
+        chunks.extend((text[previous:offset], '\n', ident, '\n'))
+        insertions.append({'part': part, 'offset': offset, 'id': ident})
+        previous = offset
+    chunks.append(text[previous:])
+    return ''.join(chunks), insertions
+
+
 def parse_prometheus(text, model=None):
     counters = {}
     for line in text.splitlines():
@@ -365,6 +392,7 @@ class Store:
             'key_requires_reentry': bool(m['api_key']) and not self.credentials.is_reference(m['api_key']),
             'has_ca_certificate': bool(m.get('ca_certificate')),
             'use_shared_ca': m.get('use_shared_ca', True),
+            'empty_guard_enabled': m.get('empty_guard_enabled', False),
         } for m in self.list('models') if not m.get('demo')]
 
     def shared_ca_certificate(self):
@@ -399,6 +427,9 @@ class Store:
         item['input_format'] = data.get('input_format', old.get('input_format', 'auto'))
         if item['input_format'] not in ('auto', 'vision', 'ocr'):
             raise ValueError('Geçerli bir model girdi profili seçin.')
+        item['empty_guard_enabled'] = data.get('empty_guard_enabled', old.get('empty_guard_enabled', False))
+        if type(item['empty_guard_enabled']) is not bool:
+            raise ValueError('Empty Guard seçimi geçersiz.')
         item['ca_certificate'] = certificate_update(data, old.get('ca_certificate', ''))
         new_reference = None
         if data.get('clear_key'):
@@ -543,6 +574,11 @@ class Engine:
             raise ValueError('Yanıt biçimi stream veya normal olmalıdır.')
         if type(data.get('reset_prefix_cache', False)) is not bool:
             raise ValueError('Cache sıfırlama seçimi geçersiz.')
+        uuid_parts = data.get('prompt_uuid_parts', [1])
+        if (not isinstance(uuid_parts, list) or not 1 <= len(uuid_parts) <= 4
+                or any(type(part) is not int or not 1 <= part <= 4 for part in uuid_parts)
+                or 1 not in uuid_parts or len(set(uuid_parts)) != len(uuid_parts)):
+            raise ValueError('UUID konumları 1/4’ü içermeli ve her konum en fazla bir kez seçilmelidir.')
         models = [self.store.get('models', ident) for ident in ids]
         if any(m is None for m in models):
             raise ValueError('Seçilen model bulunamadı. Ayarlardan model ekleyin.')
@@ -568,10 +604,12 @@ class Engine:
             shared_ca = self.store.shared_ca_certificate()
             models = [self.runtime_model(model, demo, shared_ca=shared_ca) for model in models]
             ident = secrets.token_hex(8)
-            clean_models = [{k: m[k] for k in ('id', 'name', 'model', 'provider', 'color', 'base_url', 'metrics_url')} for m in models]
+            clean_models = [{k: m[k] for k in ('id', 'name', 'model', 'provider', 'color', 'base_url', 'metrics_url')}
+                            | {'empty_guard_enabled': m.get('empty_guard_enabled', False)} for m in models]
             config = {'mode': mode, 'prompts': prompts, 'max_tokens': max_tokens, 'temperature': temperature,
                       'timeout': timeout, 'model_schedule': schedule, 'demo': demo, 'stream': data.get('stream', True),
-                      'reset_prefix_cache': data.get('reset_prefix_cache', False)}
+                      'reset_prefix_cache': data.get('reset_prefix_cache', False),
+                      'prompt_uuid_parts': sorted(uuid_parts)}
             if images:
                 config['prompt_images'] = images
             fingerprint_payload = pack_benchmark_prompts({'config': config, 'models': clean_models})
@@ -817,11 +855,12 @@ class Engine:
                     payload['messages'][0]['content'] = vision_content(
                         payload['messages'][0]['content'], [self.store.media.url(ref) for ref in attachments])
                 elif all(isinstance(message['content'], str) for message in payload['messages']):
-                    # A text prefix changes cache matching. Image-only OCR and vision instructions stay exact.
-                    prefix_id = uuid.uuid4().hex[:12]
-                    payload['messages'][0]['content'] = prefix_id + '\n' + payload['messages'][0]['content']
+                    message = payload['messages'][0]
+                    message['content'], insertions = insert_prompt_uuids(message['content'], config.get('prompt_uuid_parts', (1,)))
                     with self.lock:
-                        row['prompt_prefix_id'] = prefix_id
+                        row['prompt_prefix_id'] = insertions[0]['id']
+                        if len(insertions) > 1:
+                            row['prompt_uuid_insertions'] = insertions
                 stream_response = payload['stream']
                 if stream_response:
                     payload['stream_options'] = dict(payload.get('stream_options', {}), include_usage=True)
@@ -834,7 +873,8 @@ class Engine:
                 stage = 'receiving_response'
                 with self.lock:
                     row['http_status'] = response.status
-                    row['guard'] = guard_headers(response.headers)
+                    if model.get('empty_guard_enabled', False):
+                        row['guard'] = guard_headers(response.headers)
                     self.responses.setdefault(run['id'], {})[response] = (started + config['timeout'], deadline_fired)
                 try:
                     if cancel.is_set():
@@ -954,7 +994,8 @@ class Engine:
             with self.lock:
                 if isinstance(exc, HTTPError):
                     row['http_status'] = exc.code
-                    row['guard'] = guard_headers(exc.headers)
+                    if model.get('empty_guard_enabled', False):
+                        row['guard'] = guard_headers(exc.headers)
                     exc.close()
                 row.update(status='cancelled' if cancelled else 'failed', error=None if cancelled else error, e2e_s=elapsed)
             if not cancelled:

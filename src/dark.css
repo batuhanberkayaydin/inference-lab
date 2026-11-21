@@ -499,9 +499,6 @@
 :root[data-theme=dark] .request-matrix tr:nth-child(2) th {
   color: #adc1cf
 }
-:root[data-theme=dark] .request-matrix td:nth-child(5n + 1) {
-  border-right: 1px solid #3b4d5a
-}
 @media print {
   :root[data-theme=dark] body {
     background: #1d2d39
@@ -516,12 +513,6 @@
   :root[data-theme=dark] .chart-legend > span {
     color: #dae5ed
   }
-}
-:root[data-theme=dark] .duration-page .panel { background: #1d2d39
-}
-:root[data-theme=dark] .duration-preview { background: #182732
-}
-:root[data-theme=dark] .duration-page .duration-warning { color: #c0a07a; background: #182732
 }
 :root[data-theme=dark] .mode-explanation {
   background: #182732

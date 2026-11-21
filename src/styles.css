@@ -3057,8 +3057,8 @@ tbody tr:last-child td {
   font-weight: 500;
   color: #607582;
 }
-.request-matrix td:nth-child(5n + 1) {
-  border-right: 1px solid #e5eaf0;
+.request-matrix .model-request-end:not(:last-child) {
+  border-right: 1px solid var(--line);
 }
 .workspace b {
   font-size: 10px;

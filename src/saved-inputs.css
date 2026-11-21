@@ -349,11 +349,11 @@
 }
 @media (max-width: 680px) {
   .sidebar nav:first-of-type {
-    grid-template-columns: repeat(5, 1fr);
-    width: 83.333%;
+    grid-template-columns: repeat(4, 1fr);
+    width: 80%;
   }
   .sidebar nav:last-of-type {
-    width: 16.667%;
+    width: 20%;
   }
   .sidebar nav button {
     font-size: 9px;

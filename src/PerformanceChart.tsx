@@ -17,13 +17,7 @@ const tick = (value: number) =>
     ? display(value / 1000) + "k"
     : display(value, value < 1 ? 3 : 2);
 const patterns = ["", "7 4", "2 4", "9 3 2 3"];
-export function PerformanceChart({
-  phase,
-  models: initialModels = [],
-}: {
-  phase?: { models: ChartModel[] };
-  models?: ChartModel[];
-}) {
+export function PerformanceChart({ phase }: { phase: { models: ChartModel[] } }) {
   const [metric, setMetric] = useState<ChartMetric>("throughput");
   const [hidden, setHidden] = useState<string[]>([]);
   const [hover, setHover] = useState<number | null>(null);
@@ -51,7 +45,7 @@ export function PerformanceChart({
     media.addEventListener("change", change);
     return () => media.removeEventListener("change", change);
   }, []);
-  const models = phase?.models || initialModels;
+  const models = phase.models;
   const series = models.map((model) => ({
     model,
     points: seriesFor(model, metric),
@@ -283,17 +277,9 @@ export function PerformanceChart({
           <div className="performance-empty">
             <Activity size={24} />
             <b>
-              {!visible.length && models.length
-                ? "Bir modeli görünür yap"
-                : phase
-                  ? "Token ölçümleri henüz hazır değil"
-                  : "İlk karşılaştırmanı başlat"}
+              {!visible.length && models.length ? "Bir modeli görünür yap" : "Görüntülenecek token ölçümü yok"}
             </b>
-            <span>
-              {phase
-                ? "Eksik ölçümler sıfır olarak çizilmez."
-                : "Modellerin zaman içindeki verimi burada karşılaştırılır."}
-            </span>
+            {visible.length > 0 && <span>Grafik, sağlayıcının bildirdiği token ölçümlerini gösterir.</span>}
           </div>
         )}
       </div>

@@ -5,6 +5,7 @@ import {
   Check,
   FileText,
   FolderOpen,
+  Image,
   Loader2,
   Plus,
   Search,
@@ -296,6 +297,7 @@ export function SavedInputs({
   onRefresh,
   onApply,
   slots,
+  prefersOcr,
   running,
   onMessage,
 }: {
@@ -307,6 +309,7 @@ export function SavedInputs({
   onRefresh: () => Promise<void>;
   onApply: (id: string, target: number | "all") => Promise<void>;
   slots: number;
+  prefersOcr: boolean;
   running: boolean;
   onMessage: (text: string) => void;
 }) {
@@ -315,6 +318,7 @@ export function SavedInputs({
   );
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
+  const [mediaFilter, setMediaFilter] = useState("all");
   const [target, setTarget] = useState<number | "all">(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -322,6 +326,7 @@ export function SavedInputs({
   const isEditor = editing !== undefined || !!draft;
   const visible = items.filter(
     (item) =>
+      (mediaFilter === "all" || (mediaFilter === "visual") === Boolean(item.image_count)) &&
       (filter === "all" || item.target_tokens === Number(filter)) &&
       `${item.name} ${item.category}`
         .toLocaleLowerCase("tr")
@@ -391,22 +396,22 @@ export function SavedInputs({
   return (
     <>
       <div className="saved-page-actions">
-        <p>
-          Metinleri, soruları ve görselleri sakla ve istediğin
-          girdi kutusuna yükle.
-        </p>
+        <label className="saved-example-action">
+          Örnekle başla
+          <select aria-label="Örnek prompttan yeni girdi hazırla" value="" disabled={busy || running || !examples.length} onChange={e => void prepareExample(e.target.value)}>
+            <option value="">32K / 64K örneği seç</option>
+            {examples.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+          </select>
+          <small>Hedef uzunluk etiketi. Örnek, kaydettiğinde arşive eklenir.</small>
+        </label>
         <button className="button primary" onClick={() => setEditing(null)}>
           <Plus size={16} />
           Yeni girdi
         </button>
       </div>
-      <div className="saved-example-picker">
-        <label>Örnek prompttan yeni girdi hazırla<select aria-label="Örnek prompttan yeni girdi hazırla" value="" disabled={busy || running} onChange={e => void prepareExample(e.target.value)}><option value="">32K / 64K örneği seç</option>{examples.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
-        <p>Örnekler arşive otomatik eklenmez. Seçip inceledikten sonra kaydedebilirsin. 32K / 64K etiketleri gerçek token sayımı değildir.</p>
-      </div>
       {error && <div className="error-message" role="alert">{error}</div>}
       <section className="list-panel saved-library">
-        <div className="list-toolbar">
+        <div className="list-toolbar saved-filters">
           <div className="search-field">
             <Search size={16} />
             <input
@@ -416,6 +421,11 @@ export function SavedInputs({
               placeholder="Girdi adı veya kategori ara…"
             />
           </div>
+          <select aria-label="Girdi türünü filtrele" value={mediaFilter} onChange={e => setMediaFilter(e.target.value)}>
+            <option value="all">Tüm girdi türleri</option>
+            <option value="text">Metin</option>
+            <option value="visual">Görsel / PDF</option>
+          </select>
           <select
             aria-label="Hedef uzunluğu filtrele"
             value={filter}
@@ -433,13 +443,12 @@ export function SavedInputs({
           </span>
         </div>
         <div className="saved-use-toolbar">
-          <span>
+          <label>
             <ArrowRight size={15} />
-            Seçilen kaydı nereye yükleyelim?
-          </span>
-          <select
+            Benchmark’ta yükleme hedefi
+            <select
             aria-label="Kayıtlı girdiyi yükleme hedefi"
-            value={target}
+            value={target === "all" ? target : Math.min(target, slots - 1)}
             disabled={running || busy}
             onChange={(e) =>
               setTarget(
@@ -453,7 +462,9 @@ export function SavedInputs({
               </option>
             ))}
             <option value="all">Tüm girdiler</option>
-          </select>
+            </select>
+          </label>
+          <small>{prefersOcr ? "LightOnOCR’da her görsel ayrı istek kutusuna yerleşir." : "Kaydı seçilen kutuya veya tüm etkin kutulara yükle."}</small>
         </div>
         <div className="saved-input-list">
           {visible.map((item) => (
@@ -466,14 +477,14 @@ export function SavedInputs({
                 >
                   {item.name}
                 </button>
-                <span className="saved-length-tag">
-                  {lengthLabel(item.target_tokens)} hedef
+                <span className="saved-type">
+                  {item.image_count ? <><Image size={15} aria-hidden="true" /> {item.image_count} görsel</> : <><FileText size={15} aria-hidden="true" /> Metin</>}
                 </span>
               </div>
               <p>{item.preview}</p>
               <div className="saved-input-meta">
                 <span>{item.category || "Kategorisiz"}</span>
-                {!!item.image_count && <span>{item.image_count} görsel</span>}
+                <span>{lengthLabel(item.target_tokens)} hedef</span>
                 <span>{count(item.characters)} karakter</span>
                 <span>
                   ~{count(item.estimated_tokens)} token <small>(tahmini)</small>
@@ -534,12 +545,12 @@ export function SavedInputs({
             <h3>
               {items.length
                 ? "Eşleşen girdi yok"
-                : "İlk uzun bağlamını buraya kaydet"}
+                : "İlk girdini oluştur"}
             </h3>
             <p>
               {items.length
-                ? "Aramanı veya uzunluk filtresini değiştir."
-                : "32K gibi uzun bağlamları soru ve hedef etiketiyle hazırlayıp tekrar kullanabilirsin."}
+                ? "Aramanı veya filtreleri değiştir."
+                : "Metin, soru, görsel veya PDF ekleyerek tekrar kullanabileceğin bir girdi oluştur."}
             </p>
             {!items.length && (
               <button className="button" onClick={() => setEditing(null)}>
@@ -550,11 +561,6 @@ export function SavedInputs({
           </div>
         )}
       </section>
-      <p className="saved-library-note">
-        Kayıt seçilene kadar uzun metin yüklenmez. Kaydedilen girdiler sonraki
-        oturumlarda da korunur; gerçek token sayısı ölçüm sırasında sağlayıcıdan
-        gelir.
-      </p>
     </>
   );
 }

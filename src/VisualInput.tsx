@@ -69,7 +69,7 @@ export function MediaPreviews({ images, onRemove }: { images: MediaImage[]; onRe
   );
 }
 
-export function VisualInput({ images, onChange, disabled, onBusyChange, label, onSavePdfPages, planVisualSplit, singleImage = false }: {
+export function VisualInput({ images, onChange, disabled, onBusyChange, label, onSavePdfPages, planVisualSplit, singleImage = false, showPreview = false }: {
   images: MediaImage[];
   onChange: (images: MediaImage[]) => void;
   disabled: boolean;
@@ -78,6 +78,7 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
   onSavePdfPages?: (filename: string, pages: PdfPageImage[]) => Promise<void>;
   planVisualSplit?: (imageCount: number) => (images: MediaImage[], format: "pdf" | "images") => void;
   singleImage?: boolean;
+  showPreview?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
@@ -211,15 +212,27 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
   }
   return (
     <details className="visual-input" onToggle={e => setOpen(e.currentTarget.open)}>
-      <summary aria-label={label}>
+      <summary aria-label={label && (showPreview && images[0] ? `${label}. ${images.length} görsel ekli. ${images[0].name}` : label)}>
         <ImagePlus size={15} aria-hidden="true" />
-        <span>Görsel / PDF sayfası ekle{images.length ? ` · ${images.length} görsel` : ""}</span>
+        {showPreview && images[0] ? (
+          <span className="visual-summary-file">
+            {images[0].id && !/\.tiff?$/i.test(images[0].name) && (
+              <img src={`/api/media/${images[0].id}`} alt="" loading="lazy" width={34} height={34} />
+            )}
+            <span><b title={images[0].name}>{images[0].name}</b><small>{images.length} görsel</small></span>
+          </span>
+        ) : <span>Görsel / PDF sayfası ekle{images.length ? ` · ${images.length} görsel` : ""}</span>}
         <ChevronDown size={15} aria-hidden="true" />
       </summary>
       {open && (
         <div className="visual-input-body">
-          <p>LightOnOCR için her isteğe tek görsel ekleyin. Düz OCR’da metin alanlarını boş bırakabilirsiniz.</p>
           <MediaPreviews images={images} onRemove={locked ? undefined : index => onChange(images.filter((_, i) => i !== index))} />
+          {singleImage && <p>{planVisualSplit ? "LightOnOCR’da PDF sayfaları varsayılan olarak ayrı isteklere eklenir." : "Bu model her istekte bir görsel alır."} Düz OCR’da görev metni boş kalabilir.</p>}
+          <label>
+            Görsel veya PDF yükle
+            <input type="file" aria-label="Görsel veya PDF yükle" accept=".png,.jpg,.jpeg,.webp,.gif,.bmp,.tif,.tiff,.pdf" multiple
+              disabled={locked || (full && !canChoosePdf)} onChange={e => void chooseFiles(e)} />
+          </label>
           <div className="visual-input-actions">
             {(!singleImage || planVisualSplit) && (
               <label>PDF ekleme biçimi
@@ -237,11 +250,6 @@ export function VisualInput({ images, onChange, disabled, onBusyChange, label, o
             )}
             <label>PDF uzun kenarı<select value={edge} disabled={locked} onChange={e => setEdge(Number(e.target.value))}><option value={1540}>1540 px</option><option value={2048}>2048 px</option></select></label>
           </div>
-          <label>
-            Görsel veya PDF yükle
-            <input type="file" aria-label="Görsel veya PDF yükle" accept=".png,.jpg,.jpeg,.webp,.gif,.bmp,.tif,.tiff,.pdf" multiple
-              disabled={locked || (full && !canChoosePdf)} onChange={e => void chooseFiles(e)} />
-          </label>
           {pdf && (
             <div className="visual-pdf">
               <b>{pdf.name} · {pdf.pages} sayfa</b>

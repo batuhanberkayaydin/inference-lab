@@ -18,7 +18,7 @@ Prepare identical request inputs, compare up to four configured models, inspect 
 - One to 1024 independently editable request inputs and up to 1024 simultaneous benchmark requests in total. Counts can be typed or selected.
 - A separate saved-input archive: named context/question pairs, category and free/8K/16K/32K/64K/128K target labels, .txt import, editing, and loading into a chosen request or all requests. Target labels do not claim actual tokenizer length.
 - Single, concurrent, and serial-vs-concurrent comparison modes.
-- Separate timed-test page: one configured model, up to 1024 independent lanes, each waiting after its own response, a dispatch duration, JSON/curl body import, per-request duration and provider tokens divided by total response time, guard result/attempts/version/policy checks and saved test history. No tables or graphs. Missing headers are unknown and reasoning-only answers fail the content check.
+- Optional Empty Guard tracking by model. Benchmark answers and request details show the provider's guard result, attempt count, version and policy for opted-in models.
 - Model name, provider base URL, model ID, API key and optional metrics URL managed in admin settings.
 - Initial administrator credentials: admin / admin.
 - Automatic report persistence, previous-run inspection and exports.

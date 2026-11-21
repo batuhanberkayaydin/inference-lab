@@ -97,9 +97,9 @@ Arşivdeki **Benchmark’ta kullan** düğmesi kaydı seçilen girdi kutusuna ve
 
 ## OCR ve vision girdileri
 
-Benchmark, süreli test ve kayıtlı girdi ekranında **Görsel / PDF sayfası ekle** bölümünü kullanın. PNG, JPEG, WebP, GIF, BMP ve TIFF dosyaları en fazla 5 MB olabilir. HTTP(S) görsel adresini sağlayıcı açar. Genel vision girdisine en fazla 100 görsel ve isteğe bağlı metin ekleyebilirsiniz. Dosya olarak eklenen görsellerin toplamı bir istekte en fazla 40 MB olabilir. Sağlayıcının kabul ettiği biçimler ve görsel sayısı modele göre değişebilir.
+Benchmark ve kayıtlı girdi ekranlarında **Görsel / PDF sayfası ekle** bölümünü kullanın. PNG, JPEG, WebP, GIF, BMP ve TIFF dosyaları en fazla 5 MB olabilir. HTTP(S) görsel adresini sağlayıcı açar. Genel vision girdisine en fazla 100 görsel ve isteğe bağlı metin ekleyebilirsiniz. Dosya olarak eklenen görsellerin toplamı bir istekte en fazla 40 MB olabilir. Sağlayıcının kabul ettiği biçimler ve görsel sayısı modele göre değişebilir.
 
-PDF yüklediğinizde tüm sayfalar tarayıcıda PNG’ye çevrilip sırayla eklenir. Genel vision için sayfalar aynı girdi içinde kalır. LightOnOCR istek başına bir görsel aldığı için benchmark’ta seçilen kutudan başlayarak sayfalar boş kutulara dağıtılır ve gerekirse istek sayısı artırılır. Düz OCR için metni boş bırakın. LightOnOCR-3 grounding modunda görev metnine `grounding` yazabilirsiniz. Tek sayfa eklemek veya arşivde sayfa aralığını **Ayrı girdiler olarak kaydet** ile kaydetmek için PDF ekleme biçimini dosyayı seçmeden önce değiştirin. LightOnOCR süreli testinde bir sayfa seçilir. PDF üst sınırı 30 MB, toplu ekleme sınırı 100 sayfadır. [LightOnOCR kullanım örnekleri](https://github.com/lightonai/LightOnOCR)
+PDF yüklediğinizde tüm sayfalar tarayıcıda PNG’ye çevrilip sırayla eklenir. Genel vision için sayfalar aynı girdi içinde kalır. LightOnOCR istek başına bir görsel aldığı için benchmark’ta seçilen kutudan başlayarak sayfalar boş kutulara dağıtılır ve gerekirse istek sayısı artırılır. Düz OCR için metni boş bırakın. LightOnOCR-3 grounding modunda görev metnine `grounding` yazabilirsiniz. Tek sayfa eklemek veya arşivde sayfa aralığını **Ayrı girdiler olarak kaydet** ile kaydetmek için PDF ekleme biçimini dosyayı seçmeden önce değiştirin. PDF üst sınırı 30 MB, toplu ekleme sınırı 100 sayfadır. [LightOnOCR kullanım örnekleri](https://github.com/lightonai/LightOnOCR)
 
 Model kimliği LightOnOCR olarak tanınır. Özel bir model kimliğiyle yayınlıyorsanız yönetici ayarlarında **LightOnOCR** profilini seçin. **Vision** ve **LightOnOCR** profillerinde bağlantı testi küçük bir örnek görsel gönderir. Yüklenen görseller yerel veritabanında saklanır. Raporlar, kayıt arşivden silinse de görselleri aynı kurulumdan gösterebilir.
 
@@ -112,7 +112,6 @@ Kayıtlar SQLite `inputs` tablosunda saklanır; uygulama tekrar açıldığında
 Önceden hazırlanmış kurgusal Türkçe hasar dosyası soruları `examples/turkce_sorular_32k.txt` ve `examples/turkce_sorular_64k.txt` içinde değiştirilmeden bulunur. Bu dosyalar Docker imajına da dahildir; internet gerekmez.
 
 - Benchmark: her kutudaki **Örnek promptlar** grubundan tek girdiye, **Tüm girdilere örnek yükle** menüsünden bütün etkin girdilere yükleyin.
-- Süreli test: **Hazır girdi → Örnek promptlar** grubundan seçin.
 - Kayıtlı girdiler: **Örnek prompttan yeni girdi hazırla** ile taslak açıp inceledikten sonra kaydedin.
 
 Örnek seçmek API isteği başlatmaz. Dosyalar ilk kurulumda kullanıcı tablolarına veya istek kutularına otomatik eklenmez. 32K / 64K etiketleri hedef uzunluk adlarıdır; tam 32.768 / 65.536 token garantisi vermez. Gerçek token sayısı modelin tokenizer’ına ve chat template’ine bağlıdır. Mevcut kurulumların model, girdi ve raporları korunur; eski demo kayıtları otomatik silinmez.
@@ -123,7 +122,7 @@ Toplam 1024 istek aynı anda gönderilebilir. “Modeller aynı anda çalışsı
 
 Benchmark arayüzünde **Başlamadan önce modellerin prefix cache’ini sıfırla** seçeneği şimdilik devre dışıdır; arayüzden başlatılan koşular cache sıfırlama isteği göndermez. vLLM'de bu uç nokta geliştirme modu gerektirir; bu mod hassas yönetim uç noktalarını açabileceğinden yalnızca erişimi kısıtlı test ortamlarında kullanılmalıdır. Backend'in mevcut API davranışı ve eski raporlar korunur.
 
-Benchmark ve süreli testlerde metin isteklerinin ilk mesajına 12 karakterli UUID parçası eklenir. Kimlik `prompt_prefix_id` olarak saklanır ve önceki girdilerle prefix cache eşleşmesini azaltmayı amaçlar. Sohbet şablonunun ortak kısımları yine eşleşebilir. Görsel isteklerde içerik hazırlandığı biçimde gönderilir. Bu sayede LightOnOCR’a metinsiz görüntü veya `grounding` gibi tam görev metni verilebilir.
+Benchmark’ta **İstek girdileri → UUID konumları** altında varsayılan **1/4** seçimi metnin başına 12 karakterli bir UUID parçası ekler. **2/4**, **3/4** ve **4/4** sırasıyla yaklaşık %25, %50 ve %75 noktalarını ekler. Konumlar karakter uzunluğuna göre hesaplanır. Her gönderimde yeni kimlikler üretilir ve metin tek bir istek olarak gider. Başlangıç kimliği `prompt_prefix_id` alanında, varsa ek konumların ayrıntıları `prompt_uuid_insertions` alanında kayıtlıdır. Bu yaklaşım prefix cache eşleşmesini azaltmayı amaçlar. Görselli istekler hazırlandığı içerikle gönderilir.
 
 Benchmark’ta boş bırakılan çıktı limiti metin koşularında 20.000, görsel içeren koşularda 4.096 token olarak uygulanır. Temperature 0,1 ve zaman aşımı 120 saniyedir. Çıktı limiti ve temperature her model isteğine aynı gönderilir. Zaman aşımı istemcide her istek için uygulanır.
 
@@ -161,10 +160,8 @@ npm run build
 
 Protokol referansı: [OpenAI Chat Completions](https://developers.openai.com/api/reference/resources/chat). Yerel Manrope font dosyaları [Google Fonts](https://github.com/google/fonts/tree/main/ofl/manrope) kaynağından; OFL lisansı `public/fonts/OFL.txt` içindedir. `data/`, `.env`, anahtarlar, yerel raporlar ve geliştirme ekran görüntüleri Git deposuna dahil edilmez.
 
-## Süreli test ve vLLM empty guard
+## Benchmark’ta Empty Guard
 
-**Süreli test** sayfasında tek model, 1–1024 paralel döngü, süre (en fazla 1 saat), yanıt sonrası bekleme ve istek zaman aşımı seçilir. Her döngü kendi yanıtını alır, bekler ve yeniden gönderir; yavaş bir döngü diğerini bekletmez. Süre dolunca yeni istek başlatılmaz; devam eden istekler tamamlanır veya zaman aşımına uğrar. Bu yüzden gerçek bitiş zamanı belirtilen süreden uzun olabilir. 10.000 istek sınırında gönderim biter ve kayıt kısmi sonuç olarak işaretlenir. Durdur butonu açık bağlantıları da keser.
+Sağlayıcınız Empty Guard ile yeniden deneme yapıyorsa **Yönetici ayarları** içindeki model formunda ilgili kutuyu işaretleyin. Benchmark’ın **Cevaplar** ve **İstek detayları** bölümlerinde o model için sağlayıcının gönderdiği Guard sonucu, deneme sayısı, sürüm ve politika görünür. Örneğin iki deneme, bir yeniden deneme demektir. Sağlayıcının göndermediği alanlar bilinmiyor olarak gösterilir. Guard sonucu ile isteğin başarı durumu ayrı değerlendirilir.
 
-Metin/kayıtlı girdi veya doğrudan chat/completions JSON gövdesi kullanılabilir. curl heredoc (`--data-binary @- <<'JSON'`) ve inline `--data-raw` içeri aktarılır. curl çalıştırılmaz ve dosyadan veri okunmaz; komuttaki anahtarlar/başlıklar aktarılmaz. Gövde ve --max-time okunur. Model kimliği seçilen kayıtlı modelle eşleşmelidir; sağlayıcı URL’si ve anahtarı admin ayarlarından alınır. Docker’da host servisi için `host.docker.internal` adresini kullanın. `chat_template_kwargs.enable_thinking` ve `reasoning_effort` korunur; stream isteklerinde usage istenir.
-
-Her istek için HTTP durumu, dolu cevap/boş cevap kontrolü, toplam yanıt süresi, completion_tokens / toplam süre olarak token/sn, `x-vllm-empty-guard`, attempts, version ve policy saklanır. Reasoning ayrı tutulur: reasoning gelip content boş kalırsa istek başarılı sayılmaz. HTTP/cevap başarısı ile guard pass ayrı kavramlardır. Attempts >1 tekrar olarak işaretlenir; eksik başlık ve usage bilinmeyen kalır. Sonuçlar aynı sayfanın geçmişinde saklanır; detaylar sayfalıdır, cevaplar detayı açınca yüklenir. JSON indir ile tam kayıt alınabilir. Demo sonuçları ve başlıkları sentetiktir.
+Kayıtlı benchmark raporları, koşu sırasında alınmış Guard bilgilerini gösterir. Eski süreli test kayıtlarına oturum açtıktan sonra `/api/duration-runs` ve `/api/duration-runs/{id}` uç noktalarından erişilebilir.

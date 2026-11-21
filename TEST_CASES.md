@@ -25,9 +25,11 @@
 
 - Admin/admin ile giriş; hatalı şifre mesajı.
 - 1–4 model seçimi; 1–1024 girdi; listeden ve sayı yazarak seçim, ayrı bağlam seçimi ve metin düzenleme.
+- UUID konumları başlangıçta yalnızca 1/4’ü göstermeli. 32K örneğinde 2/4 ve 4/4 seçildiğinde her metin isteğinde üç yeni kimlik görünmeli. Rapor konumları ve özgün metni saklamalı.
+- İki model ve 24 girdiyle seri ve eşzamanlı modunda özet, model başına 24 girdi, toplam 96 API isteği ve en çok 48 eşzamanlı istek göstermeli. Modeller sırayla çalıştırılırsa en yüksek eşzamanlı sayı 24’e inmeli. Girilen üretim ayarları özette ve koşu yapılandırmasında eşleşmeli.
 - 203 etkin girdiye bir kayıtlı girdi, bir bağlam ve bir örneği rastgele dağıtın. Kaynakların 67–68 kez kullanıldığını, son sayfaya kadar tüm kutuların dolduğunu ve dağıtımın benchmark başlatmadığını kontrol edin. Bir kaynak yüklenemezse mevcut metinler korunmalıdır.
 - İki sayfalı PDF’yi ayrı görsel kayıtlar olarak kaydedin. Rastgele dağıtımda Görsel kaynakları ve Tümünü seç ile iki sayfayı etkin kutulara dağıtın. LightOnOCR isteklerinin her birinde tek `image_url` bulunur. Boş metinli OCR’a ek prefix gönderilmez.
-- On sayfalık bir PDF’yi tek arşiv kaydı olarak saklayın. LightOnOCR ve dört eşzamanlı istek seçiliyken kaydı Görsel kaynakları üzerinden rastgele dağıtın. İstek sayısı ona çıkmalı ve on sayfanın her biri ayrı kutuda görünmeli. Aynı kaydı ilk kutunun arşiv menüsünden seçtiğinizde sayfalar sırayla yerleşmeli.
+- On sayfalık bir PDF’yi tek arşiv kaydı olarak saklayın. LightOnOCR ve dört eşzamanlı istek seçiliyken Görsel kaynakları, dağıtımdan önce 10 ayrı istek ve kutu sayısının 4’ten 10’a çıkacağını göstermeli. Dağıtımdan sonra her kutuda sayfa adı ve önizleme görünmeli. Aynı kaydı ilk kutunun arşiv menüsünden seçtiğinizde sayfalar sırayla yerleşmeli.
 - 10 sayfalı bir PDF yükleyin. Genel Vision girdisinde 10 görsel birden eklenir. LightOnOCR benchmark’ında sayfalar ayrı istek kutularına yerleşir, mevcut dolu kutular korunur ve istek sayısı gerektiğinde artar.
 - LightOnOCR benchmark’ında varsayılan dört kutuya bir görsel yükleyin. Yalnız ilk kutu doluysa istek sayısı bire iner. Bir kutuya çok görselli kayıt yükleyin, uyarıdaki işlemle görselleri ayırın ve yalnız boş kutuların kaldırıldığını doğrulayın.
 - Vision girişinde bir dosya, bir URL ve metin kullanın. Girdi sırası ve içeriği istekte korunur. Görseli arşivden kaldırmak eski raporu değiştirmez. `file:` adresleri reddedilir.
@@ -40,6 +42,7 @@
 - Tek ortak CA yükleyerek yeni ve mevcut modelleri yerel HTTPS sağlayıcıya bağla. Bir modelde ortak CA kullanımını kapatınca sadece o modelin bağlantısının başarısız olduğunu, ortak sertifikayı kaldırınca diğer modelin de bağlantısının reddedildiğini kontrol et.
 - Bağlam ekleme/düzenleme; .txt içe aktarım; testte kullan.
 - Masaüstü 1440 px, mobil 390 px; yatay sayfa taşması yok, geniş tablolar kendi içinde kayar.
+- Aynı benchmark’ta Empty Guard açık ve kapalı iki model kullanın. Cevaplar ve İstek detayları, guard sonucu ve deneme sayısını açık model için göstermeli. Ayarı tekrar kapatmak kayıtlı raporu değiştirmemeli.
 - Klavyeyle gezinme, görünen focus, boş/hata/durdurulmuş durumlar.
 
 ## Kayıtlı girdi regresyonları
@@ -77,7 +80,7 @@ Gerçek sağlayıcı sözleşme testleri, farklı SSE/protokol adaptörleri, tok
 - Normal JSON responses and JSON fallback from a streaming request preserve text/usage; TTFT and stream speed remain unknown.
 - UI: overview and Cevaplar group answers by input; phases switch answers; desktop/mobile layout and copy controls work.
 
-## Süreli test
+## Süreli test API regresyonları
 - JSON/curl heredoc ve inline data yalnızca veri olarak okunur; response örneği ve authorization başlığı içeri aktarılmaz, dosya/shell komutu çalıştırılmaz.
 - Her bağımsız döngü kendi yanıtından sonra bekler; yavaş istek diğer döngüyü engellemez. En fazla 1024 aktif istek, süre bitiminde yeni gönderim yok; aktif istek sonuçlanır.
 - HTTP 200, guard pass, attempts=1 veya >1, başlık/usage eksikliği ayrı korunur. Eksik usage hız üretmez; reasoning-only cevap başarısızdır.

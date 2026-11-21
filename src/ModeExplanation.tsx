@@ -1,110 +1,63 @@
-import { ArrowRight, Check, Layers3, Timer } from "lucide-react";
+import { ArrowRight, ChevronDown, CircleHelp, Layers3, Timer } from "lucide-react";
 import "./mode-explanation.css";
 
-export function ModeExplanation({
-  mode,
-  count,
-  models,
-  schedule,
-}: {
+export function ModeExplanation({ mode, count, schedule }: {
   mode: string;
   count: number;
-  models: number;
   schedule: string;
 }) {
-  const concurrent = mode === "concurrent",
-    compare = mode === "compare";
-  const inputs = mode === "single" ? 1 : count;
+  const compare = mode === "compare";
+  const single = mode === "single";
+  const visibleInputs = Math.min(count, 4);
+
   return (
-    <div className="mode-explanation">
-      <div className="mode-explanation-heading">
-        <h3>
-          {compare
-            ? "Yük artınca performans nasıl değişiyor?"
-            : concurrent
-              ? "Bir model, aynı anda birden fazla isteği nasıl karşılıyor?"
-              : "Bir isteğin yanıt süresini ölç"}
-        </h3>
-        <span>
-          {models} model · {inputs} girdi{compare ? " · 2 faz" : ""}
-        </span>
-      </div>
-      <p>
-        {compare
-          ? `Aynı ${inputs} girdiyi her modelde iki kez çalıştırırız. Önce girdiler sırayla gönderilir; bir yanıt bitmeden diğeri başlamaz. Sonra aynı girdilerin tamamı birlikte gönderilir. Böylece eşzamanlı yükün hız ve bekleme süresi üzerindeki etkisini görürsün.`
-          : concurrent
-            ? `${inputs} girdi, her modelin kendi testinde aynı anda gönderilir. Örneğin 4 girdi seçersen model aynı anda 4 yanıt üretmeye çalışır; bir isteğin bitmesi beklenmez. Bu mod, servisinin birden fazla kullanıcıya aynı anda cevap verme kapasitesini ölçer.`
-            : "Tek bir girdi seçtiğin modellerde aynı ayarlarla gönderilir. İlk yanıtın ne kadar sürede geldiğini ve cevabın ne kadar sürede tamamlandığını karşılaştırırsın."}
-      </p>
-      <div className="mode-sequence">
-        {!concurrent && (
-          <div className="sequence-lane">
-            <span>
-              <Timer size={14} />
-              {compare ? "İlk faz · sırayla" : "Tek istek"}
-            </span>
-            <div className="sequence-items">
-              {Array.from(
-                { length: compare ? Math.min(inputs, 4) : 1 },
-                (_, i) => (
-                  <span className="sequence-pair" key={i}>
-                    <span className="sequence-request">
-                      Girdi {String(i + 1).padStart(2, "0")}
-                    </span>
-                    {i < Math.min(inputs, 4) - 1 && compare && (
-                      <>
-                        <small>yanıt bitsin</small>
-                        <ArrowRight size={12} />
-                      </>
-                    )}
-                  </span>
-                ),
-              )}
-              {compare && inputs > 4 && <small>… {inputs} girdi</small>}
-            </div>
-          </div>
-        )}
-        {(concurrent || compare) && (
-          <div className="sequence-lane">
-            <span>
-              <Layers3 size={14} />
-              {compare ? "İkinci faz · aynı anda" : "Aynı anda gönderim"}
-            </span>
-            <div className="sequence-items concurrent">
-              {Array.from({ length: Math.min(inputs, 24) }, (_, i) => (
-                <span className="sequence-request" key={i}>
-                  Girdi {String(i + 1).padStart(2, "0")}
-                </span>
-              ))}
-              {inputs > 24 && <small>+{inputs - 24} girdi</small>}
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="mode-takeaways">
-        <span>
-          <Check size={13} />
-          {compare
-            ? `${models * inputs * 2} toplam API isteği; iki faz ayrı raporlanır.`
-            : `${models * inputs} toplam API isteği; tüm modeller aynı girdileri alır.`}
-        </span>
-        <span>
-          <Check size={13} />
-          {compare
-            ? "Sonuçlarda “Sırayla” ve “Aynı anda” fazlarını değiştirerek karşılaştır."
-            : "İlk token süresi, toplam verim ve tamamlanma süresini birlikte değerlendir."}
-        </span>
-      </div>
-      <div className="model-schedule-explanation">
-        <b>Modellerin çalışma sırası farklı bir ayardır.</b>
+    <details className="mode-explanation">
+      <summary><CircleHelp size={15} aria-hidden="true" /> Bu test nasıl çalışır? <ChevronDown size={15} aria-hidden="true" /></summary>
+      <div className="mode-explanation-body">
         <p>
-          {schedule === "parallel"
-            ? "“Modeller aynı anda” seçili: her fazda seçtiğin modellerin testleri birlikte başlar. Ayrı sunucu/GPU kullanan modeller için uygundur. Aynı GPU’yu paylaşan modeller birbirini yavaşlatabilir."
-            : "“Modeller sırayla” seçili: ilk modelin o fazdaki testi biter, sonra diğer model başlar. Bu, girdilerin eşzamanlı gönderilmesine engel değildir. Aynı GPU’yu paylaşan servisleri karşılaştırırken birbirine ek yük bindirmemeye yardımcı olur."}
-          {compare &&
-            " Önce tüm modellerin sırayla gönderim fazı tamamlanır, ardından tüm modellerin aynı anda gönderim fazına geçilir."}
+          {compare
+            ? `Her model aynı ${count} girdiyi iki fazda alır. İlk fazda bir istek sonuçlanınca sıradaki başlar. İkinci fazda girdiler birlikte gönderilir. Sonuçlarda iki fazı ayrı ayrı inceleyebilirsin.`
+            : single
+              ? "Seçtiğin her model aynı girdiyi bir kez alır. İlk token ve cevabın tamamlanma sürelerini karşılaştırabilirsin."
+              : `Her modelin ${count} girdisi, önceki yanıtlar beklenmeden birlikte gönderilir. Bu mod, modelin yük altındaki hızını ve yanıt sürelerini ölçer.`}
         </p>
+        <div className="mode-sequence">
+          {(single || compare) && (
+            <div className="sequence-lane">
+              <span><Timer size={15} aria-hidden="true" /> {single ? "Tek istek" : "İlk faz · sırayla"}</span>
+              <div className="sequence-items">
+                {Array.from({ length: single ? 1 : visibleInputs }, (_, index) => (
+                  <span className="sequence-pair" key={index}>
+                    <span className="sequence-request">Girdi {index + 1}</span>
+                    {compare && index < visibleInputs - 1 && <><small>yanıt bitsin</small><ArrowRight size={13} aria-hidden="true" /></>}
+                  </span>
+                ))}
+                {compare && count > visibleInputs && <small>+${count - visibleInputs} girdi</small>}
+              </div>
+            </div>
+          )}
+          {!single && (
+            <div className="sequence-lane">
+              <span><Layers3 size={15} aria-hidden="true" /> {compare ? "İkinci faz · birlikte" : "Birlikte gönderim"}</span>
+              <div className="sequence-items concurrent">
+                {Array.from({ length: visibleInputs }, (_, index) => (
+                  <span className="sequence-request" key={index}>Girdi {index + 1}</span>
+                ))}
+                {count > visibleInputs && <small>+${count - visibleInputs} girdi</small>}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="model-schedule-explanation">
+          <b>Modellerin çalışma sırası</b>
+          <p>
+            {schedule === "parallel"
+              ? "Seçilen modellerin testleri her fazda birlikte başlar. Aynı GPU’yu paylaşan modeller birbirini yavaşlatabilir."
+              : "Bir modelin o fazdaki testi bitince diğer model başlar. Her modelin kendi girdileri, seçilen test türüne göre gönderilir."}
+            {compare && " İlk faz tüm modellerde tamamlanınca ikinci faz başlar."}
+          </p>
+        </div>
       </div>
-    </div>
+    </details>
   );
 }

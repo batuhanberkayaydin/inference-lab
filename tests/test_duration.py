@@ -107,7 +107,7 @@ class DurationTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.store = Store(self.temp.name)
         self.engine = Engine(self.store)
-        self.model = self.store.save_model({'name': 'Local fixture', 'model': 'pass', 'base_url': f'http://127.0.0.1:{self.provider.server_port}', 'api_key':'local-secret'})
+        self.model = self.store.save_model({'name': 'Local fixture', 'model': 'pass', 'base_url': f'http://127.0.0.1:{self.provider.server_port}', 'api_key':'local-secret', 'empty_guard_enabled': True})
         self.config = {'model_id':self.model['id'], 'concurrency':2, 'duration_s':1, 'interval_s':.1, 'timeout':2, 'demo':False, 'payload':{'messages':[{'role':'user','content':'Selam'}], 'stream':True, 'max_tokens':1024, 'chat_template_kwargs':{'enable_thinking':True, 'reasoning_effort':'medium'}}}
         with Provider.lock: Provider.calls=[]; Provider.peak=0
     def tearDown(self): self.temp.cleanup()
@@ -159,6 +159,35 @@ class DurationTests(unittest.TestCase):
         self.assertTrue(run['summary']['all_success'])
         self.assertEqual(run['requests'][0]['guard']['version'],'2.3')
         self.assertIsNone(run['requests'][0]['ttft_s'])
+
+    def test_guard_opt_in_preserves_http_outcome_and_run_history(self):
+        model = self.store.save_model({
+            'name': 'Optional guard', 'model': 'retry',
+            'base_url': self.model['base_url'],
+        })
+        self.assertFalse(model['empty_guard_enabled'])
+        config = self.config | {'model_id': model['id'], 'concurrency': 1, 'interval_s': 1}
+        guard_keys = {'guard_pass', 'guard_other', 'guard_missing', 'retried', 'attempts_unknown', 'all_guard_pass'}
+        for provider_model, expected_status in (('retry', 200), ('http-error', 500)):
+            with self.subTest(provider_model=provider_model):
+                self.store.save_model(model | {'model': provider_model})
+                report = finish(self.engine, duration.start(self.engine, config)['id'])
+                self.assertFalse(report['config']['empty_guard_enabled'])
+                self.assertEqual(report['requests'][0]['http_status'], expected_status)
+                self.assertEqual(report['summary']['all_success'], expected_status == 200)
+                self.assertNotIn('guard', report['requests'][0])
+                self.assertFalse(guard_keys.intersection(report['summary']))
+                self.assertEqual(self.store.get('duration_runs', report['id'])['summary'], report['summary'])
+
+        self.store.save_model(model | {'empty_guard_enabled': True})
+        report = finish(self.engine, duration.start(self.engine, config)['id'])
+        self.store.save_model(model)
+        historical = duration.page(self.engine, report['id'])
+        self.assertTrue(historical['config']['empty_guard_enabled'])
+        self.assertEqual(historical['summary']['retried'], 1)
+        self.assertEqual(historical['requests'][0]['guard']['attempts'], 2)
+        del report['config']['empty_guard_enabled']
+        self.assertEqual(duration.summary(report)['retried'], 1)
 
     def test_missing_headers_and_usage_are_unknown(self):
         run=self.run_case('missing',interval_s=1)
