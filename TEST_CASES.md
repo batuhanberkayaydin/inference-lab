@@ -36,6 +36,8 @@
 - Tek istek, eşzamanlı, seri vs. eşzamanlı modları.
 - Yeni demo istekleri reddedilir; geçmiş demo raporları sentetik olarak işaretli kalır.
 - Tüm metriğin görünmesi, referans model farkları ve istek çıktıları.
+- Aynı fazda girdilerin ilk akış parçaları sıra dışı geldiğinde en erken ve en geç zamanlar doğru girdiyle eşleşmeli. İstek detayındaki ilk token anı, gönderim zamanı ve TTFT toplamına eşit olmalı. İlk tokenı alınamayan istekler kapsam sayısında eksik kalmalı.
+- Uçtan uca 50 ve 10 tok/sn ölçülen iki isteğin son ortalaması 30 tok/sn olmalı. Başarısız veya token kullanımı bilinmeyen bir üçüncü istek eklendiğinde ortalama 30 tok/sn ve kapsam 2/3 kalmalı.
 - Koşunun otomatik kaydı, geçmişten açılması, arama/filtre ve dışa aktarım.
 - Model ekleme/düzenleme; anahtarın geri gönderilmemesi.
 - Özel CA kullanan modelin HTTPS bağlantı kontrolü ve benchmark istekleri yerel TLS sağlayıcıyla doğrulanır. Sertifikasız ve sunucu adı uyuşmayan bağlantılar başarısız olur. Özel anahtar içeren dosya reddedilir, boş düzenleme CA kaydını korur, açık kaldırma seçeneği kaydı temizler.

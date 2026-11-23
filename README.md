@@ -132,13 +132,19 @@ Toplam çıktı verimi, TTFT ortalama/p95/p99, tahmini akış hızı, uçtan uca
 
 Token sayısı sağlayıcı usage alanından alınır. Sağlayıcı usage göndermiyorsa token tabanlı hızlar boş kalır; karakter tahmini sadece girdi hazırlığında gösterilir. Grafik, sağlayıcı sayıları geldikçe toplam çıktı / geçen süreyi gösterir. Ara usage olmayan sağlayıcılarda tamamlanma anında güncellenir; gerçek zamanlı decode token hızını temsil etmez.
 
-Genel bakış grafiği benchmark ve kayıtlı raporlarda ortaktır. Verim veya kümülatif çıktı tokenı seçilebilir; model isimlerine tıklayarak çizgiler gizlenir/gösterilir. Grafiğe tıklayarak, üzerinde gezinerek veya süre kaydırıcısının ok/Home/End tuşlarını kullanarak kayıtlı örnekler incelenir. Eksenler koşu süresine ve değerlere, çizim alanı da gerçek panel genişliğine uyarlanır. Eksik veriler sıfır olarak çizilmez veya aradaki boşluklar birleştirilmez. Her model kendi fazının başlangıcına göre hizalanır; faz tamamlandığında son nokta rapor özetiyle eşleşir.
+Genel bakış grafiği benchmark ve kayıtlı raporlarda ortaktır. Varsayılan **Ortalama uçtan uca istek hızı**, o ana kadar tamamlanan başarılı isteklerdeki `çıktı tokenı / toplam yanıt süresi` değerlerinin aritmetik ortalamasıdır. **Ortalama akış hızı**, ilk ve son akış parçası arasında ölçülen tahmini istek hızlarının ortalamasıdır. **Toplam verim** ve **Çıktı tokenları** da seçilebilir. Koşu özeti her model için uçtan uca ortalamayı ve ölçüm kapsamını gösterir. Bitiş zamanları bulunmayan eski raporlarda hesaplanabilen son ortalama görünür.
+
+Model ismine tıklayarak çizgiyi gizleyebilir, grafik veya süre kaydırıcısıyla kayıtlı örnekleri inceleyebilirsiniz. Eksenler veriye ve panel genişliğine uyarlanır. Her çizgi kendi model fazının başlangıcına göre hizalanır. Eksik değerler boş kalır.
 
 Draft/kabul oranı için isteğe bağlı metrics URL eklenir. Desteklenen sayaçlar: `spec_decode_num_drafts_total`, `spec_decode_num_draft_tokens_total`, `spec_decode_num_accepted_tokens_total`. [vLLM kaynak dokümanı](https://github.com/vllm-project/vllm/blob/main/docs/features/speculative_decoding/acceptance_metrics.md) bu sayaçların anlamlarını açıklar. Öncesi/sonrası farklar kullanılır; sayaçlar sunucu kapsamında olduğu için diğer trafik ve yayın gecikmesi sonucu etkileyebilir. Küçük ilk sürümde warmup, çoklu tekrar veya donanım izolasyonu doğrulaması yoktur.
 
 Bu uygulama performans ölçer; model cevaplarının doğruluğunu otomatik değerlendirmez. Her fazda 1–1024 örnek kullanılır. p95/p99 koşudaki örnekleri özetler.
 
 Koşular, durdurma ve hata durumları dahil, `data/lab.sqlite3` içinde saklanır. Raporlar geçmişten açılabilir, onay verilerek silinebilir ve **Markdown / CSV / JSON** olarak dışa aktarılabilir. Devam eden koşular silinemez. **PDF / Yazdır** raporun ekrandaki görünümünü yeni sekmede açıp tarayıcının yazdırma penceresini gösterir; açılır pencerelere izin verilmesi gerekebilir. Girdiler ve model çıktıları raporlarda saklandığından kendi veri saklama politikanıza uygun içerik kullanın.
+
+**Ölçüm bilgileri** sekmesi koşu ayarlarını özetler. **Girdileri aç** ile önizlemeleri sayfa sayfa inceleyebilir, bir girdiyi açarak tam metnini ve eklerini yükleyebilirsiniz. Tüm girdileri tek dosyada almak için **Tam JSON indir** seçeneğini kullanın.
+
+**İlk token zaman aralığı** her modelin seçili fazında, isteklerin ilk akış parçalarından en erken ve en geç gelenin zamanını ve girdi numarasını gösterir. **İstek detayları** bölümünde gönderim zamanı ve ilk token anı faz başlangıcına göre, TTFT ise isteğin gönderiminden itibaren ölçülür. Akış kesilmeden önce alınan ilk token da gözlenen istek sayısına girer. Normal JSON yanıtta gönderim zamanı ölçülür ve ilk token alanları boş kalır.
 
 ## Yerel ayarlar
 

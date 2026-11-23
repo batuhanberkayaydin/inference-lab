@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { REQUESTS_PER_PAGE, RequestPage } from "./RequestCount";
-import { MediaPreviews, type MediaImage } from "./VisualInput";
+import { ReportInputDetails, useReportInputPage, type ReportInputSource } from "./ReportInputs";
 import "./responses.css";
 
 export type GuardInfo = {
@@ -61,28 +61,23 @@ function Answer({ model, row, stream, showGuard }: { model: ResponseModel; row?:
   </article>;
 }
 
-export function ResponseComparison({ phase, prompts, images, stream }: {
+export function ResponseComparison({ phase, source, stream }: {
   phase: { models: ResponseModel[] };
-  prompts: string[];
-  images?: Record<number, MediaImage[]>;
+  source: ReportInputSource;
   stream: boolean;
 }) {
   const [page, setPage] = useState(0);
-  const visiblePage = Math.max(0, Math.min(page, Math.ceil(prompts.length / REQUESTS_PER_PAGE) - 1));
+  const visiblePage = Math.max(0, Math.min(page, Math.ceil(source.count / REQUESTS_PER_PAGE) - 1));
   const offset = visiblePage * REQUESTS_PER_PAGE;
-  const visiblePrompts = prompts.slice(offset, offset + REQUESTS_PER_PAGE)
-    .map((prompt, index) => ({prompt, index: offset + index}));
+  const { items } = useReportInputPage(source, visiblePage);
+  const visibleInputs = Array.from({ length: Math.min(REQUESTS_PER_PAGE, source.count - offset) }, (_, position) => offset + position);
   const models = phase.models.map(model => ({model, showGuard: showsBenchmarkGuard(model)}));
   return <section className="response-comparison" aria-label="Girdi bazında cevap karşılaştırması">
     <div className="responses-heading"><h3>Girdiler ve model cevapları</h3><p>{stream ? "Yanıtlar geldikçe güncellenir; tamamlanan metinler açık kalır." : "Normal yanıtlar tamamlandığında gösterilir. İlk token ve akış hızı bu biçimde ölçülmez."} Faz seçimi, bu bölümdeki cevapları da değiştirir.</p></div>
-    <RequestPage label="Cevap aralığı" total={prompts.length} page={visiblePage} onChange={setPage} />
-    {visiblePrompts.map(({prompt, index}) => <section className="response-input" key={index} aria-label={`Girdi ${index + 1} cevapları`}>
+    <RequestPage label="Cevap aralığı" total={source.count} page={visiblePage} onChange={setPage} />
+    {visibleInputs.map((index, position) => <section className="response-input" key={index} aria-label={`Girdi ${index + 1} cevapları`}>
       <div className="response-input-heading"><h3>Girdi {String(index + 1).padStart(2, "0")}</h3><span>{phase.models.length} model cevabı</span></div>
-      <details className="response-prompt">
-        <summary><span>{prompt.length > 140 ? prompt.slice(0, 140) + "…" : prompt}{images?.[index]?.length ? `${prompt ? " · " : ""}${images[index].length} görsel` : ""}</span><b>Girdiyi göster</b></summary>
-        {prompt && <pre>{prompt}</pre>}
-        <MediaPreviews images={images?.[index] ?? []} />
-      </details>
+      <ReportInputDetails source={source} index={index} preview={items[position]} />
       <div className="answer-grid" style={{ gridTemplateColumns: `repeat(${models.length}, minmax(0, 1fr))` }}>
         {models.map(({model, showGuard}) => <Answer key={model.id} model={model} row={model.requests.find(row => row.index === index)} stream={stream} showGuard={showGuard} />)}
       </div>

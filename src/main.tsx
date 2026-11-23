@@ -36,10 +36,13 @@ import {
 import "./styles.css";
 import { loadExample, type PromptExample } from "./examples";
 import { BenchmarkGuard, ResponseComparison, showsBenchmarkGuard, type GuardInfo } from "./ResponseComparison";
+import { FirstTokenTiming } from "./FirstTokenTiming";
+import { ReportInputs, type ReportInputSource } from "./ReportInputs";
 import { ModeExplanation } from "./ModeExplanation";
 import { distributePromptSources, PromptDistribution, type PromptSourceGroup } from "./PromptDistribution";
 import { VisualInput, requiresSingleImage, type MediaImage, type ModelInputFormat } from "./VisualInput";
 import { PerformanceChart as Chart } from "./PerformanceChart";
+import { averageRequestRate } from "./chart-data";
 import { api } from "./api";
 import { MAX_CONCURRENT_REQUESTS, REQUESTS_PER_PAGE, RequestCount, RequestPage, parseRequestCount } from "./RequestCount";
 import {
@@ -87,6 +90,9 @@ type Row = {
   input_tokens: number | null;
   output_tokens: number | null;
   ttft_s: number | null;
+  dispatch_offset_s?: number | null;
+  first_token_offset_s?: number | null;
+  completed_offset_s?: number | null;
   e2e_s: number | null;
   stream_tps: number | null;
   tpot_s: number | null;
@@ -109,7 +115,9 @@ type Target = Model & {
 type Phase = { name: string; models: Target[] };
 type Config = {
   mode: string;
-  prompts: string[];
+  prompts?: string[];
+  prompt_count?: number;
+  text_prompt_count?: number;
   prompt_images?: Record<number, MediaImage[]>;
   prompt_uuid_parts?: number[];
   max_tokens: number;
@@ -118,6 +126,7 @@ type Config = {
   model_schedule: string;
   demo: boolean;
   stream?: boolean;
+  reset_prefix_cache?: boolean;
 };
 type Report = {
   id: string;
@@ -130,6 +139,7 @@ type Report = {
   phases?: Phase[];
   warnings?: string[];
   fingerprint?: string;
+  request_phase_timing?: boolean;
 };
 type ReportSummary = Omit<Report, "config"> & {
   config: Omit<Config, "prompts" | "prompt_images"> & { prompt_count: number };
@@ -137,7 +147,7 @@ type ReportSummary = Omit<Report, "config"> & {
 const promptUuidPositions = ["Başlangıç", "Yaklaşık %25", "Yaklaşık %50", "Yaklaşık %75"];
 
 async function fetchBenchmarkReport(path: string, method = "GET", body?: unknown): Promise<Report> {
-  const report = await api<Report & { config: Config & { prompt_indices?: number[] } }>(path + "?compact=1", method, body);
+  const report = await api<Report & { config: Config & { prompts: string[]; prompt_indices?: number[] } }>(path + "?compact=1", method, body);
   const { prompt_indices: indices, ...config } = report.config;
   return { ...report, config: { ...config, prompts: indices ? indices.map(index => config.prompts[index]) : config.prompts } };
 }
@@ -368,10 +378,12 @@ function MetricHelp({metric, label}: {metric: string; label: string}) {
   </>;
 }
 
-function RequestMatrix({ phase }: { phase: Phase }) {
+function RequestMatrix({ phase, recorded }: { phase: Phase; recorded: boolean }) {
   const metrics = [
     ["input_tokens", "Giriş tok"],
-    ["ttft_s", "İlk token sn"],
+    ...(recorded ? [["dispatch_offset_s", "Gönderim · sn"]] as const : []),
+    ["ttft_s", "TTFT · sn"],
+    ...(recorded ? [["first_token_offset_s", "İlk token anı · sn"]] as const : []),
     ["stream_tps", "Akış tok/sn¹"],
     ["e2e_s", "E2E sn"],
     ["output_tokens", "Çıktı tok"],
@@ -380,7 +392,7 @@ function RequestMatrix({ phase }: { phase: Phase }) {
   return (
     <div className="request-matrix">
       <h3>Girdi bazında karşılaştırma</h3>
-      <div className="table-scroll">
+      <div className="table-scroll" role="region" aria-label="Girdi bazında ölçümler" tabIndex={0}>
         <table>
           <thead>
             <tr>
@@ -397,7 +409,8 @@ function RequestMatrix({ phase }: { phase: Phase }) {
             <tr>
               {models.map(({model: m, showGuard}) => (
                 <React.Fragment key={m.id}>
-                  {metrics.map(([key, label]) => <th scope="col" key={key}>{label}</th>)}
+                  {metrics.map(([key, label]) => <th scope="col" key={key}
+                    title={key === "ttft_s" ? "İsteğin gönderiminden ilk parçaya kadar geçen süre" : undefined}>{label}</th>)}
                   {showGuard && <th scope="col">Empty Guard</th>}
                 </React.Fragment>
               ))}
@@ -416,7 +429,7 @@ function RequestMatrix({ phase }: { phase: Phase }) {
                       {metrics.map(([key]) => (
                         <td key={key} className={!showGuard && key === "output_tokens" ? "model-request-end" : undefined}
                           title={row?.error || (row && statusLabels[row.status])}>
-                          {fmt(row?.[key], key.includes("tokens") ? 0 : 2)}
+                          {fmt(row?.[key], key.endsWith("_offset_s") ? 3 : key.includes("tokens") ? 0 : 2)}
                         </td>
                       ))}
                       {showGuard && <td className="model-request-end"><BenchmarkGuard row={row} /></td>}
@@ -490,7 +503,15 @@ function Results({
   }
   const phases = run.phases || [];
   const phase = phases[Math.min(phaseIndex, phases.length - 1)];
+  const recordedTiming = run.request_phase_timing === true;
   const running = active(run);
+  const inputSource: ReportInputSource = {
+    runId: run.id,
+    count: run.config.prompt_count ?? run.config.prompts?.length ?? 0,
+    prompts: run.config.prompts,
+    images: run.config.prompt_images,
+  };
+  const textInputCount = run.config.text_prompt_count ?? inputSource.count - Object.keys(inputSource.images ?? {}).length;
   const [baselineId, setBaselineId] = useState(run.models[0]?.id);
   const baseline =
     phase?.models.find((m) => m.id === baselineId) || phase?.models[0];
@@ -547,7 +568,7 @@ function Results({
           <p>
             {running
               ? "Akışlar çalışıyor. Her model aynı girdilerle ölçülüyor."
-              : `${date(run.created_at)} · ${run.config.prompts.length} girdi · ${run.models.length} model`}
+              : `${date(run.created_at)} · ${inputSource.count} girdi · ${run.models.length} model`}
           </p>
         </div>
         <div className="result-actions">
@@ -629,7 +650,7 @@ function Results({
               >
                 {p.name === "serial"
                   ? "Sırayla (C1)"
-                  : `Aynı anda (C${run.config.prompts.length})`}
+                  : `Aynı anda (C${inputSource.count})`}
               </button>
             ))}
           </div>
@@ -692,8 +713,23 @@ function Results({
                     : "Modeller sırayla"}
                 </b>
               </div>
+              <div className="request-rate-summary">
+                <h4>Ort. uçtan uca hız</h4>
+                <ul>
+                  {phase.models.map(model => {
+                    const { value, count } = averageRequestRate(model.requests);
+                    const total = model.requests.length;
+                    return <li key={model.id}>
+                      <b><i style={{ background: model.color }} />{model.name}</b>
+                      <span>{total.toLocaleString("tr-TR")} istek · ort. {value == null ? "—" : `${fmt(value)} tok/sn`}</span>
+                      {count < total && <small>{count.toLocaleString("tr-TR")} / {total.toLocaleString("tr-TR")} ölçüldü</small>}
+                    </li>;
+                  })}
+                </ul>
+              </div>
             </div>
           </div>
+          <FirstTokenTiming models={phase.models} recorded={recordedTiming} stream={run.config.stream !== false} />
           <section className="model-metric-overview" aria-labelledby="model-summary-title">
             <h3 id="model-summary-title">Model özetleri</h3>
             {phase.models.map((model) => (
@@ -811,11 +847,12 @@ function Results({
         </>
       )}
       {(tab === "summary" || tab === "answers") && phase && (
-        <ResponseComparison phase={phase} prompts={run.config.prompts} images={run.config.prompt_images} stream={run.config.stream !== false} />
+        <ResponseComparison phase={phase} source={inputSource} stream={run.config.stream !== false} />
       )}
       {tab === "requests" && phase && (
         <div className="request-results">
-          <RequestMatrix phase={phase} />
+          <FirstTokenTiming models={phase.models} recorded={recordedTiming} stream={run.config.stream !== false} />
+          <RequestMatrix phase={phase} recorded={recordedTiming} />
         </div>
       )}
       {tab === "method" && (
@@ -848,12 +885,6 @@ function Results({
               sayaç farkları. Sunucu trafiği ve yayın gecikmesi sonucu
               etkileyebilir.
             </dd>
-            {run.config.prompt_uuid_parts && run.config.prompts.some((_, index) => !run.config.prompt_images?.[index]?.length) && (
-              <>
-                <dt>Metin UUID konumları</dt>
-                <dd>{run.config.prompt_uuid_parts.map(part => `${part}/4`).join(", ")}</dd>
-              </>
-            )}
             <dt>Koşu kimliği</dt>
             <dd>
               <code>{run.id}</code>
@@ -869,7 +900,28 @@ function Results({
           ))}
           {!run.warnings?.length && <p>Bu koşu için ek not yok.</p>}
           <h3>Girdiler ve ayarlar</h3>
-          <pre>{JSON.stringify(run.config, null, 2)}</pre>
+          <dl>
+            <dt>Modeller</dt>
+            <dd>{run.models.map(model => model.name).join(", ")}</dd>
+            <dt>Girdi sayısı</dt>
+            <dd>{inputSource.count.toLocaleString("tr-TR")}</dd>
+            <dt>Çalışma düzeni</dt>
+            <dd>{run.config.mode === "compare" ? "Seri ve eşzamanlı" : run.config.mode === "single" ? "Tek istek" : "Eşzamanlı yük"} · {run.config.model_schedule === "parallel" ? "Modeller birlikte" : "Modeller sırayla"}</dd>
+            <dt>Çıktı limiti</dt>
+            <dd>{run.config.max_tokens?.toLocaleString("tr-TR") ?? "—"} token</dd>
+            <dt>Temperature</dt>
+            <dd>{run.config.temperature?.toLocaleString("tr-TR") ?? "—"}</dd>
+            <dt>Zaman aşımı</dt>
+            <dd>{run.config.timeout?.toLocaleString("tr-TR") ?? "—"} sn</dd>
+            <dt>Yanıt biçimi</dt>
+            <dd>{run.config.stream === false ? "Normal JSON" : "Stream"}</dd>
+            {run.config.prompt_uuid_parts && textInputCount > 0 && <>
+              <dt>Metin UUID konumları</dt>
+              <dd>{run.config.prompt_uuid_parts.map(part => `${part}/4`).join(", ")}</dd>
+            </>}
+            {run.config.reset_prefix_cache && <><dt>Prefix cache</dt><dd>Koşudan önce sıfırlama istendi</dd></>}
+          </dl>
+          <ReportInputs source={inputSource} />
         </div>
       )}
     </section>
@@ -1766,7 +1818,7 @@ function App() {
   async function openReport(report: ReportSummary) {
     setBusy(true);
     try {
-      setHistoric(await fetchBenchmarkReport("/runs/" + report.id));
+      setHistoric(await api<Report>(`/runs/${report.id}?view=report`));
     } catch (e) {
       setError((e as Error).message);
     } finally {

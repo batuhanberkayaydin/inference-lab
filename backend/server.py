@@ -98,6 +98,34 @@ def read_stored_report(raw):
     return report
 
 
+def benchmark_report_view(report):
+    if report.get('kind') == 'duration':
+        return None
+    config = report['config']
+    count = len(config['prompts'])
+    images = config.get('prompt_images', {})
+    settings = {key: value for key, value in config.items() if key not in ('prompts', 'prompt_images')}
+    return report | {'config': settings | {
+        'prompt_count': count,
+        'text_prompt_count': sum(not images.get(str(index)) for index in range(count)),
+    }}
+
+
+def benchmark_report_inputs(report, *, index=None, offset=0, limit=24):
+    if report.get('kind') == 'duration':
+        return None
+    config = report['config']
+    prompts = config['prompts']
+    images = config.get('prompt_images', {})
+    if index is not None:
+        if index >= len(prompts):
+            return None
+        return {'prompt': prompts[index], 'images': images.get(str(index), [])}
+    return [{'index': position, 'preview': prompt[:140] + ('…' if len(prompt) > 140 else ''), 'characters': len(prompt),
+             'image_count': len(images.get(str(position), []))}
+            for position, prompt in enumerate(prompts[offset:offset + limit], start=offset)]
+
+
 def valid_url(value, allow_empty=False):
     if not value and allow_empty:
         return ''
@@ -512,10 +540,10 @@ class Engine:
         except Exception:
             return {'ok': False, 'message': 'Sağlayıcıya bağlanılamadı veya istek zaman aşımına uğradı. URL ve ağ erişimini kontrol edin.', 'http_status': None}
 
-    def snapshot(self, ident):
+    def snapshot(self, ident, *, project=None):
         with self.lock:
             report = self.runs.get(ident) or self.store.get('reports', ident) or self.store.get('duration_runs', ident)
-            return copy.deepcopy(report)
+            return copy.deepcopy(project(report) if report is not None and project else report)
 
     def persist(self, run):
         with self.lock:
@@ -615,6 +643,7 @@ class Engine:
             fingerprint_payload = pack_benchmark_prompts({'config': config, 'models': clean_models})
             run = {'id': ident, 'name': str(data.get('name', '')).strip()[:120] or f'{"Demo" if demo else "Benchmark"} · {len(prompts)} istek',
                    'created_at': now(), 'finished_at': None, 'status': 'running', 'config': config, 'models': clean_models,
+                   'request_phase_timing': True,
                    'fingerprint': hashlib.sha256(json.dumps(fingerprint_payload, sort_keys=True).encode()).hexdigest(),
                    'warnings': ['Demo: sentetik veri; performans sonucu olarak kullanmayın.'] if demo else [], 'phases': []}
             for phase in (['serial', 'concurrent'] if mode == 'compare' else ['serial' if mode == 'single' else 'concurrent']):
@@ -775,7 +804,7 @@ class Engine:
         workers = len(target['requests']) if phase['name'] == 'concurrent' else 1
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-                list(pool.map(lambda row: self.request_one(run, target, model, row), target['requests']))
+                list(pool.map(lambda row: self.request_one(run, target, model, row, phase_started=started), target['requests']))
             wall = time.perf_counter() - started
         finally:
             done.set()
@@ -804,7 +833,7 @@ class Engine:
             with self.lock:
                 target['history'].append(self.sample_point(target, time.perf_counter() - started))
 
-    def request_one(self, run, target, model, row):
+    def request_one(self, run, target, model, row, *, phase_started=None):
         cancel = self.events[run['id']]
         if cancel.is_set():
             with self.lock:
@@ -812,6 +841,7 @@ class Engine:
             return
         prompt_index = row.get('prompt_index', row['index'])
         started = time.perf_counter()
+        request_started = started
         times, usage, finish, done, response = [], None, None, False, None
         stage = 'waiting_for_headers'
         deadline_fired = threading.Event()
@@ -868,7 +898,12 @@ class Engine:
                 if model['api_key']:
                     headers['Authorization'] = 'Bearer ' + model['api_key']
                 opener = provider_opener(model)
-                response = opener.open(Request(endpoint(model['base_url']), data=json.dumps(payload, ensure_ascii=False).encode(), headers=headers), timeout=config['timeout'])
+                request = Request(endpoint(model['base_url']), data=json.dumps(payload, ensure_ascii=False).encode(), headers=headers)
+                if phase_started is not None:
+                    with self.lock:
+                        request_started = time.perf_counter()
+                        row['dispatch_offset_s'] = request_started - phase_started
+                response = opener.open(request, timeout=config['timeout'])
                 del payload
                 stage = 'receiving_response'
                 with self.lock:
@@ -930,7 +965,10 @@ class Engine:
                                     with self.lock:
                                         row['text'] += content
                                         row['reasoning'] = row.get('reasoning', '') + reasoning
-                                        row['ttft_s'] = times[0] - started
+                                        if len(times) == 1:
+                                            row['ttft_s'] = times[0] - request_started
+                                            if phase_started is not None:
+                                                row['first_token_offset_s'] = times[0] - phase_started
                                         row['content_chunks'] = len(times)
                                 if choice.get('finish_reason') is not None:
                                     finish = choice['finish_reason']
@@ -950,11 +988,13 @@ class Engine:
             span = times[-1] - times[0] if len(times) > 1 else 0
             with self.lock:
                 row.update(status='completed', input_tokens=token_count('prompt_tokens'), output_tokens=output,
-                           ttft_s=times[0] - started if times else None, e2e_s=ended - started, finish_reason=finish,
+                           ttft_s=times[0] - request_started if times else None, e2e_s=ended - started, finish_reason=finish,
                            stream_tps=(output - 1) / span if output is not None and output > 1 and span > 0 else None,
                            tpot_s=span / (output - 1) if output is not None and output > 1 and span > 0 else None,
                            chunk_gap_p95_s=percentile([b-a for a,b in zip(times, times[1:])], .95),
                            content_chunks=len(times), usage_source='synthetic' if run['config']['demo'] else ('provider' if usage else 'unavailable'))
+                if phase_started is not None:
+                    row['completed_offset_s'] = ended - phase_started
                 if not usage:
                     warning = model['name'] + ': Sağlayıcı usage göndermedi; token tabanlı hızlar hesaplanamadı.'
                     if warning not in run['warnings']:
@@ -1156,13 +1196,25 @@ def handler_for(engine):
                                 config = row['config']
                                 row['config'] = {k: v for k, v in config.items() if k not in ('prompts', 'prompt_images')} | {'prompt_count': len(config['prompts'])}
                         return self.reply(rows)
+                    inputs = re.fullmatch(r'/api/runs/([a-f0-9]{16})/inputs(?:/([0-9]{1,4}))?', path)
+                    if inputs:
+                        query = parse_qs(urlparse(self.path).query)
+                        offset = max(0, int(query.get('offset', ['0'])[0]))
+                        limit = min(50, max(1, int(query.get('limit', ['24'])[0])))
+                        index = int(inputs.group(2)) if inputs.group(2) is not None else None
+                        result = engine.snapshot(inputs.group(1), project=lambda run:
+                            benchmark_report_inputs(run, index=index, offset=offset, limit=limit))
+                        return self.reply(result) if result is not None else self.reply({'error': 'Rapor girdisi bulunamadı.'}, 404)
                     match = re.fullmatch(r'/api/runs/([a-f0-9]{16})(?:/export)?', path)
                     if match:
-                        run = engine.snapshot(match.group(1))
+                        query = parse_qs(urlparse(self.path).query)
+                        export = path.endswith('/export')
+                        view = benchmark_report_view if not export and query.get('view') == ['report'] else None
+                        run = engine.snapshot(match.group(1), project=view)
                         if not run:
                             return self.reply({'error': 'Rapor bulunamadı.'}, 404)
-                        if path.endswith('/export'):
-                            fmt = parse_qs(urlparse(self.path).query).get('format', ['json'])[0]
+                        if export:
+                            fmt = query.get('format', ['json'])[0]
                             if fmt not in ('json', 'md', 'csv'):
                                 raise ValueError('Desteklenen biçimler: json, md, csv.')
                             headers = {'Content-Disposition': f'attachment; filename="inference-{run["id"]}.{fmt}"'}
@@ -1170,7 +1222,7 @@ def handler_for(engine):
                                 return self.reply(run, headers=headers)
                             return self.reply(markdown_report(run) if fmt == 'md' else csv_report(run), headers=headers,
                                               content_type='text/markdown; charset=utf-8' if fmt == 'md' else 'text/csv; charset=utf-8')
-                        if parse_qs(urlparse(self.path).query).get('compact') == ['1']:
+                        if query.get('compact') == ['1']:
                             run = pack_benchmark_prompts(run)
                         return self.reply(run)
                     return self.reply({'error': 'Uç nokta bulunamadı.'}, 404)

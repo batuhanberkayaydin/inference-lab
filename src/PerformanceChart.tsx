@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Activity } from "lucide-react";
 import {
   niceAxis,
@@ -17,8 +17,35 @@ const tick = (value: number) =>
     ? display(value / 1000) + "k"
     : display(value, value < 1 ? 3 : 2);
 const patterns = ["", "7 4", "2 4", "9 3 2 3"];
+const chartMetrics = {
+  e2e_tps: {
+    option: "Ort. uçtan uca hız",
+    title: "Ortalama uçtan uca istek hızı",
+    description: "Her isteğin çıktı tokenı / toplam yanıt süresi. Ölçülebilen hızların ortalaması.",
+    unit: "tok/sn",
+  },
+  stream_tps: {
+    option: "Ort. akış hızı",
+    title: "Ortalama akış hızı (tahmini)",
+    description: "İlk ve son akış parçası arasındaki tahmini istek hızlarının ortalaması.",
+    unit: "tok/sn",
+  },
+  throughput: {
+    option: "Toplam verim",
+    title: "Toplam çıktı verimi",
+    description: "Toplam çıktı tokenı / model fazında geçen süre",
+    unit: "tok/sn",
+  },
+  tokens: {
+    option: "Çıktı tokenları",
+    title: "Üretilen çıktı tokenları",
+    description: "Kümülatif token sayısı",
+    unit: "token",
+  },
+} satisfies Record<ChartMetric, { option: string; title: string; description: string; unit: string }>;
+
 export function PerformanceChart({ phase }: { phase: { models: ChartModel[] } }) {
-  const [metric, setMetric] = useState<ChartMetric>("throughput");
+  const [metric, setMetric] = useState<ChartMetric>("e2e_tps");
   const [hidden, setHidden] = useState<string[]>([]);
   const [hover, setHover] = useState<number | null>(null);
   const [inspection, setInspection] = useState<number | null>(null);
@@ -46,37 +73,53 @@ export function PerformanceChart({ phase }: { phase: { models: ChartModel[] } })
     return () => media.removeEventListener("change", change);
   }, []);
   const models = phase.models;
-  const series = models.map((model) => ({
+  const selectedMetric = chartMetrics[metric];
+  const perRequest = metric === "e2e_tps" || metric === "stream_tps";
+  const series = useMemo(() => models.map((model) => ({
     model,
     points: seriesFor(model, metric),
-  }));
-  const points = series.flatMap((item) => item.points);
-  const measured = points.filter((point) => point.value !== null);
-  const maxTime = points.reduce((max, point) => Math.max(max, point.time), 0);
-  const maxValue = measured.reduce(
-    (max, point) => Math.max(max, point.value!),
-    0,
-  );
+  })), [models, metric]);
+  const { maxTime, maxValue } = useMemo(() => {
+    let maxTime = 0;
+    let maxValue = 0;
+    for (const {points} of series) {
+      for (const point of points) {
+        maxTime = Math.max(maxTime, point.time);
+        if (point.value !== null) maxValue = Math.max(maxValue, point.value);
+      }
+    }
+    return { maxTime, maxValue };
+  }, [series]);
   const width = plotWidth || (mobile ? 360 : 800);
   const xAxis = niceAxis(maxTime, width < 500 ? 3 : width < 700 ? 4 : 5, 5);
-  const yAxis = niceAxis(maxValue * 1.08, 4, metric === "tokens" ? 100 : 100);
+  const yAxis = niceAxis(maxValue * 1.08, 4, 100);
   const height = mobile ? 250 : 270,
     left = 58,
     right = 20,
     top = 20,
     bottom = 40;
-  const x = (time: number) =>
-    left + (time / xAxis.max) * (width - left - right);
-  const y = (value: number) =>
-    top + (1 - value / yAxis.max) * (height - top - bottom);
+  const x = useCallback((time: number) =>
+    left + (time / xAxis.max) * (width - left - right), [left, right, width, xAxis.max]);
+  const y = useCallback((value: number) =>
+    top + (1 - value / yAxis.max) * (height - top - bottom), [top, bottom, height, yAxis.max]);
   const selectedTime = Math.min(
     xAxis.max,
     Math.max(0, hover ?? inspection ?? maxTime),
   );
-  const visible = series.filter((item) => !hidden.includes(item.model.id));
-  const hasData = visible.some((item) =>
-    item.points.some((point) => point.value !== null),
-  );
+  const drawing = useMemo(() => series.map(({ model, points }, index) => ({
+    model,
+    points,
+    index,
+    paths: segmentsFor(points).map(segment => segment.map((point, position) => {
+      const horizontal = x(point.time).toFixed(2);
+      const vertical = y(point.value).toFixed(2);
+      if (position === 0) return `M ${horizontal} ${vertical}`;
+      return metric === "throughput" ? `L ${horizontal} ${vertical}` : `H ${horizontal} V ${vertical}`;
+    }).join(" ")),
+    last: points.filter(point => point.value !== null).at(-1),
+  })), [series, metric, x, y]);
+  const visible = drawing.filter((item) => !hidden.includes(item.model.id));
+  const hasData = visible.some((item) => !!item.last);
   function pointer(e: React.PointerEvent<SVGSVGElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
     return Math.max(
@@ -89,28 +132,12 @@ export function PerformanceChart({ phase }: { phase: { models: ChartModel[] } })
       ),
     );
   }
-  function pathFor(segment: { time: number; value: number }[]) {
-    return segment
-      .map(
-        (point, i) =>
-          `${i === 0 ? "M" : metric === "tokens" ? "H" : "L"} ${x(point.time)}${i === 0 || metric !== "tokens" ? " " + y(point.value) : " V " + y(point.value)}`,
-      )
-      .join(" ");
-  }
   return (
     <div className="performance-chart">
       <div className="performance-heading">
         <div>
-          <h3>
-            {metric === "tokens"
-              ? "Üretilen çıktı tokenları"
-              : "Toplam çıktı verimi"}
-          </h3>
-          <p>
-            {metric === "tokens"
-              ? "Kümülatif token sayısı"
-              : "Toplam çıktı tokenı / geçen süre"}
-          </p>
+          <h3>{selectedMetric.title}</h3>
+          <p>{selectedMetric.description}</p>
         </div>
         <select
           aria-label="Grafikte gösterilecek metrik"
@@ -121,8 +148,7 @@ export function PerformanceChart({ phase }: { phase: { models: ChartModel[] } })
             setHover(null);
           }}
         >
-          <option value="throughput">Verim · tok/sn</option>
-          <option value="tokens">Çıktı · token</option>
+          {Object.entries(chartMetrics).map(([key, value]) => <option key={key} value={key}>{value.option}</option>)}
         </select>
       </div>
       {models.length > 0 && (
@@ -159,19 +185,15 @@ export function PerformanceChart({ phase }: { phase: { models: ChartModel[] } })
         <svg
           viewBox={`0 0 ${width} ${height}`}
           role="img"
-          aria-label={`${metric === "tokens" ? "Çıktı tokenları" : "Toplam verim"}: model başına geçen süre grafiği`}
+          aria-label={`${selectedMetric.title} · model fazında geçen süre grafiği`}
           onPointerMove={(e) => setHover(pointer(e))}
           onPointerLeave={() => setHover(null)}
           onPointerDown={(e) => setInspection(pointer(e))}
         >
-          <title>
-            {metric === "tokens"
-              ? "Sağlayıcı tarafından bildirilen çıktı tokenları"
-              : "Model fazının başlangıcından itibaren toplam çıktı / geçen süre"}
-          </title>
+          <title>{selectedMetric.description}</title>
           <rect x={left} y={top} width={width - left - right} height={height - top - bottom} rx="4" className="plot-surface" />
           <text x={left} y="11" className="plot-unit">
-            {metric === "tokens" ? "token" : "tok/sn"}
+            {selectedMetric.unit}
           </text>
           {yAxis.ticks.map((value) => (
             <g key={value}>
@@ -210,18 +232,13 @@ export function PerformanceChart({ phase }: { phase: { models: ChartModel[] } })
             Geçen süre (sn)
           </text>
           {hasData &&
-            visible.map(({ model, points }) => {
-              const index = series.findIndex(
-                (item) => item.model.id === model.id,
-              );
-              const segments = segmentsFor(points);
-              const last = points.filter((p) => p.value !== null).at(-1);
+            visible.map(({ model, paths, index, last }) => {
               return (
                 <g key={model.id}>
-                  {segments.map((segment, i) => (
+                  {paths.map((path, i) => (
                     <path
                       key={i}
-                      d={pathFor(segment)}
+                      d={path}
                       stroke={model.color}
                       strokeWidth="2.6"
                       strokeDasharray={patterns[index % 4]}
@@ -277,9 +294,9 @@ export function PerformanceChart({ phase }: { phase: { models: ChartModel[] } })
           <div className="performance-empty">
             <Activity size={24} />
             <b>
-              {!visible.length && models.length ? "Bir modeli görünür yap" : "Görüntülenecek token ölçümü yok"}
+              {!visible.length && models.length ? "Bir modeli görünür yap" : perRequest ? "Ölçülen istek hızı yok" : "Görüntülenecek token ölçümü yok"}
             </b>
-            {visible.length > 0 && <span>Grafik, sağlayıcının bildirdiği token ölçümlerini gösterir.</span>}
+            {visible.length > 0 && <span>{perRequest ? "Değerler, tamamlanan ve hızı ölçülebilen isteklerden gelir." : "Grafik, sağlayıcının bildirdiği token ölçümlerini gösterir."}</span>}
           </div>
         )}
       </div>
@@ -319,11 +336,11 @@ export function PerformanceChart({ phase }: { phase: { models: ChartModel[] } })
                     {point
                       ? display(point.value!, metric === "tokens" ? 0 : 2)
                       : "—"}
-                    <small>{metric === "tokens" ? "token" : "tok/sn"}</small>
+                    <small>{selectedMetric.unit}</small>
                   </b>
                   <small>
                     {point
-                      ? `${display(point.time, 2)} sn ölçümü`
+                      ? `${display(point.time, 2)} sn ölçümü${point.measuredRequests != null ? ` · ${point.measuredRequests.toLocaleString("tr-TR")} istek` : ""}`
                       : "Bu sürede veri yok"}
                   </small>
                 </div>
@@ -334,10 +351,10 @@ export function PerformanceChart({ phase }: { phase: { models: ChartModel[] } })
       )}
       <p className="performance-caption">
         {hasData && visible.every(({ points }) => points.filter((point) => point.value !== null).length <= 1) &&
-          "Ara token ölçümü yok; yalnızca kayıtlı ölçüm noktası gösteriliyor. "}
-        Her eğri kendi model fazının başlangıcına göre hizalanır. Token sayısı
-        sağlayıcıdan geldikçe güncellenir. Faz tamamlandığında son nokta toplam
-        sonucu gösterir.
+          (perRequest ? "Ara hız zamanları bulunamadığında son ortalama gösterilir. " : "Ara token ölçümü yok. ")}
+        Her eğri kendi model fazının başlangıcına göre hizalanır. {perRequest
+          ? "Ortalama, hızı ölçülebilen her başarılı istek tamamlandıkça güncellenir."
+          : "Token sayısı sağlayıcıdan geldikçe güncellenir. Son nokta fazın toplam sonucunu gösterir."}
       </p>
     </div>
   );

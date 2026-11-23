@@ -12,7 +12,7 @@ const code = ts.transpileModule(source, {
     target: ts.ScriptTarget.ES2022,
   },
 }).outputText;
-const { niceAxis, seriesFor, segmentsFor, sampleAt } = await import(
+const { niceAxis, seriesFor, segmentsFor, sampleAt, averageRequestRate } = await import(
   "data:text/javascript;base64," + Buffer.from(code).toString("base64")
 );
 const base = { id: "a", name: "fixture", color: "#000" };
@@ -100,4 +100,43 @@ test("measured zero is valid but unknown final values stay unknown", () => {
     seriesFor({ ...base, history: [{ time_s: 1, tokens: 0 }] }, "tokens"),
     [{ time: 1, value: 0 }],
   );
+});
+
+test("request speed uses the mean of successful measured requests in completion order", () => {
+  const requests = [
+    { status: "completed", output_tokens: 20, e2e_s: 2, stream_tps: 15, completed_offset_s: 3 },
+    { status: "completed", output_tokens: 50, e2e_s: 1, stream_tps: null, completed_offset_s: 1 },
+    { status: "completed", output_tokens: null, e2e_s: 2, completed_offset_s: 2 },
+    { status: "failed", output_tokens: 100, e2e_s: 1, stream_tps: 99, completed_offset_s: 2 },
+    { status: "running", output_tokens: 60, e2e_s: null },
+  ];
+  const model = { ...base, requests, summary: { wall_s: 4 } };
+  assert.deepEqual(averageRequestRate(requests), { value: 30, count: 2 });
+  const e2e = seriesFor(model, "e2e_tps");
+  assert.deepEqual(e2e, [
+    { time: 1, value: 50, measuredRequests: 1 },
+    { time: 3, value: 30, measuredRequests: 2 },
+    { time: 4, value: 30, measuredRequests: 2 },
+  ]);
+  assert.equal(sampleAt(e2e, 0.9), null);
+  assert.equal(sampleAt(e2e, 2.5).value, 50);
+  assert.deepEqual(seriesFor(model, "stream_tps"), [
+    { time: 3, value: 15, measuredRequests: 1 },
+    { time: 4, value: 15, measuredRequests: 1 },
+  ]);
+});
+
+test("live curves carry measured zero forward and legacy reports get a final point only", () => {
+  const requests = [
+    { status: "completed", output_tokens: 0, e2e_s: 1, completed_offset_s: 1 },
+    { status: "completed", output_tokens: 10, e2e_s: 2, completed_offset_s: 1 },
+  ];
+  assert.deepEqual(seriesFor({ ...base, requests, history: [{ time_s: 2 }] }, "e2e_tps"), [
+    { time: 1, value: 2.5, measuredRequests: 2 },
+    { time: 2, value: 2.5, measuredRequests: 2 },
+  ]);
+  const legacy = { ...base, requests: requests.map(({ completed_offset_s, ...row }) => row),
+    history: [{ time_s: 1, throughput: 10 }], summary: { wall_s: 2 } };
+  assert.deepEqual(seriesFor(legacy, "e2e_tps"), [{ time: 2, value: 2.5, measuredRequests: 2 }]);
+  assert.deepEqual(seriesFor(legacy, "stream_tps"), []);
 });

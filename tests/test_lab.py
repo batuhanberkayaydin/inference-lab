@@ -352,6 +352,9 @@ class IntegrationTests(unittest.TestCase):
                 self.assertIsNone(row['ttft_s'])
                 self.assertIsNone(row['stream_tps'])
                 self.assertGreater(row['e2e_s'], 0)
+                self.assertGreaterEqual(row['dispatch_offset_s'], 0)
+                self.assertGreaterEqual(row['completed_offset_s'], row['dispatch_offset_s'])
+                self.assertNotIn('first_token_offset_s', row)
             self.assertEqual(Fixture.bodies[-1]['stream'], stream)
             if not stream:
                 self.assertNotIn('stream_options', Fixture.bodies[-1])
@@ -369,6 +372,9 @@ class IntegrationTests(unittest.TestCase):
             time.sleep(.005)
         completed = await_report(self.engine, run['id'])
         self.assertTrue(observed)
+        self.assertAlmostEqual(row['first_token_offset_s'] - row['dispatch_offset_s'], row['ttft_s'])
+        self.assertEqual(completed['phases'][0]['models'][0]['requests'][0]['first_token_offset_s'],
+                         row['first_token_offset_s'])
         self.assertEqual(completed['phases'][0]['models'][0]['requests'][0]['text'], 'Merhaba dünya')
 
     def test_real_stream_usage_timing_and_persistence(self):
@@ -391,8 +397,20 @@ class IntegrationTests(unittest.TestCase):
 
     def test_serial_and_concurrent_use_unique_prefixes_and_same_inputs(self):
         run = self.run_config(mode='compare', prompts=[str(i) for i in range(16)])
+        self.assertTrue(run['request_phase_timing'])
         self.assertEqual(run['config']['prompt_uuid_parts'], [1])
         self.assertEqual([p['name'] for p in run['phases']], ['serial', 'concurrent'])
+        for phase in run['phases']:
+            target = phase['models'][0]
+            rows = target['requests']
+            for row in rows:
+                self.assertGreaterEqual(row['dispatch_offset_s'], 0)
+                self.assertAlmostEqual(row['first_token_offset_s'] - row['dispatch_offset_s'], row['ttft_s'])
+                self.assertLessEqual(row['first_token_offset_s'], row['completed_offset_s'])
+                self.assertLessEqual(row['completed_offset_s'], target['summary']['wall_s'])
+            if phase['name'] == 'serial':
+                for previous, current in zip(rows, rows[1:]):
+                    self.assertLess(previous['first_token_offset_s'], current['dispatch_offset_s'])
         self.assertGreaterEqual(Fixture.peak, 2)
         bodies = Fixture.bodies
         self.assertEqual(len(bodies),32)
@@ -458,6 +476,8 @@ class IntegrationTests(unittest.TestCase):
         self.assertEqual(run['status'],'partial')
         self.assertEqual(run['phases'][0]['models'][0]['summary']['completed'],0)
         self.assertIsNone(run['phases'][0]['models'][0]['summary']['throughput'])
+        self.assertTrue(all(row['first_token_offset_s'] >= row['dispatch_offset_s']
+                            for row in run['phases'][0]['models'][0]['requests']))
 
     def test_timeout_interrupts_stalled_response(self):
         for model in ('stall', 'trickle'):
@@ -584,6 +604,26 @@ class IntegrationTests(unittest.TestCase):
             completed = await_report(self.engine, large_run['id'])
             self.assertEqual(completed['phases'][0]['models'][0]['summary']['completed'], 16)
             self.assertEqual(completed['config']['prompts'], [long_prompt] * 16)
+            report_url = base + f'/api/runs/{completed["id"]}'
+            with client.open(report_url + '?view=report') as response:
+                initial_payload = response.read()
+            report_view = json.loads(initial_payload)
+            self.assertEqual(report_view['config']['prompt_count'], 16)
+            self.assertEqual(report_view['config']['text_prompt_count'], 16)
+            self.assertNotIn('prompts', report_view['config'])
+            self.assertNotIn('prompt_images', report_view['config'])
+            self.assertLess(len(initial_payload), len(long_prompt.encode()))
+            with client.open(report_url + '/inputs?offset=14&limit=3') as response:
+                previews = json.load(response)
+            self.assertEqual([item['index'] for item in previews], [14, 15])
+            self.assertEqual(previews[-1]['preview'], long_prompt[:140] + '…')
+            self.assertEqual(previews[-1]['characters'], len(long_prompt))
+            with client.open(report_url + '/inputs/15') as response:
+                self.assertEqual(json.load(response), {'prompt': long_prompt, 'images': []})
+            with self.assertRaises(HTTPError) as result:
+                client.open(report_url + '/inputs/16')
+            self.assertEqual(result.exception.code, 404)
+            result.exception.close()
             delete('/api/reports/'+run['id']).close()
             self.assertIsNone(self.engine.snapshot(run['id']))
             self.assertIsNone(self.store.get('reports',run['id']))
